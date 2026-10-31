@@ -54,6 +54,7 @@ export async function importWorkbookFile(db: Db, file: string, allowPersonal: bo
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
+  await import('../load-env.js');
   const { loadConfig } = await import('../config.js'); const { createDb } = await import('../db.js'); const { migrate } = await import('./migrate.js');
   const cfg = loadConfig(); const db = createDb(cfg);
   await migrate(db); await seedReference(db); const admin = await bootstrapAdmin(db, cfg);

@@ -1,6 +1,6 @@
 # Local / stage stack: postgres + api + jobs worker + website.
-#   cp .env.stage.example .env.stage && docker compose -f infra/docker-compose.yml --env-file .env.stage up --build
-#   docker compose -f infra/docker-compose.yml --env-file .env.stage run --rm api node dist/cli/seed.js --workbook=/seed/mod-alpha-test-data.xlsx
+#   cp .env.local.example .env.local && docker compose -f infra/docker-compose.yml up --build
+#   docker compose -f infra/docker-compose.yml run --rm api node dist/cli/seed.js --workbook=/seed/mod-alpha-test-data.xlsx
 name: mod-alpha
 services:
   db:
@@ -11,14 +11,14 @@ services:
     ports: ["5432:5432"]
   api:
     build: { context: .., dockerfile: apps/api/Dockerfile }
-    env_file: ../.env.stage
+    env_file: ../.env.local
     environment: { DATABASE_URL: "postgres://modalpha:${POSTGRES_PASSWORD:-modalpha}@db:5432/modalpha", MIGRATE_ON_START: "true" }
     depends_on: { db: { condition: service_healthy } }
     volumes: [../apps/web/data:/seed:ro]
     ports: ["8080:8080"]
   jobs:
     build: { context: .., dockerfile: apps/api/Dockerfile }
-    env_file: ../.env.stage
+    env_file: ../.env.local
     environment: { DATABASE_URL: "postgres://modalpha:${POSTGRES_PASSWORD:-modalpha}@db:5432/modalpha" }
     command: ["node", "dist/cli/jobs.js"]
     depends_on: [api]

@@ -1,3 +1,4 @@
+import '../load-env.js';
 /**
  * Background worker. `npm run jobs -- --once <job>` runs one job (used by schedulers/cron),
  * `npm run jobs` runs the loop: campaigns every minute, lifecycle + data requests hourly, NAV at 23:30 IST.
