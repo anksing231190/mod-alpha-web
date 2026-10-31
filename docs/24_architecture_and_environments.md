@@ -56,43 +56,7 @@ All differences are driven by `APP_ENV` and provider env vars, so the **same ima
 
 ## 3. Running locally
 
-```bash
-npm ci
-```
-
-```bash
-cp .env.stage.example .env.stage    # edit DATABASE_URL, JWT_SECRET
-```
-
-```bash
-docker compose -f infra/docker-compose.yml --env-file .env.stage up --build
-```
-
-```bash
-docker compose -f infra/docker-compose.yml --env-file .env.stage run --rm api node dist/cli/seed.js --workbook=/seed/mod-alpha-test-data.xlsx
-```
-
-Open http://localhost:8081 and log in with the `ADMIN_BOOTSTRAP_*` credentials.
-
-Without Docker you need Node 22 and PostgreSQL 16:
-
-```bash
-npm run seed -- --workbook=../web/data/mod-alpha-test-data.xlsx
-```
-
-```bash
-npm run dev:api
-```
-
-```bash
-node scripts/build-web.mjs local && npx serve dist/web-local -l 8081
-```
-
-Tests (needs PostgreSQL; set `TEST_DATABASE_URL`):
-
-```bash
-npm test
-```
+See **`RUN_LOCALLY.md`** in the repository root. It covers Docker and Node + PostgreSQL, login details, how to test mocked flows, and troubleshooting. Local settings live in `.env.local`, created from `.env.local.example`. The API loads that file automatically.
 
 ## 4. Deploying
 

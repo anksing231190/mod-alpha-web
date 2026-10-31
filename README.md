@@ -9,31 +9,29 @@ Mutual-fund analytics and monthly SIP-date intelligence. The repository holds th
 | Infra | `infra/`, `.github/workflows/` | Docker, docker-compose, GitHub Actions |
 | Docs | `docs/` | see the index below |
 
-## Quick start (local)
+## Run it locally
+
+Step-by-step guide (Docker, or Node + PostgreSQL): **[RUN_LOCALLY.md](RUN_LOCALLY.md)**
+
+The short version, without Docker:
 
 ```bash
-npm ci
+cp .env.local.example .env.local
 ```
 
 ```bash
-cp .env.stage.example .env.stage
+npm ci && npm run seed:test
 ```
 
 ```bash
-docker compose -f infra/docker-compose.yml --env-file .env.stage up --build
+npm run dev:api
 ```
 
 ```bash
-docker compose -f infra/docker-compose.yml --env-file .env.stage run --rm api node dist/cli/seed.js --workbook=/seed/mod-alpha-test-data.xlsx
+npm run dev:web
 ```
 
-Website: http://localhost:8081 · API: http://localhost:8080/health. Log in with `ADMIN_BOOTSTRAP_EMAIL` / `ADMIN_BOOTSTRAP_PASSWORD`.
-
-To run the tests (needs PostgreSQL; set `TEST_DATABASE_URL`):
-
-```bash
-npm test
-```
+Open http://localhost:8081 and log in as `admin@modalpha.local` / `Admin-password-123`.
 
 ## Environments
 
