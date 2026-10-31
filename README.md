@@ -60,3 +60,6 @@ All 72 integration items are tracked in `docs/22_integration_backlog.md`. They a
 
 ## Themes
 Dark (Midnight, default) and light (Sand — beige + cream). Toggle in the top bar or Settings → Preferences. See `docs/25_light_theme.md`; regenerate with `npm run theme:build`.
+
+## Languages
+English and Hindi (हिन्दी). Switch with the A/अ button in the top bar or Settings → Preferences → Language. See `docs/26_hindi_language.md`.

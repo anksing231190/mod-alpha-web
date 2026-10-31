@@ -1553,3 +1553,27 @@ footer.public-footer .v22-foot-copy>*{margin:0!important}
 .v22-plan h3,.v22-subpage .v22-plan h3{font-size:24px!important;font-weight:800!important;color:#fff!important}
 .v22-subfaq .v22-h2{font-size:22px!important}
 .v22-subinfo .v22-act b{font-size:19px!important}
+
+/* v23.5 — layout fixes (both themes) */
+.v22-feat-ic{display:grid!important;place-items:center!important;justify-content:center;align-items:center}
+.v22-feat-ic.brand img{height:32px!important;width:auto!important;max-width:44px;object-fit:contain;display:block;margin:auto}
+/* preset chips never clip their label: wrap onto a second row instead */
+.v22-opts button,.v22-chips button,.v22-pills button{white-space:nowrap}
+.v22-mini-box .v22-opts button{flex:1 1 auto!important;min-width:max-content!important;padding:0 10px!important}
+.v22-opts{flex-wrap:wrap}
+.v22-mini-box .v22-opts{display:grid!important;grid-template-columns:1fr 1fr;gap:8px}
+.v22-mini-box .v22-opts button{min-width:0!important;width:100%}
+
+/* v23.5 — language switch (A / अ) and Hindi typography */
+.ma-lang-toggle{height:42px;flex:none;display:inline-flex;align-items:center;gap:2px;padding:4px;border-radius:12px;border:1px solid rgba(110,140,230,.35);background:rgba(20,30,70,.6);cursor:pointer;font-family:'Inter','Noto Sans Devanagari',sans-serif}
+.ma-lang-toggle span{min-width:30px;height:32px;display:grid;place-items:center;border-radius:9px;color:#a7b3cf;font-size:15px;font-weight:700;line-height:1;transition:background .2s,color .2s}
+.ma-lang-toggle span.on{background:linear-gradient(135deg,#3b82f6,#7c5cfa);color:#fff}
+.ma-lang-toggle:hover{border-color:#6b8cff}
+.topbar .top-actions .ma-lang-toggle{height:44px}
+html[lang="hi"]{--v-font:'Inter','Noto Sans Devanagari',system-ui,-apple-system,'Segoe UI',sans-serif}
+html[lang="hi"] body,html[lang="hi"] body :where(h1,h2,h3,h4,p,span,b,strong,small,em,a,button,label,li,td,th,div,input,select,textarea,option,summary){font-family:'Inter','Noto Sans Devanagari',system-ui,sans-serif!important}
+html[lang="hi"] body :where(h1,h2,h3,h4,p,span,b,strong,small,em,a,button,label,li,td,th,div,summary){letter-spacing:0!important}
+html[lang="hi"] :where(h1,h2,h3){line-height:1.3!important}
+html[lang="hi"] .v22-hero-copy h1{line-height:1.22!important}
+html[lang="hi"] :where(button,.v22-pill,.v22-pills button,.nav-link){line-height:1.35}
+html[lang="hi"] :where(.v22-eyebrow,.v22-crumb,.side-label,th,.hd-best small){text-transform:none!important}

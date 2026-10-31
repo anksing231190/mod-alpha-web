@@ -238,3 +238,36 @@ html[data-theme="light"] .v22-chat-head small{color:#54442f!important}
 html[data-theme="light"] .v22-av{text-shadow:0 1px 1px rgba(0,0,0,.35)}
 html[data-theme="light"] .v22-ins-ic svg,html[data-theme="light"] .v22-ins-ic .v22-ic{color:#7d3d5d!important}
 html[data-theme="light"] .v22-help-topics button small{color:#54442f!important}
+
+/* ---------- hero phone (light): espresso body + warm sunset lock screen ---------- */
+html[data-theme="light"] .hd-phone{
+ background:
+  radial-gradient(120% 60% at 15% 0%,rgba(255,226,178,.95) 0%,transparent 60%),
+  radial-gradient(110% 70% at 100% 100%,rgba(125,61,93,.85) 0%,transparent 62%),
+  linear-gradient(172deg,#f3c890 0%,#e2a067 38%,#b8673f 70%,#7f4152 100%)!important;
+ border:3px solid #3a2c20!important;
+ box-shadow:0 0 0 7px #241a12,0 0 0 8.5px #7a6450,0 40px 80px rgba(94,64,32,.38),0 12px 24px rgba(94,64,32,.22)!important}
+html[data-theme="light"] .hd-notch{background:#160f0a!important}
+html[data-theme="light"] .hd-time{color:#fff!important;text-shadow:0 2px 14px rgba(90,40,20,.35)}
+html[data-theme="light"] .hd-date{color:#fff6ea!important;text-shadow:0 1px 6px rgba(90,40,20,.35)}
+html[data-theme="light"] .hd-card{background:rgba(255,250,241,.9)!important;color:#2b2118!important;border:1px solid rgba(255,255,255,.7)!important;backdrop-filter:blur(10px);box-shadow:0 8px 22px rgba(70,35,15,.22)!important}
+html[data-theme="light"] .hd-card b{color:#2b2118!important}
+html[data-theme="light"] .hd-card b small{color:#6b5641!important}
+html[data-theme="light"] .hd-card p{color:#4a3a2c!important}
+html[data-theme="light"] .hd-card .v22-mark{background:#2b2118!important}
+html[data-theme="light"] .hd-card.n2{background:rgba(43,28,18,.5)!important;border:1px solid rgba(255,235,205,.45)!important;color:#fff!important;backdrop-filter:blur(12px)}
+html[data-theme="light"] .hd-best small{color:#ffe2b4!important}
+html[data-theme="light"] .hd-best strong{background-image:linear-gradient(90deg,#ffe0a3,#ffb27a)!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent!important}
+html[data-theme="light"] .hd-best span{color:#d8f0c0!important}
+html[data-theme="light"] .hd-alts span{border-color:rgba(255,240,215,.6)!important;color:#fff!important;background:rgba(255,255,255,.12)}
+html[data-theme="light"] .hd-home{background:rgba(255,255,255,.8)!important}
+html[data-theme="light"] .v22-float{background:rgba(255,250,241,.95)!important;border:1px solid var(--sand-line2)!important;color:var(--sand-text)!important;box-shadow:0 14px 34px rgba(94,64,32,.18)!important}
+html[data-theme="light"] .v22-float small{color:#54442f!important}
+html[data-theme="light"] .hd-f1 .v22-float-ic,html[data-theme="light"] .v22-float-ic{background:var(--sand-grad)!important;color:#fff!important;border:0!important;box-shadow:0 6px 14px rgba(127,75,34,.3)!important}
+html[data-theme="light"] .v22-phone{background:linear-gradient(172deg,#f3c890,#d9925c 50%,#9c5a48)!important;border-color:#3a2c20!important;box-shadow:0 0 0 5px #241a12,0 20px 40px rgba(94,64,32,.3)!important}
+html[data-theme="light"] .v22-phone-time,html[data-theme="light"] .v22-phone-date,html[data-theme="light"] .v22-phone-bar,html[data-theme="light"] .v22-phone-lock{color:#fff!important}
+html[data-theme="light"] .v22-phone-bell{background:var(--sand-grad)!important;box-shadow:0 8px 18px rgba(127,75,34,.3)!important}
+html[data-theme="light"] .ma-lang-toggle{border:1px solid var(--sand-line2)!important;background:var(--sand-card)!important;box-shadow:0 1px 2px rgba(94,64,32,.06)}
+html[data-theme="light"] .ma-lang-toggle span{color:#6b5641!important}
+html[data-theme="light"] .ma-lang-toggle span.on{background:var(--sand-solid)!important;color:#fff!important}
+html[data-theme="light"] .ma-lang-toggle:hover{border-color:var(--sand-caramel)!important}

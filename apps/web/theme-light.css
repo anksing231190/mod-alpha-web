@@ -6496,3 +6496,19 @@ html[data-theme="light"] .v22-plan h3,
 html[data-theme="light"] .v22-subpage .v22-plan h3 {
     color: #292119 !important
 }
+html[data-theme="light"] .ma-lang-toggle {
+    border-radius: 12px;
+    border: 1px solid rgba(126,92,52,0.358);
+    background: rgba(252,246,236,0.9)
+}
+html[data-theme="light"] .ma-lang-toggle span {
+    border-radius: 9px;
+    color: #5d4a39
+}
+html[data-theme="light"] .ma-lang-toggle span.on {
+    background: linear-gradient(135deg,#985f2a,#833f65);
+    color: #fff
+}
+html[data-theme="light"] .ma-lang-toggle:hover {
+    border-color: #d69c66
+}
