@@ -1453,3 +1453,103 @@ footer.public-footer .v22-foot-copy>*{margin:0!important}
 #ma-mocks .v22-ints article small b{font-weight:500;color:#dbe4fb}
 #ma-mocks .v22-ints article small.v22-muted{font-size:11.5px;color:#7d8bab;word-break:break-word}
 @media (max-width:1100px){#ma-mocks .v22-ints{grid-template-columns:1fr}}
+
+/* v23.2 — user Subscription page (larger type, same components as landing pricing) */
+.v22-subpage{display:grid;gap:22px}
+.v22-subhead{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;padding:28px 30px;border-radius:20px;border:1px solid var(--v-border);background:radial-gradient(ellipse at 90% 0%,rgba(99,102,241,.25),transparent 60%),linear-gradient(180deg,rgba(18,28,66,.9),rgba(11,18,46,.92))}
+.v22-subhead h1{margin-top:16px!important;font-size:34px;font-weight:800;color:#fff;letter-spacing:-.02em}
+.v22-subhead p{margin-top:8px!important;color:#c3cde6;font-size:17px}
+.v22-subhead .v22-billing{margin-top:0}
+.v22-subpage .v22-plans{margin-top:8px}
+.v22-subpage .v22-plan h3{font-size:24px}
+.v22-subpage .v22-plan-head p{font-size:15.5px}
+.v22-subpage .v22-price b{font-size:46px}
+.v22-subpage .v22-price span{font-size:16px}
+.v22-subpage .v22-price-note{font-size:14px}
+.v22-subpage .v22-plan li{font-size:16px}
+.v22-subpage .v22-plan .v22-grad-btn,.v22-subpage .v22-plan-btn{height:54px;font-size:16.5px!important;width:100%}
+.v22-plan-btn:disabled{opacity:.65;cursor:default;border-color:rgba(74,222,128,.5);color:#bbf7d0}
+.v22-plan.is-current{border-color:rgba(74,222,128,.55)}
+.v22-pop.cur{background:linear-gradient(90deg,#16a34a,#22c55e)}
+.v22-plan.popular.is-current .v22-pop:not(.cur){display:none}
+.v22-subnote{color:#9fb0d4;font-size:14.5px;margin-top:-6px!important}
+.v22-subinfo .v22-act b{font-size:19px}
+.v22-subinfo .v22-act p{font-size:15.5px!important;line-height:1.6}
+.v22-subinfo .v22-pill.lg{font-size:14px}
+.v22-subinfo .v22-outline-btn{height:44px;font-size:15px!important}
+.v22-subfaq .v22-h2{font-size:22px;margin-bottom:16px}
+.v22-subfaq .v22-acc-q{font-size:16.5px!important}
+.v22-subfaq .v22-acc-a p{font-size:15.5px;padding-left:58px}
+/* v23 current-plan card above the page */
+.ma-cur-plan h2{font-size:21px!important}
+.ma-cur-plan .v22-card-head p{font-size:15.5px!important}
+@media (max-width:760px){.v22-subhead{padding:22px}.v22-subhead h1{font-size:27px}.v22-subfaq .v22-acc-a p{padding-left:20px}}
+
+/* ======================================================================
+   v23.2 — readability pass: raise small text site-wide (min ~13px)
+   ====================================================================== */
+/* sidebar & brand */
+.sidebar .brand-wording small,.side-brand .brand-wording small{font-size:11px!important}
+.public-topbar .brand-wording small{font-size:11.5px!important}
+.side-label{font-size:12px!important;letter-spacing:.14em}
+.side-demo b{font-size:14px!important}.side-demo small{font-size:12.5px!important}
+.sidebar.v22-side .nav-link{font-size:15.5px!important}
+.v22-subnav a{font-size:14.5px!important}
+.logout-btn,.v22-back{font-size:14.5px!important}
+.profile-menu span,.v22-role-chip{font-size:14.5px!important}
+/* labels, captions, notes */
+.v22-eyebrow{font-size:13.5px!important}
+.v22-crumb{font-size:13px!important}
+.v22-note,.v22-hint,.v22-muted{font-size:14px!important}
+.v22-tags span{font-size:13.5px!important}
+.v22-pill{font-size:13.5px!important}
+.v22-pop{font-size:13px!important}
+.v22-billing em{font-size:12.5px!important}
+.v22-fab-label{font-size:13.5px!important}
+.v22-legend{font-size:14px!important}
+.v22-label,.v22-fl{font-size:15px!important}
+.v22-opts.sm button{font-size:14px!important}
+.v22-result-box b small{font-size:13px!important}
+/* dashboard */
+.v22-kpi-txt small{font-size:14.5px!important}.v22-kpi-txt small em{font-size:13.5px!important}.v22-kpi-txt>span{font-size:14px!important}
+.v22-best p,.v22-best strong small,.v22-other div,.v22-other>b{font-size:14.5px!important}
+.v22-cal-week span{font-size:13.5px!important}.v22-cal-days span{font-size:15px!important}
+.v22-est small{font-size:14px!important}
+.v22-stat3 small{font-size:13.5px!important}
+.v22-ins-top b{font-size:15px!important}.v22-ins-top small{font-size:13px!important}.v22-ins p{font-size:14px!important}
+.v22-dash-bottom .v22-sub{font-size:14.5px!important}
+/* admin */
+.v22-akpi small{font-size:14.5px!important}.v22-akpi-delta span,.v22-akpi-prev,.v22-akpi-prev b{font-size:14px!important}
+.v22-src,.v22-updated{font-size:14px!important}
+.v22-mini-table{font-size:14px!important}.v22-mini-table th{font-size:13px!important}.v22-mini-table td{font-size:14px!important}
+.v22-admin-table td{font-size:15px!important}.v22-admin-table th{font-size:13px!important}
+.v22-who small{font-size:13.5px!important}
+.v22 .mono{font-size:14px!important}
+.v22-skpis small{font-size:14.5px!important}.v22-skpis em{font-size:13.5px!important}
+.v22-dsum small{font-size:13.5px!important}.v22-dsum em{font-size:13px!important}
+.v22-last dl,.v22-upcoming{font-size:14.5px!important}
+.v22-op-head p,.v22-sipcfg-note p{font-size:14.5px!important}
+.v22-batch small,.v22-camp small,.v22-tl-main small,.v22-tl time{font-size:13.5px!important}
+.v22-ints small,.v22-int-body p{font-size:14px!important}.v22-int-body small{font-size:12.5px!important}
+.v22-int summary b{font-size:15.5px!important}
+.v22-schema span,.v22-issue{font-size:14px!important}
+.v22-seg-pills button{font-size:14.5px!important}
+.v22-kv>div{font-size:15px!important}
+.v22-callout{font-size:14.5px!important}
+/* settings, help, chat */
+.v22-set-side nav small,.v22-trow small,.v22-chan small,.v22-set-who small{font-size:13.5px!important}
+.v22-trow b{font-size:16px!important}
+.v22-help-topics small,.v22-quick small,.v22-faq-help small{font-size:13.5px!important}
+.v22-count{font-size:13.5px!important}
+.v22-chat-note,.v22-bubble small{font-size:13px!important}
+.v22-notice>div{font-size:15px!important}
+.v22-np-item small{font-size:13.5px!important}.v22-np-item time{font-size:12.5px!important}
+/* landing explainer */
+.v22-input small,.v22-conf small,.v22-channels small,.v22-step-head p{font-size:13.5px!important}
+.v22-input b{font-size:14px!important}
+.v22-oc-label{font-size:13.5px!important}
+.v22-benefits small{font-size:14px!important}
+.v22-auth-guest{font-size:13.5px!important}
+.v22-plan h3,.v22-subpage .v22-plan h3{font-size:24px!important;font-weight:800!important;color:#fff!important}
+.v22-subfaq .v22-h2{font-size:22px!important}
+.v22-subinfo .v22-act b{font-size:19px!important}

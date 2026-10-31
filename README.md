@@ -13,7 +13,13 @@ Mutual-fund analytics and monthly SIP-date intelligence. The repository holds th
 
 Step-by-step guide (Docker, or Node + PostgreSQL): **[RUN_LOCALLY.md](RUN_LOCALLY.md)**
 
-The short version, without Docker:
+One command (macOS/Linux; sets up the database, test data, API and website):
+
+```bash
+./scripts/start-local.sh
+```
+
+Or step by step, without Docker:
 
 ```bash
 cp .env.local.example .env.local

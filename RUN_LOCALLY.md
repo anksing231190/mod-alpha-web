@@ -2,6 +2,26 @@
 
 You get the website at **http://localhost:8081** and the API at **http://localhost:8080**. Everything external (payments, KYC, email, SMS) is mocked, so you need no vendor accounts.
 
+## Quickest — one command (macOS / Linux)
+
+Install [Node.js 22](https://nodejs.org) first. On a Mac with [Homebrew](https://brew.sh) the script can install PostgreSQL for you. Then, inside the `mod-alpha` folder:
+
+```bash
+./scripts/start-local.sh
+```
+
+On the first run it creates `.env.local`, installs dependencies, starts PostgreSQL (and offers to install it with Homebrew), creates the database, loads the test data, starts the API and website, and opens your browser. Later runs start in a few seconds and keep your data. **Ctrl+C** stops everything.
+
+| Option | What it does |
+|---|---|
+| `./scripts/start-local.sh --reset` | wipe the local database and reload the test data |
+| `./scripts/start-local.sh --jobs` | also run the background-jobs worker (scheduled reminders, NAV import) |
+| `./scripts/start-local.sh --no-open` | don't open the browser |
+
+`npm run local` does the same. Logs are written to `var/logs/`.
+
+If you prefer to do it by hand, use one of the two options below.
+
 Choose **one** of the two options.
 
 ---
