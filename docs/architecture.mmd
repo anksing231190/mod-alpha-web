@@ -1,0 +1,45 @@
+flowchart TB
+    U[Visitor / User Browser] --> EDGE[CDN + WAF]
+    A[Admin Browser] --> EDGE
+    EDGE --> WEB[Web App: Public + User + Admin]
+    WEB --> API[API Gateway / Modular Backend]
+
+    API --> AUTH[Identity, RBAC, Consent]
+    API --> FUND[Fund Catalogue + Analytics]
+    API --> CALC[What-If + SIP Backtest Engine]
+    API --> BILL[Subscription & Billing]
+    API --> AI[AI Gateway + Grounded Retrieval]
+    API --> ADMIN[Admin + Audit]
+
+    AUTH --> DB[(Managed PostgreSQL)]
+    FUND --> DB
+    CALC --> DB
+    BILL --> DB
+    ADMIN --> DB
+    API --> CACHE[(Redis Cache)]
+
+    NAVSRC[NAV Provider / Admin CSV-XLSX] --> OBJ[(Object Storage: Raw Files)]
+    OBJ --> Q[Job Queue]
+    Q --> INGEST[NAV Ingestion + Validation Workers]
+    INGEST --> STAGE[(Staging Tables)]
+    STAGE --> DB
+
+    ADMIN --> PUB[SIP Date Draft / Approval / Publish]
+    PUB --> DB
+    DB --> NQ[Notification Queue]
+    NQ --> NW[Notification Workers]
+    NW --> SMS[SMS / DLT Provider]
+    NW --> EMAIL[Email Provider]
+    NW --> PUSH[Web Push Provider]
+
+    BILL --> PG[Hosted Payment Gateway]
+    PG --> WH[Signed Webhook Endpoint]
+    WH --> BILL
+
+    AI --> MODEL[LLM Provider]
+    AI --> RAG[Approved Fund Facts + Calculation Results]
+
+    API --> OBS[Logs / Metrics / Traces / Alerts]
+    INGEST --> OBS
+    NW --> OBS
+    WH --> OBS

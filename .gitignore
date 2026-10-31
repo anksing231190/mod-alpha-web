@@ -1,0 +1,9 @@
+node_modules/
+dist/
+apps/api/dist/
+var/
+.env
+.env.stage
+.env.prod
+*.log
+.DS_Store

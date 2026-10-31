@@ -1,0 +1,28 @@
+# Local / stage stack: postgres + api + jobs worker + website.
+#   cp .env.stage.example .env.stage && docker compose -f infra/docker-compose.yml --env-file .env.stage up --build
+#   docker compose -f infra/docker-compose.yml --env-file .env.stage run --rm api node dist/cli/seed.js --workbook=/seed/mod-alpha-test-data.xlsx
+name: mod-alpha
+services:
+  db:
+    image: postgres:16-alpine
+    environment: { POSTGRES_DB: modalpha, POSTGRES_USER: modalpha, POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-modalpha}" }
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD", "pg_isready", "-U", "modalpha"], interval: 5s, retries: 20 }
+    ports: ["5432:5432"]
+  api:
+    build: { context: .., dockerfile: apps/api/Dockerfile }
+    env_file: ../.env.stage
+    environment: { DATABASE_URL: "postgres://modalpha:${POSTGRES_PASSWORD:-modalpha}@db:5432/modalpha", MIGRATE_ON_START: "true" }
+    depends_on: { db: { condition: service_healthy } }
+    volumes: [../apps/web/data:/seed:ro]
+    ports: ["8080:8080"]
+  jobs:
+    build: { context: .., dockerfile: apps/api/Dockerfile }
+    env_file: ../.env.stage
+    environment: { DATABASE_URL: "postgres://modalpha:${POSTGRES_PASSWORD:-modalpha}@db:5432/modalpha" }
+    command: ["node", "dist/cli/jobs.js"]
+    depends_on: [api]
+  web:
+    build: { context: .., dockerfile: apps/web/Dockerfile, args: { APP_ENV: local, WEB_API_BASE_URL: "http://localhost:8080" } }
+    ports: ["8081:80"]
+volumes: { pgdata: {} }

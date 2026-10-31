@@ -1,0 +1,16 @@
+{
+  "name": "mod-alpha",
+  "private": true,
+  "workspaces": ["apps/api"],
+  "scripts": {
+    "dev:api": "npm --workspace apps/api run dev",
+    "build": "npm --workspace apps/api run build && node scripts/build-web.mjs",
+    "build:web:stage": "node scripts/build-web.mjs stage",
+    "build:web:prod": "node scripts/build-web.mjs prod",
+    "migrate": "npm --workspace apps/api run migrate",
+    "seed": "npm --workspace apps/api run seed",
+    "test": "npm --workspace apps/api test",
+    "typecheck": "npm --workspace apps/api run typecheck"
+  },
+  "engines": { "node": ">=20" }
+}
