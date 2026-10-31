@@ -86,13 +86,19 @@ for (const file of SOURCES) {
       }
       if (child.type !== 'rule') return;
       const icon = ICON_SEL.test(child.selector);
-      const keepWhite = child.selectors.some((s) => accentBg.has(baseSel(s)));
+      const clipText = child.some((d) => d.type === 'decl' && /background-clip$/.test(d.prop) && /text/.test(d.value));
+      // white text stays white on an accent fill — painted by this element or by an ancestor in the selector
+      const onAccent = (s) => { const b = baseSel(s); if (accentBg.has(b)) return true; const parts = b.split(/\s+|\s*>\s*/); for (let i = parts.length - 1; i > 0; i--) if (accentBg.has(parts.slice(0, i).join(' '))) return true; return false; };
+      const keepWhite = child.selectors.some(onAccent);
       const decls = [];
       child.each((d) => {
-        if (d.type !== 'decl' || !COLOR_TEST.test(d.value)) return;
+        if (d.type !== 'decl') return;
+        // colour-free values (transparent, none, var(--x), inherit …) are re-emitted unchanged so the cascade order is kept
+        if (!COLOR_TEST.test(d.value)) { if (category(d.prop, d.value) && !d.prop.startsWith('--')) decls.push(postcss.decl({ prop: d.prop, value: d.value, important: d.important })); return; }
         if (/url\(/.test(d.value) && !/gradient/.test(d.value)) return;
         let cat = category(d.prop, d.value);
         if (!cat) return;
+        if (cat === 'bg' && clipText) cat = 'gradtext';   // gradient headline words
         let value;
         if (cat === 'fill' || cat === 'stroke') {
           value = d.value.replace(P.COLOR_RE, (m) => {
@@ -102,7 +108,7 @@ for (const file of SOURCES) {
           });
         } else if (icon && (cat === 'bg' || cat === 'shadow' || cat === 'text')) {
           value = d.value.replace(P.COLOR_RE, (m) => (P.isAccent(m) || (cat === 'text' && /^(#fff|#ffffff|white)$/i.test(m)) ? (cat === 'shadow' ? P.mapColor(m, 'shadow') : m) : P.mapColor(m, cat)));
-        } else if (cat === 'text' && keepWhite && child.selectors.some((s) => strongSel.has(baseSel(s)))) {
+        } else if (cat === 'text' && keepWhite && child.selectors.some((s) => { const b = baseSel(s); if (strongSel.has(b)) return true; const parts = b.split(/\s+|\s*>\s*/); for (let i = parts.length - 1; i > 0; i--) if (strongSel.has(parts.slice(0, i).join(' '))) return true; return false; })) {
           // on a solid accent fill (now a deep caramel/plum/sage), text reads white
           value = d.value.replace(P.COLOR_RE, (m) => { const c = P.parse(m); return c && !P.isAccent(m) ? '#fff' : P.mapColor(m, 'text'); });
         } else {

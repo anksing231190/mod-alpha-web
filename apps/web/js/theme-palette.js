@@ -88,7 +88,7 @@
     for (const [a, b, th, ts] of FAMILIES) if (h >= a && h < b) return [th, ts];
     return RED;
   }
-  const isNeutral = (s, l) => s < 0.42 || l < 0.28 || l > 0.86 || (l > 0.8 && s < 0.8);
+  const isNeutral = (s, l) => s < 0.42 || l < 0.28 || (l < 0.36 && s < 0.5) || l > 0.86 || (l > 0.8 && s < 0.8);
 
   /** Map one colour. cat: bg | text | border | shadow | chart | accent ; opts.keepWhite */
   function mapColor(str, cat, opts = {}) {
@@ -104,8 +104,8 @@
       switch (cat) {
         case 'bg': {
           if (l < 0.08 && s < 0.15 && a < 0.95) return out([52, 36, 20], a * 0.55);   // black scrim → warm scrim
-          if (l < 0.24) {                                                         // dark surface → beige / cream
-            const t = l / 0.24;
+          if (l < 0.36) {                                                         // dark surface → beige / cream
+            const t = Math.min(1, l / 0.3);
             const L = l < 0.075 ? 0.915 : 0.985 - t * 0.05;
             return out(fromHsl(40, l < 0.075 ? 0.48 : 0.72, L), a < 0.3 ? a * 0.9 : Math.max(a, 0.9));
           }
@@ -115,10 +115,10 @@
           }
           return out(fromHsl(35, 0.26, 0.5 + (l - 0.24) * 0.45), a);                // mid grey → sand
         }
-        case 'text': case 'chart': {
+        case 'text': case 'chart': case 'gradtext': {
           if (opts.keepWhite && l > 0.85) return str;
           if (l >= 0.5) {
-            const L = clamp(0.13 + (1 - l) * 0.75, 0.13, 0.5);
+            const L = clamp(0.13 + (1 - l) * 0.62, 0.13, 0.38);
             return out(fromHsl(28, 0.24, L), a < 1 ? Math.max(a, 0.55) : 1);
           }
           return out(fromHsl(28, 0.26, 0.12 + l * 0.45), a);
@@ -140,14 +140,15 @@
     const [th, ts] = family(h);
     const sat = clamp(ts + (s - 0.8) * 0.15, 0.2, 0.8);
     switch (cat) {
-      case 'text': return out(fromHsl(th, sat, clamp(0.3 + (l - 0.3) * 0.25, 0.3, 0.42)), a);
+      case 'text': return out(fromHsl(th, sat, clamp(0.26 + (l - 0.3) * 0.2, 0.26, 0.35)), a < 1 ? Math.max(a, 0.8) : 1);
+      case 'gradtext': return out(fromHsl(th, Math.min(0.7, sat + 0.05), clamp(0.3 + (l - 0.4) * 0.2, 0.3, 0.4)), 1);
       case 'chart': return out(fromHsl(th, sat, clamp(0.36 + (l - 0.4) * 0.3, 0.36, 0.52)), a);
       case 'border': return out(fromHsl(th, sat, clamp(l, 0.45, 0.62)), a);
       case 'shadow': return out(fromHsl(th, sat, 0.45), clamp(a * 0.45, 0.04, 0.25));
       case 'bg': default: {
         if (a < 0.6) return out(fromHsl(th, sat, clamp(l, 0.45, 0.62)), Math.min(0.6, a * 1.2));
         if (l > 0.8) return out(fromHsl(th, sat * 0.9, clamp(l, 0.86, 0.95)), a);   // pastel stays pastel
-        return out(fromHsl(th, sat, clamp(l * 0.85, 0.32, 0.47)), a);               // solid fill: white text stays readable
+        return out(fromHsl(th, sat, clamp(l * 0.75, 0.28, 0.38)), a);               // solid fill: white text ≥ 4.5:1
       }
     }
   }

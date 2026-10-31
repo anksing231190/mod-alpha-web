@@ -14,11 +14,12 @@ html.ma-theme-anim body,html.ma-theme-anim body *{transition:background-color .3
 
 html[data-theme="light"]{
  --sand-page:#f4ecdd;--sand-page2:#efe4cf;--sand-card:#fffaf1;--sand-card2:#fbf4e7;--sand-line:#e4d6bf;--sand-line2:#d6c3a3;
- --sand-text:#2b2118;--sand-sub:#5c4b3b;--sand-muted:#8a7560;--sand-caramel:#a8692f;--sand-caramel-d:#7f4b22;--sand-plum:#8e4a6c;
+ --sand-text:#2b2118;--sand-sub:#54442f;--sand-muted:#75604b;--sand-caramel:#a8692f;--sand-caramel-d:#7f4b22;--sand-plum:#8e4a6c;
  --sand-sage:#5a7d43;--sand-terra:#b4472f;--sand-ochre:#b98019;
  --sand-shadow:0 1px 2px rgba(94,64,32,.06),0 10px 28px rgba(94,64,32,.08);
  --sand-shadow-lg:0 2px 6px rgba(94,64,32,.06),0 24px 60px rgba(94,64,32,.14);
- --sand-grad:linear-gradient(100deg,#b77a3e,#9a5a33 55%,#8e4a6c);
+ --sand-grad:linear-gradient(100deg,#9c5f2a,#86501f 55%,#7d3d5d);
+ --sand-solid:linear-gradient(100deg,#9c5f2a,#7f4b22);
  color-scheme:light;
  /* re-point the dark theme's own tokens */
  --v-panel:var(--sand-card);--v-panel-2:var(--sand-card2);--v-inner:var(--sand-card2);
@@ -59,12 +60,12 @@ html[data-theme="light"] .workspace-top,html[data-theme="light"] .workspace-head
 
 /* ---------- sidebar ---------- */
 html[data-theme="light"] .sidebar{background:linear-gradient(180deg,#fbf6ec 0%,#f6eddc 100%)!important;border-right:1px solid var(--sand-line)!important;box-shadow:1px 0 0 rgba(255,255,255,.6)}
-html[data-theme="light"] .side-label{color:#9a8368!important}
+html[data-theme="light"] .side-label{color:#7a6450!important}
 html[data-theme="light"] .nav-link{color:#4a3a2c!important}
 html[data-theme="light"] .nav-link>span{color:inherit!important}
 html[data-theme="light"] .nav-link svg,html[data-theme="light"] .sidebar.v22-side .nav-link .v22-ic{color:#9a6a3c!important}
 html[data-theme="light"] .nav-link:hover{background:#f1e5d0!important;color:var(--sand-text)!important}
-html[data-theme="light"] .nav-link.active{background:linear-gradient(100deg,#b77a3e,#94582c)!important;border-color:#a8692f!important;color:#fff!important;box-shadow:0 6px 16px rgba(127,75,34,.28),inset 0 1px 0 rgba(255,255,255,.18)!important}
+html[data-theme="light"] .nav-link.active{background:var(--sand-solid)!important;border-color:#a8692f!important;color:#fff!important;box-shadow:0 6px 16px rgba(127,75,34,.28),inset 0 1px 0 rgba(255,255,255,.18)!important}
 html[data-theme="light"] .nav-link.active svg,html[data-theme="light"] .sidebar.v22-side .nav-link.active .v22-ic{color:#fff!important}
 html[data-theme="light"] .side-demo{background:var(--sand-card)!important;border-color:var(--sand-line)!important}
 html[data-theme="light"] .side-demo b{color:var(--sand-text)!important}
@@ -90,7 +91,7 @@ html[data-theme="light"] .v22-ghost-btn{background:var(--sand-card)!important;bo
 html[data-theme="light"] .v22-ghost-btn:hover{border-color:var(--sand-caramel)!important;color:var(--sand-caramel)!important}
 html[data-theme="light"] .v22-pills button{background:var(--sand-card)!important;border-color:var(--sand-line2)!important;color:#5c4b3b!important}
 html[data-theme="light"] .v22-pills button:hover{border-color:var(--sand-caramel)!important;color:var(--sand-caramel)!important}
-html[data-theme="light"] .v22-pills button.active{background:linear-gradient(135deg,#b77a3e,#94582c)!important;border-color:#94582c!important;color:#fff!important;box-shadow:0 4px 12px rgba(127,75,34,.28)!important}
+html[data-theme="light"] .v22-pills button.active{background:var(--sand-solid)!important;border-color:#94582c!important;color:#fff!important;box-shadow:0 4px 12px rgba(127,75,34,.28)!important}
 
 /* ---------- form controls ---------- */
 html[data-theme="light"] input:not([type=checkbox]):not([type=radio]):not([type=range]),html[data-theme="light"] select,html[data-theme="light"] textarea{color:var(--sand-text)!important}
@@ -136,16 +137,104 @@ html[data-theme="light"] .v22-theme small{color:var(--sand-muted)!important}
 
 /* ---------- auth ---------- */
 html[data-theme="light"] [data-v22-social="Apple"] svg path{fill:#2b2118}
-html[data-theme="light"] .v22-seg button.active,html[data-theme="light"] .ma-auth-tabs button.active{background:linear-gradient(100deg,#b77a3e,#94582c)!important;color:#fff!important}
+html[data-theme="light"] .v22-seg button.active,html[data-theme="light"] .ma-auth-tabs button.active{background:var(--sand-solid)!important;color:#fff!important}
 
 /* ---------- pricing toggle, fund list buttons ---------- */
 html[data-theme="light"] .v22-billing button[aria-pressed="true"]{color:#fff!important}
-html[data-theme="light"] .v22-billing-thumb{background:linear-gradient(100deg,#b77a3e,#94582c)!important;box-shadow:0 6px 16px rgba(127,75,34,.28)!important}
+html[data-theme="light"] .v22-billing-thumb{background:var(--sand-solid)!important;box-shadow:0 6px 16px rgba(127,75,34,.28)!important}
 html[data-theme="light"] .v22-view{background:var(--sand-card)!important;border:1px solid var(--sand-line2)!important;color:var(--sand-caramel-d)!important;box-shadow:none!important}
-html[data-theme="light"] .v22-view:hover{background:linear-gradient(100deg,#b77a3e,#94582c)!important;border-color:transparent!important;color:#fff!important}
+html[data-theme="light"] .v22-view:hover{background:var(--sand-solid)!important;border-color:transparent!important;color:#fff!important}
 html[data-theme="light"] .v22-steps .done{color:var(--sand-text)!important}
 html[data-theme="light"] .v22-steps .done i,html[data-theme="light"] .v22-step-no{color:#fff!important}
 html[data-theme="light"] .v22-skpi-ic{background:#f3e7d3!important;border-color:#e2cfae!important}
 html[data-theme="light"] .v22-theme-prev.dark{background:#070d22!important}
 html[data-theme="light"] .v22-theme-prev.dark i{background:#1a2552!important}
 html[data-theme="light"] .v22-theme-prev.dark i:nth-child(2){background:linear-gradient(90deg,#3b82f6,#8b5cf6)!important}
+
+/* ==========================================================================
+   Contrast & icon pass (audit: every text ≥ 4.5:1, large text ≥ 3:1)
+   ========================================================================== */
+/* colourful icons: pale highlight areas get a hairline shadow so they read on cream */
+html[data-theme="light"] .v22-cic{filter:drop-shadow(0 0 .6px rgba(94,64,32,.55)) drop-shadow(0 1px 1.5px rgba(94,64,32,.18))}
+
+/* icon tiles — cream tiles instead of the dark-theme navy */
+html[data-theme="light"] .v22-plan-ic,html[data-theme="light"] .v22-feat-ic,html[data-theme="light"] .v22-skpi-ic,
+html[data-theme="light"] .v22-kpi-ic,html[data-theme="light"] .v22-akpi-ic,html[data-theme="light"] .v22-in-ic,
+html[data-theme="light"] .v22-ins-ic,html[data-theme="light"] .v22-channels span,html[data-theme="light"] .v22-benefits span,
+html[data-theme="light"] .v22-how-badge,html[data-theme="light"] .v22-act-ic,html[data-theme="light"] .v22-set-ic{
+ background:linear-gradient(160deg,#fffdf8,#f3e7d3)!important;border:1px solid #e2cfae!important;box-shadow:0 1px 2px rgba(94,64,32,.08),inset 0 1px 0 #fff!important}
+html[data-theme="light"] .v22-feat-ic.brand{background:linear-gradient(160deg,#fff7ea,#efdcbc)!important}
+
+/* gradient words in headlines — deeper so they read on beige */
+html[data-theme="light"] .g-blue,html[data-theme="light"] .g-cyan,html[data-theme="light"] .g-violet,html[data-theme="light"] .g-grad,html[data-theme="light"] .hd-best strong{-webkit-text-fill-color:transparent}
+html[data-theme="light"] .g-blue{background-image:linear-gradient(90deg,#8a521f,#6e3f1a)!important}
+html[data-theme="light"] .g-cyan{background-image:linear-gradient(90deg,#2f6764,#7a4a1f)!important}
+html[data-theme="light"] .g-violet{background-image:linear-gradient(90deg,#7d3d5d,#6a2f4c)!important}
+html[data-theme="light"] .hd-best strong{background-image:linear-gradient(90deg,#8a521f,#7d3d5d)!important}
+html[data-theme="light"] .hd-best small{color:#7f4b22!important}
+
+/* SIP date orb (admin) */
+html[data-theme="light"] .v22-orb>div{background:radial-gradient(circle at 50% 35%,#fffaf1,#f1e2c8 72%)!important;border:2px solid #c99a62!important;box-shadow:0 10px 30px rgba(127,75,34,.18),inset 0 0 0 6px rgba(255,255,255,.6)!important}
+html[data-theme="light"] .v22-orb small{color:#7f4b22!important}
+html[data-theme="light"] .v22-orb strong{color:#2b2118!important}
+html[data-theme="light"] .v22-orb span{color:#54442f!important}
+
+/* AI engine tile on the landing "How it works" */
+html[data-theme="light"] .v22-core{background:linear-gradient(160deg,#9c5f2a,#6e3f1f 60%,#6a2f4c)!important;border-color:rgba(255,255,255,.35)!important}
+html[data-theme="light"] .v22-core b{color:#fff!important}
+html[data-theme="light"] .v22-core-glow{background:radial-gradient(circle,rgba(168,105,47,.25),transparent 65%)!important}
+html[data-theme="light"] .pv-bar b,html[data-theme="light"] .pv-bar span b{color:#2b2118!important}
+html[data-theme="light"] .pv-bar.fixed span{background:linear-gradient(180deg,#b9a58a,#8f7a5f)!important}
+
+/* chat bubble button */
+html[data-theme="light"] .v22-fab-bot{background:radial-gradient(circle at 50% 40%,#fffaf1,#efdcbc 75%)!important;border:2px solid #c99a62!important;box-shadow:0 8px 22px rgba(127,75,34,.3)!important}
+
+/* tabs (fund detail etc.) */
+html[data-theme="light"] .v22-tabs button{color:#54442f!important}
+html[data-theme="light"] .v22-tabs button.active{background:var(--sand-solid)!important;color:#fff!important;box-shadow:none!important}
+
+/* guest / admin notices */
+html[data-theme="light"] .v22-notice{background:linear-gradient(90deg,#fbefd9,#fffaf1)!important;border:1px solid #e2c9a0!important}
+html[data-theme="light"] .v22-notice.admin{background:linear-gradient(90deg,#eaf1e3,#fffaf1)!important;border-color:#c8d6b6!important}
+html[data-theme="light"] .v22-notice>div{color:#54442f!important}
+html[data-theme="light"] .v22-notice b{color:#2b2118!important}
+html[data-theme="light"] .v22-notice a{color:#7f4b22!important}
+
+/* small labels: eyebrows, crumbs, warn pills, footer, notes */
+html[data-theme="light"] .v22-eyebrow,html[data-theme="light"] .v22-crumb,html[data-theme="light"] .v22-hero-badge{color:#7f4b22!important}
+html[data-theme="light"] .v22-pill.warn{color:#7a5208!important}
+html[data-theme="light"] .v22-pill.ok,html[data-theme="light"] .v22-pill.good{color:#3f6130!important}
+html[data-theme="light"] .v22-note,html[data-theme="light"] .v22-muted,html[data-theme="light"] .v22-src{color:#6b5641!important}
+html[data-theme="light"] .public-footer,html[data-theme="light"] .public-footer span,html[data-theme="light"] .footer-link-col h3,html[data-theme="light"] .footer-bottom span{color:#6b5641!important}
+html[data-theme="light"] .v22-lockbox b{color:#7a5208!important}
+html[data-theme="light"] .v22-billing button>em{background:#4f7a3a!important;color:#fff!important}
+
+/* remaining audit items */
+html[data-theme="light"]{--sand-sage:#4c6e38}
+html[data-theme="light"] .t-ic.blue{background:var(--sand-solid)!important;color:#fff!important}
+html[data-theme="light"] .t-ic.gold{color:#9a6a12!important}
+html[data-theme="light"] .t-ic.teal{color:#2f6764!important}
+html[data-theme="light"] .v22-insight-logo{background:linear-gradient(180deg,#fffaf1,#f6ead6)!important}
+html[data-theme="light"] .v22-insight-logo .v22-mark{background:var(--sand-grad)!important;box-shadow:0 6px 16px rgba(127,75,34,.25)!important}
+html[data-theme="light"] .v22-float-ic{background:radial-gradient(circle,#fffaf1,#efdcbc)!important;color:#8e4a6c!important;box-shadow:0 2px 8px rgba(94,64,32,.18)!important;border:1px solid #e2cfae}
+html[data-theme="light"] .v22-conf.best{background:linear-gradient(90deg,#4c6e38,#5f8546)!important;border-color:#4c6e38!important;box-shadow:0 8px 20px rgba(76,110,56,.3)!important}
+html[data-theme="light"] .v22-conf.best b,html[data-theme="light"] .v22-conf.best small{color:#fff!important}
+html[data-theme="light"] .pv-bar.fixed span{background:linear-gradient(180deg,#8f7a5f,#6b5843)!important}
+html[data-theme="light"] .v22-ov.v22-badge{color:#fff!important}
+html[data-theme="light"] .v22-av{color:#fff!important}
+html[data-theme="light"] .workspace-actions .upgrade-link.v22-upgrade span{background:linear-gradient(90deg,#7a5208,#6a3f0c)!important;-webkit-background-clip:text!important;background-clip:text!important}
+html[data-theme="light"] .v22-best-top em{color:#3f5f2d!important}
+html[data-theme="light"] .v22-axis,html[data-theme="light"] text.v22-axis{fill:#6b5641!important;color:#6b5641!important}
+html[data-theme="light"] .v22-card-head a{color:#7f4b22!important}
+html[data-theme="light"] .v22 em.pos,html[data-theme="light"] .v22 .pos{color:#4a6b36!important}
+html[data-theme="light"] .v22-how-badge svg{color:#8a521f!important}
+html[data-theme="light"] .v22-ins-ic{color:#7d3d5d!important}
+html[data-theme="light"] .v22-gate-box{border-color:#c9ad85!important}
+/* the dark theme's glow pulse fades whole elements on cream — use a soft shadow pulse instead */
+@keyframes sandPulse{0%,100%{box-shadow:0 10px 30px rgba(127,75,34,.16),inset 0 0 0 6px rgba(255,255,255,.6)}50%{box-shadow:0 14px 40px rgba(127,75,34,.3),inset 0 0 0 6px rgba(255,255,255,.6)}}
+html[data-theme="light"] .v22-orb>div{animation:sandPulse 3.5s ease-in-out infinite!important}
+html[data-theme="light"] .v22-chat-head{background:linear-gradient(180deg,#fbf1e1,#fffaf1)!important;border-bottom:1px solid var(--sand-line)!important}
+html[data-theme="light"] .v22-chat-head small{color:#54442f!important}
+html[data-theme="light"] .v22-av{text-shadow:0 1px 1px rgba(0,0,0,.35)}
+html[data-theme="light"] .v22-ins-ic svg,html[data-theme="light"] .v22-ins-ic .v22-ic{color:#7d3d5d!important}
+html[data-theme="light"] .v22-help-topics button small{color:#54442f!important}

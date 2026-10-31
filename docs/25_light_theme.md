@@ -54,3 +54,22 @@ The colourful icon tiles keep their original colours in both themes.
 ```bash
 npm run theme:build
 ```
+
+## Contrast check (v23.4)
+Every page and popup was checked in the light theme with `scripts/qa/contrast-audit.js`. That covers the landing page, login, all user pages, all admin pages, notifications, chat, the date-range picker, checkout, the user record, campaign and pricing dialogs, and the hover state of every button. Targets: body text **≥ 4.5:1**, large text **≥ 3:1**, and no navy icon tiles.
+
+- **Buttons:** primary buttons use a deeper caramel (`#9c5f2a → #7f4b22`), so white text passes.
+- **Small text:** small labels (eyebrows, crumbs, warning pills, footer, notes, axis labels) were darkened.
+- **Icon tiles:** they are now cream with a sand border.
+- **Colourful icons:** they keep their original colours, with a hairline shadow so their pale parts read on cream.
+- **Generator:** it also copies colour resets (`transparent`, `none`, `var(--x)`), so a later reset in the dark CSS still wins in light mode.
+
+The remaining items the script reports are known false positives:
+- pale highlight shapes inside colourful icons;
+- the gradient border of the "Most popular" plan card;
+- the sliding Monthly/Yearly thumb.
+
+To run it, start the site, then:
+```bash
+node scripts/qa/contrast-audit.js
+```
