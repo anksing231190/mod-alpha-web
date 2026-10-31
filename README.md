@@ -57,3 +57,6 @@ All 72 integration items are tracked in `docs/22_integration_backlog.md`. They a
 - `22_integration_backlog.md`: every API and integration, with status (generated)
 - `23_mocks_and_replacements.md`: mocks today and what replaces them
 - `24_architecture_and_environments.md`: code structure, environments, deploy, API reference
+
+## Themes
+Dark (Midnight, default) and light (Sand — beige + cream). Toggle in the top bar or Settings → Preferences. See `docs/25_light_theme.md`; regenerate with `npm run theme:build`.

@@ -3,9 +3,9 @@ const D=window.MOD_ALPHA_DATA; let pricingBilling='monthly', authMode='login', c
 const U_NAV=[['overview','◈','Overview'],['funds','▦','Explore Funds'],['whatif','⌁','What If Calculator'],['sip','◷','MOD Alpha SIP'],['insights','✧','Mod Alpha AI'],['subscription','◇','Subscription'],['settings','⚙','Settings'],['help','?','Help & FAQ']];
 const A_NAV=[['dashboard','◈','Dashboard'],['users','♙','Users'],['subscriptions','◇','Subscriptions'],['sipdate','◷','SIP Date Configuration'],['data','▤','Data Management'],['notifications','♧','Notifications'],['methodology','✧','AI & Methodology'],['audit','≋','Audit Logs'],['settings','⚙','System Settings']];
 const money=n=>'₹'+Number(n).toLocaleString('en-IN',{maximumFractionDigits:2});
-function getTheme(){return 'dark'}
-function setTheme(theme){document.documentElement.dataset.theme='dark';try{localStorage.setItem('mod-alpha-theme','dark')}catch(e){};const select=document.getElementById('theme-select');if(select)select.value='dark'}
-setTheme('dark');
+function getTheme(){try{return localStorage.getItem('mod-alpha-theme')==='light'?'light':'dark'}catch(e){return 'dark'}}
+function setTheme(theme){theme=theme==='light'?'light':'dark';document.documentElement.dataset.theme=theme;try{localStorage.setItem('mod-alpha-theme',theme)}catch(e){};const select=document.getElementById('theme-select');if(select)select.value=theme;const m=document.querySelector('meta[name=theme-color]');if(m)m.content=theme==='light'?'#f4ecdd':'#080b18';window.dispatchEvent(new CustomEvent('ma:theme',{detail:theme}))}
+setTheme(getTheme());
 const pct=n=>(n>0?'+':'')+Number(n).toFixed(1)+'%';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function notify(m){toast.textContent=m;toast.classList.add('show');clearTimeout(notify.t);notify.t=setTimeout(()=>toast.classList.remove('show'),3000)}

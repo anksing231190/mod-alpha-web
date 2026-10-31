@@ -31,13 +31,13 @@ function v22AuthAnim(cv){
  const size=()=>{dpr=Math.min(2,devicePixelRatio||1);W=cv.clientWidth;H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);const n=Math.round(Math.min(110,W*H/14000));pts=Array.from({length:n},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.35,vy:(Math.random()-.5)*.35,r:Math.random()*1.8+.6,h:Math.random()<.5?'96,165,250':'167,139,250'}))};
  size();addEventListener('resize',size);
  let mx=-999,my=-999;cv.parentElement.parentElement.addEventListener('pointermove',e=>{const r=cv.getBoundingClientRect();mx=e.clientX-r.left;my=e.clientY-r.top});
- const draw=()=>{if(!cv.isConnected){removeEventListener('resize',size);return}t+=.006;ctx.clearRect(0,0,W,H);
+ const draw=()=>{if(!cv.isConnected){removeEventListener('resize',size);return}t+=.006;ctx.clearRect(0,0,W,H);const lt=document.documentElement.dataset.theme==='light';
   // flowing waves
-  for(let k=0;k<14;k++){ctx.beginPath();const base=H*.62+k*9,amp=40+k*5;for(let x=0;x<=W;x+=12){const y=base+Math.sin(x/260+t*2+k*.35)*amp*.5+Math.sin(x/120-t*3+k)*8;x?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.strokeStyle=`rgba(${k%2?'99,102,241':'59,130,246'},${.05+k*.012})`;ctx.lineWidth=1;ctx.stroke()}
+  for(let k=0;k<14;k++){ctx.beginPath();const base=H*.62+k*9,amp=40+k*5;for(let x=0;x<=W;x+=12){const y=base+Math.sin(x/260+t*2+k*.35)*amp*.5+Math.sin(x/120-t*3+k)*8;x?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.strokeStyle=`rgba(${lt?(k%2?'142,74,108':'168,105,47'):(k%2?'99,102,241':'59,130,246')},${(lt?.07:.05)+k*.012})`;ctx.lineWidth=1;ctx.stroke()}
   // particles + links
   for(const p of pts){p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;const dm=Math.hypot(p.x-mx,p.y-my);if(dm<140){p.x+=(p.x-mx)/dm*.6;p.y+=(p.y-my)/dm*.6}}
-  for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){const a=pts[i],b=pts[j],d=Math.hypot(a.x-b.x,a.y-b.y);if(d<130){ctx.strokeStyle=`rgba(96,165,250,${(1-d/130)*.22})`;ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}}
-  for(const p of pts){ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fillStyle=`rgba(${p.h},${.55+Math.sin(t*6+p.x)*.3})`;ctx.shadowColor=`rgb(${p.h})`;ctx.shadowBlur=8;ctx.fill();ctx.shadowBlur=0}
+  for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){const a=pts[i],b=pts[j],d=Math.hypot(a.x-b.x,a.y-b.y);if(d<130){ctx.strokeStyle=`rgba(${lt?'150,98,52':'96,165,250'},${(1-d/130)*(lt?.28:.22)})`;ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}}
+  for(const p of pts){const ph=lt?(p.h[0]==='9'?'168,105,47':'142,74,108'):p.h;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fillStyle=`rgba(${ph},${.55+Math.sin(t*6+p.x)*.3})`;ctx.shadowColor=`rgb(${ph})`;ctx.shadowBlur=lt?4:8;ctx.fill();ctx.shadowBlur=0}
   if(!reduce)requestAnimationFrame(draw)};
  draw();
 }

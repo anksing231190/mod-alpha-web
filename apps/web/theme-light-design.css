@@ -1,0 +1,151 @@
+/* ==========================================================================
+   Mod Alpha — "Sand" light theme: hand-designed layer (beige + cream)
+   Loads after theme-light.css (generated). Tokens: docs/25_light_theme.md
+   ========================================================================== */
+
+/* ---------- theme toggle (both themes) ---------- */
+.ma-theme-toggle{width:42px;height:42px;flex:none;border-radius:12px;display:grid;place-items:center;padding:0;cursor:pointer;
+ border:1px solid rgba(110,140,230,.35);background:rgba(20,30,70,.6);color:#fde68a;transition:transform .2s,border-color .2s,background .2s}
+.ma-theme-toggle svg{width:20px;height:20px;transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+.ma-theme-toggle:hover{border-color:#6b8cff;transform:translateY(-1px)}
+.ma-theme-toggle:hover svg{transform:rotate(25deg)}
+.topbar .top-actions .ma-theme-toggle{width:44px;height:44px}
+html.ma-theme-anim body,html.ma-theme-anim body *{transition:background-color .35s ease,border-color .35s ease,color .25s ease,fill .35s ease,stroke .35s ease!important}
+
+html[data-theme="light"]{
+ --sand-page:#f4ecdd;--sand-page2:#efe4cf;--sand-card:#fffaf1;--sand-card2:#fbf4e7;--sand-line:#e4d6bf;--sand-line2:#d6c3a3;
+ --sand-text:#2b2118;--sand-sub:#5c4b3b;--sand-muted:#8a7560;--sand-caramel:#a8692f;--sand-caramel-d:#7f4b22;--sand-plum:#8e4a6c;
+ --sand-sage:#5a7d43;--sand-terra:#b4472f;--sand-ochre:#b98019;
+ --sand-shadow:0 1px 2px rgba(94,64,32,.06),0 10px 28px rgba(94,64,32,.08);
+ --sand-shadow-lg:0 2px 6px rgba(94,64,32,.06),0 24px 60px rgba(94,64,32,.14);
+ --sand-grad:linear-gradient(100deg,#b77a3e,#9a5a33 55%,#8e4a6c);
+ color-scheme:light;
+ /* re-point the dark theme's own tokens */
+ --v-panel:var(--sand-card);--v-panel-2:var(--sand-card2);--v-inner:var(--sand-card2);
+ --v-border:var(--sand-line);--v-border-2:var(--sand-line2);
+ --v-text:var(--sand-text);--v-sub:var(--sand-sub);--v-muted:var(--sand-muted);
+ --v-green:var(--sand-sage);--v-blue:var(--sand-caramel);--v-violet:var(--sand-plum);--v-cyan:#3f7c79;--v-active:var(--sand-caramel);
+ --bg:var(--sand-page);--panel:var(--sand-card);--panel2:var(--sand-card2);--line:var(--sand-line);--text:var(--sand-text);--muted:var(--sand-muted)
+}
+html[data-theme="light"] body{background:
+ radial-gradient(1200px 600px at 8% -8%,rgba(255,250,240,.95),transparent 60%),
+ radial-gradient(900px 520px at 100% 12%,rgba(226,200,160,.35),transparent 65%),
+ var(--sand-page)!important;color:var(--sand-text)}
+html[data-theme="light"] .ambient{opacity:.18}
+html[data-theme="light"] .ambient-a{background:#e2c49a}
+html[data-theme="light"] .ambient-b{background:#e8cfc0}
+html[data-theme="light"] ::selection{background:#e9cfa8;color:var(--sand-text)}
+html[data-theme="light"] *{scrollbar-color:#d2bc98 transparent}
+html[data-theme="light"] ::-webkit-scrollbar-thumb{background:#d2bc98;border-radius:8px}
+
+/* toggle + header chips */
+html[data-theme="light"] .ma-theme-toggle{border:1px solid var(--sand-line2);background:var(--sand-card);color:#6b4a2b;box-shadow:0 1px 2px rgba(94,64,32,.06)}
+html[data-theme="light"] .ma-theme-toggle:hover{border-color:var(--sand-caramel);color:var(--sand-caramel)}
+html[data-theme="light"] .workspace-actions .icon-action.v22-bell{border:1px solid var(--sand-line2)!important;background:var(--sand-card)!important;color:#5c4b3b!important}
+html[data-theme="light"] .workspace-actions .icon-action.v22-bell:hover{border-color:var(--sand-caramel)!important;color:var(--sand-caramel)!important}
+html[data-theme="light"] .v22-bell-badge{background:var(--sand-terra)!important;color:#fff!important;box-shadow:0 0 0 2px var(--sand-card)!important}
+html[data-theme="light"] .workspace-actions .upgrade-link.v22-upgrade{border:1px solid #d9b46a!important;background:linear-gradient(135deg,#fff3d6,#f7e2b5)!important;color:#7a5410!important;box-shadow:0 2px 10px rgba(185,128,25,.18)!important}
+html[data-theme="light"] .workspace-actions .upgrade-link.v22-upgrade:hover{box-shadow:0 6px 18px rgba(185,128,25,.28)!important}
+html[data-theme="light"] .workspace-actions .upgrade-link.v22-upgrade span{background:linear-gradient(90deg,#9a6a12,#7a4b10)!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important}
+html[data-theme="light"] .v22-role-chip{background:#eef2e6!important;border-color:#c8d3b6!important;color:#4c6a37!important}
+
+/* ---------- top bars ---------- */
+html[data-theme="light"] .topbar{background:rgba(250,244,233,.86)!important;border-bottom:1px solid var(--sand-line)!important;box-shadow:0 1px 0 rgba(255,255,255,.7)}
+html[data-theme="light"] .topbar nav a,html[data-theme="light"] .top-link{color:#4a3a2c!important}
+html[data-theme="light"] .topbar nav a:hover,html[data-theme="light"] .topbar nav a.active{color:var(--sand-caramel)!important}
+html[data-theme="light"] .login-outline{border-color:var(--sand-line2)!important;color:var(--sand-text)!important;background:var(--sand-card)!important}
+html[data-theme="light"] .login-outline:hover{border-color:var(--sand-caramel)!important;color:var(--sand-caramel)!important}
+html[data-theme="light"] .workspace-top,html[data-theme="light"] .workspace-header{background:rgba(250,244,233,.82)!important;border-bottom-color:var(--sand-line)!important}
+
+/* ---------- sidebar ---------- */
+html[data-theme="light"] .sidebar{background:linear-gradient(180deg,#fbf6ec 0%,#f6eddc 100%)!important;border-right:1px solid var(--sand-line)!important;box-shadow:1px 0 0 rgba(255,255,255,.6)}
+html[data-theme="light"] .side-label{color:#9a8368!important}
+html[data-theme="light"] .nav-link{color:#4a3a2c!important}
+html[data-theme="light"] .nav-link>span{color:inherit!important}
+html[data-theme="light"] .nav-link svg,html[data-theme="light"] .sidebar.v22-side .nav-link .v22-ic{color:#9a6a3c!important}
+html[data-theme="light"] .nav-link:hover{background:#f1e5d0!important;color:var(--sand-text)!important}
+html[data-theme="light"] .nav-link.active{background:linear-gradient(100deg,#b77a3e,#94582c)!important;border-color:#a8692f!important;color:#fff!important;box-shadow:0 6px 16px rgba(127,75,34,.28),inset 0 1px 0 rgba(255,255,255,.18)!important}
+html[data-theme="light"] .nav-link.active svg,html[data-theme="light"] .sidebar.v22-side .nav-link.active .v22-ic{color:#fff!important}
+html[data-theme="light"] .side-demo{background:var(--sand-card)!important;border-color:var(--sand-line)!important}
+html[data-theme="light"] .side-demo b{color:var(--sand-text)!important}
+html[data-theme="light"] .side-demo small{color:var(--sand-muted)!important}
+html[data-theme="light"] .side-demo i{background:var(--sand-sage)!important;box-shadow:0 0 0 3px rgba(90,125,67,.18)!important}
+
+/* ---------- cards & surfaces ---------- */
+html[data-theme="light"] .v22-card{background:var(--sand-card)!important;border:1px solid var(--sand-line)!important;box-shadow:var(--sand-shadow)!important}
+html[data-theme="light"] .v22-card .v22-card,html[data-theme="light"] .v22-inner,html[data-theme="light"] [class*="v22-"][class*="-inner"]{background:var(--sand-card2)}
+html[data-theme="light"] .v22-card-head h2,html[data-theme="light"] .v22-h2{color:var(--sand-text)!important}
+html[data-theme="light"] .v22-card-head a{color:var(--sand-caramel)!important}
+html[data-theme="light"] .v22-title h1{color:var(--sand-text)}
+html[data-theme="light"] .v22-note{color:var(--sand-muted)}
+html[data-theme="light"] .v22 .pos{color:var(--sand-sage)!important}
+html[data-theme="light"] .v22 .neg{color:var(--sand-terra)!important}
+html[data-theme="light"] .v22 .pos-soft{color:#6d8f55!important}
+html[data-theme="light"] .v22-tags span{background:#f3e7d3!important;border-color:#e2cfae!important;color:#6b4a2b!important}
+
+/* ---------- buttons ---------- */
+html[data-theme="light"] .v22-grad-btn,html[data-theme="light"] .top-cta,html[data-theme="light"] .primary-btn,html[data-theme="light"] .btn-primary{background:var(--sand-grad)!important;color:#fff!important;box-shadow:0 8px 20px rgba(127,75,34,.25)!important;border-color:transparent!important}
+html[data-theme="light"] .v22-grad-btn:hover,html[data-theme="light"] .top-cta:hover{filter:brightness(1.06)}
+html[data-theme="light"] .v22-ghost-btn{background:var(--sand-card)!important;border-color:var(--sand-line2)!important;color:var(--sand-text)!important}
+html[data-theme="light"] .v22-ghost-btn:hover{border-color:var(--sand-caramel)!important;color:var(--sand-caramel)!important}
+html[data-theme="light"] .v22-pills button{background:var(--sand-card)!important;border-color:var(--sand-line2)!important;color:#5c4b3b!important}
+html[data-theme="light"] .v22-pills button:hover{border-color:var(--sand-caramel)!important;color:var(--sand-caramel)!important}
+html[data-theme="light"] .v22-pills button.active{background:linear-gradient(135deg,#b77a3e,#94582c)!important;border-color:#94582c!important;color:#fff!important;box-shadow:0 4px 12px rgba(127,75,34,.28)!important}
+
+/* ---------- form controls ---------- */
+html[data-theme="light"] input:not([type=checkbox]):not([type=radio]):not([type=range]),html[data-theme="light"] select,html[data-theme="light"] textarea{color:var(--sand-text)!important}
+html[data-theme="light"] input::placeholder,html[data-theme="light"] textarea::placeholder{color:#a8937b!important}
+html[data-theme="light"] input:focus,html[data-theme="light"] select:focus,html[data-theme="light"] textarea:focus{outline:none;border-color:var(--sand-caramel)!important;box-shadow:0 0 0 3px rgba(168,105,47,.18)!important}
+html[data-theme="light"] input[type=checkbox],html[data-theme="light"] input[type=radio],html[data-theme="light"] input[type=range]{accent-color:var(--sand-caramel)}
+html[data-theme="light"] select option{background:#fffdf8;color:var(--sand-text)}
+
+/* ---------- tables ---------- */
+html[data-theme="light"] table thead th,html[data-theme="light"] .v22 th{background:#f5ead8!important;color:#6b5641!important;border-color:var(--sand-line)!important}
+html[data-theme="light"] .v22 td,html[data-theme="light"] table td{border-color:#efe3cf!important;color:var(--sand-text)}
+html[data-theme="light"] .v22 tbody tr:hover td,html[data-theme="light"] table tbody tr:hover td{background:#fbf2e3!important}
+
+/* ---------- charts ---------- */
+html[data-theme="light"] .ma-gridline,html[data-theme="light"] .v22-grid line,html[data-theme="light"] .v22-gridline{stroke:#eadcc5!important}
+html[data-theme="light"] .v22-axis,html[data-theme="light"] .v22-axis text{color:#8a7560!important;fill:#8a7560!important}
+html[data-theme="light"] .v22-tip,html[data-theme="light"] .v22-multi-tip,html[data-theme="light"] [class*="-tooltip"]{background:rgba(255,251,243,.97)!important;border:1px solid var(--sand-line2)!important;box-shadow:0 12px 30px rgba(94,64,32,.16)!important;color:var(--sand-text)!important}
+html[data-theme="light"] .v22-tip small{color:var(--sand-muted)!important}
+html[data-theme="light"] .v22-tip b{color:var(--sand-text)!important}
+html[data-theme="light"] .v22-line,html[data-theme="light"] .v22-enddot{filter:none!important}
+html[data-theme="light"] .v22-legend i,html[data-theme="light"] .v22-multi-tip i,html[data-theme="light"] .v22-other i{box-shadow:none!important}
+
+/* ---------- calendar ---------- */
+html[data-theme="light"] .v22-cal-btn{color:#5c4b3b!important}
+html[data-theme="light"] .v22-cal-btn:hover{background:#f1e5d0!important}
+
+/* ---------- modals, menus, toasts ---------- */
+html[data-theme="light"] .modal-backdrop,html[data-theme="light"] .v22-modal-bg,html[data-theme="light"] [class*="backdrop"]{background:rgba(60,42,22,.32)!important;backdrop-filter:blur(6px)}
+html[data-theme="light"] .toast{background:#2b2118!important;color:#fbf4e7!important;border-color:#2b2118!important}
+
+/* ---------- footer ---------- */
+html[data-theme="light"] footer{background:var(--sand-page2)!important;border-top:1px solid var(--sand-line)!important;color:var(--sand-sub)!important}
+
+/* ---------- Settings → Appearance previews ---------- */
+html[data-theme="light"] .v22-theme{background:var(--sand-card2)!important;border-color:var(--sand-line2)!important}
+html[data-theme="light"] .v22-theme.on{border-color:var(--sand-caramel)!important;box-shadow:0 0 0 3px rgba(168,105,47,.18)!important}
+html[data-theme="light"] .v22-theme b{color:var(--sand-text)!important}
+html[data-theme="light"] .v22-theme small{color:var(--sand-muted)!important}
+.v22-theme-prev.light{background:#f4ecdd!important}
+.v22-theme-prev.light i{background:#fffaf1!important;box-shadow:0 0 0 1px #e4d6bf inset}
+.v22-theme-prev.light i:nth-child(2){background:linear-gradient(90deg,#b77a3e,#8e4a6c)!important;box-shadow:none}
+.v22-theme.off{opacity:1!important;cursor:pointer!important}
+
+/* ---------- auth ---------- */
+html[data-theme="light"] [data-v22-social="Apple"] svg path{fill:#2b2118}
+html[data-theme="light"] .v22-seg button.active,html[data-theme="light"] .ma-auth-tabs button.active{background:linear-gradient(100deg,#b77a3e,#94582c)!important;color:#fff!important}
+
+/* ---------- pricing toggle, fund list buttons ---------- */
+html[data-theme="light"] .v22-billing button[aria-pressed="true"]{color:#fff!important}
+html[data-theme="light"] .v22-billing-thumb{background:linear-gradient(100deg,#b77a3e,#94582c)!important;box-shadow:0 6px 16px rgba(127,75,34,.28)!important}
+html[data-theme="light"] .v22-view{background:var(--sand-card)!important;border:1px solid var(--sand-line2)!important;color:var(--sand-caramel-d)!important;box-shadow:none!important}
+html[data-theme="light"] .v22-view:hover{background:linear-gradient(100deg,#b77a3e,#94582c)!important;border-color:transparent!important;color:#fff!important}
+html[data-theme="light"] .v22-steps .done{color:var(--sand-text)!important}
+html[data-theme="light"] .v22-steps .done i,html[data-theme="light"] .v22-step-no{color:#fff!important}
+html[data-theme="light"] .v22-skpi-ic{background:#f3e7d3!important;border-color:#e2cfae!important}
+html[data-theme="light"] .v22-theme-prev.dark{background:#070d22!important}
+html[data-theme="light"] .v22-theme-prev.dark i{background:#1a2552!important}
+html[data-theme="light"] .v22-theme-prev.dark i:nth-child(2){background:linear-gradient(90deg,#3b82f6,#8b5cf6)!important}
