@@ -1598,3 +1598,64 @@ html[lang="hi"] :where(.v22-eyebrow,.v22-crumb,.side-label,th,.hd-best small){te
 .ma-rem-dlg .ma-rem-q{font-size:16px;font-weight:600;line-height:1.5;margin:0 0 12px}
 .ma-rem-dlg .ma-rem-list{margin:0 0 20px;padding-left:20px;display:grid;gap:8px;font-size:14.5px;line-height:1.5;color:#c3cde6}
 .ma-rem-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+
+/* v23.7 — SIP calendar card rebalanced: calendar + good-date chips on the left, compact reminder card on the right */
+.v22-cal-wrap{grid-template-columns:minmax(0,1fr) 250px!important;align-items:stretch;gap:14px}
+.v22-cal-main{display:flex;flex-direction:column;border:1px solid var(--v-border);border-radius:12px;background:rgba(7,14,36,.55);padding:12px 10px 14px;min-width:0}
+.v22-cal-main .v22-cal{border:0!important;background:none!important;padding:0!important}
+.v22-cal-foot{margin-top:auto;padding:14px 6px 0;border-top:1px solid var(--v-border)}
+.v22-cal-foot-head{display:flex;justify-content:space-between;align-items:baseline;gap:6px 12px;flex-wrap:wrap}
+.v22-cal-foot-head b{font-size:14.5px;font-weight:600;color:#e6ecfb}
+.v22-cal-foot-head span{font-size:12.5px;color:#8ea0c4}
+.v22-alt-chips{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px;margin-top:10px}
+.v22-alt-chip{display:flex;align-items:center;gap:8px;min-width:0;padding:9px 11px;border-radius:10px;border:1px solid var(--v-border-2);background:rgba(13,24,56,.7);color:#e6ecfb;font-size:13.5px!important;font-weight:500;cursor:pointer;text-align:left;transition:border-color .15s,transform .15s}
+.v22-alt-chip:hover{transform:translateY(-1px);border-color:#6b8cff}
+.v22-alt-chip.on{border-color:#7c8cff;box-shadow:0 0 0 2px rgba(124,140,255,.25)}
+.v22-alt-chip i{width:10px;height:10px;border-radius:50%;flex:none}
+.v22-alt-chip.pink i{background:#f472b6}.v22-alt-chip.green i{background:#22d3a5}.v22-alt-chip.purple i{background:#d946ef}
+.v22-alt-chip span{white-space:nowrap}
+.v22-alt-chip b{margin-left:auto;color:var(--v-green);font-weight:700;white-space:nowrap}
+.v22-cal-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:12px;font-size:12.5px;color:#8ea0c4}
+.v22-cal-legend span{display:inline-flex;align-items:center;gap:6px}
+.v22-cal-legend i{width:12px;height:12px;border-radius:50%;flex:none}
+.v22-cal-legend .lg-best{background:linear-gradient(135deg,#3b6cff,#4b4fe0);box-shadow:0 0 0 2px #4e78ff}
+.v22-cal-legend .lg-good{background:rgba(20,150,110,.35);border:1px solid rgba(62,224,137,.6)}
+.v22-cal-legend .lg-pick{border:2px dashed #7c8cff}
+.v22-cal-side{display:flex!important;flex-direction:column}
+.v22-cal-side .v22-best{flex:1;display:flex;flex-direction:column;padding:16px}
+.v22-best-top{min-height:26px}
+.v22-best-top .v22-link-btn{margin:0;font-size:12.5px!important;text-align:right}
+.v22-best-day{display:flex;align-items:center;gap:14px;margin-top:16px}
+.v22-best-day>b{font-size:52px;font-weight:800;line-height:1;letter-spacing:-.02em;color:#fff;font-variant-numeric:tabular-nums}
+.v22-best-day span{display:block;font-size:16px;font-weight:700;color:#e6ecfb}
+.v22-best-day small{display:block;margin-top:3px;font-size:13.5px;color:#8ea0c4}
+.v22-cal-side .v22-best strong{margin:16px 0 0}
+.v22-best-sub{margin-top:16px!important;font-size:13.5px!important;color:#8ea0c4!important}
+.v22-cal-side .v22-best .v22-grad-btn{margin-top:auto;height:44px}
+.v22-cal-side .v22-best strong,.v22-cal-side .v22-best .v22-best-sub{margin-bottom:16px!important}
+.v22-cal-side .v22-rem-now{margin-top:12px!important;font-size:13px!important;line-height:1.4}
+@media (max-width:1100px){.v22-cal-wrap{grid-template-columns:1fr!important}}
+/* v23.7b — balance */
+.v22-cal-wrap{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)!important}
+.v22-alt-chips{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+.v22-alt-chip{display:grid!important;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:7px;row-gap:2px;align-items:center;padding:8px 10px!important}
+.v22-alt-chip i{grid-row:1}
+.v22-alt-chip span{grid-column:2;font-size:13.5px}
+.v22-alt-chip b{grid-column:2;margin-left:0!important;font-size:14px}
+.v22-cal-foot-head span{flex-basis:100%;margin-top:2px}
+.v22-cal-side .v22-best{justify-content:space-between;gap:10px}
+.v22-cal-side .v22-best .v22-grad-btn{margin-top:4px!important}
+.v22-cal-side .v22-best strong,.v22-cal-side .v22-best .v22-best-sub{margin:0!important}
+.v22-best-day{margin-top:0!important}
+.v22-cal-side .v22-rem-now{margin-top:0!important}
+/* v23.7c — reminder card: info on top, actions at the bottom */
+.v22-cal-side .v22-best{justify-content:space-between!important;gap:18px!important}
+.v22-best-info{display:flex;flex-direction:column;gap:16px}
+.v22-best-act{display:flex;flex-direction:column;gap:10px;padding-top:16px;border-top:1px solid var(--v-border)}
+.v22-best-act .v22-grad-btn{margin:0!important;width:100%}
+.v22-best-act .v22-link-btn{align-self:flex-start;margin:0;font-size:13px!important}
+.v22-cal-side .v22-best strong.v22-best-gain{font-size:26px;line-height:1.1}
+.v22-best-gain small{display:block;margin-top:4px;font-size:13.5px!important;font-weight:500}
+.v22-alt-chip span,.v22-alt-chip b{justify-self:start;text-align:left}
+.v22-best-day span{white-space:nowrap}
+.v22-best-gain small{line-height:1.45!important}

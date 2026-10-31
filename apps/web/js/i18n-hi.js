@@ -406,3 +406,6 @@ Object.assign(window.MA_I18N_DICT, {
     [/^(\w+) plan activated \(demo\)\.$/, (_, p) => `${P(p)} प्लान चालू हुआ (डेमो)।`],
   );
 })();
+
+Object.assign(window.MA_I18N_DICT, { 'Tap a day to choose your own reminder date': 'अपनी रिमाइंडर तारीख चुनने के लिए कोई दिन टैप करें', 'Good dates': 'अच्छी तारीखें', 'Best date': 'सबसे अच्छी तारीख' });
+Object.assign(window.MA_I18N_DICT, { 'Best': 'सबसे अच्छी', 'Good': 'अच्छी', 'Your pick': 'आपकी पसंद' });

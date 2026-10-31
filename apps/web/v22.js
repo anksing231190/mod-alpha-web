@@ -283,9 +283,19 @@ let v22PickDay=null;
 function v22ReminderState(){return (window.MA_REMINDER&&MA_REMINDER.get())||{mode:'modalpha',day:null}}
 function v22ReminderCard(SP,MN){
  const y=v22CalMonth.y,pick=v22PickDay&&v22PickDay!==SP.day?v22PickDay:null,alt=pick&&SP.alts.find(a=>a[0]===pick),st=v22ReminderState();
- const now=st.mode==='custom'&&st.day?`<p class="v22-rem-now">${ic('bell')}<span>Your reminder: <b>day ${st.day} of every month</b></span></p>`:`<p class="v22-rem-now">${ic('bell')}<span>Your reminder: <b>Mod Alpha date</b></span></p>`;
- if(!pick)return `<div class="v22-best"><div class="v22-best-top"><span class="v22-best-date"><i></i>${SP.day} ${MN} ${y}</span><em>Best Date</em></div><p>AI-recommended date<br>for higher potential returns</p><strong>+${SP.uplift}% <small>vs. fixed date SIP</small></strong><button type="button" class="v22-grad-btn" data-action="set-reminder">Set Reminder</button>${now}<p class="v22-rem-hint">Tip: tap another day to choose your own reminder date.</p></div>`;
- return `<div class="v22-best is-custom"><div class="v22-best-top"><span class="v22-best-date"><i></i>${pick} ${MN} ${y}</span><em class="mine">Your date</em></div><p>${alt?'Also a good date this month':'Not a Mod Alpha recommended date'}</p>${alt?`<strong>+${alt[1]}% <small>vs. fixed date SIP</small></strong>`:`<p class="v22-rem-hint">Mod Alpha's date this month is the ${SP.day}.</p>`}<button type="button" class="v22-grad-btn" data-action="set-reminder" data-day="${pick}">Set Reminder</button>${now}<button type="button" class="v22-link-btn" data-v22-pick-reset>Use Mod Alpha date (${SP.day} ${MN})</button></div>`;
+ const day=pick||SP.day,wd=new Date(y,v22CalMonth.m,day).toLocaleDateString('en-GB',{weekday:'long'});
+ const now=`<p class="v22-rem-now">${ic('bell')}<span>Your reminder: <b>${st.mode==='custom'&&st.day?`day ${st.day} of every month`:'Mod Alpha date'}</b></span></p>`;
+ const tag=pick?'<em class="mine">Your date</em>':'<em>Best Date</em>';
+ const gain=pick?(alt?`<strong class="v22-best-gain">+${alt[1]}%<small>vs. fixed date SIP</small></strong>`:`<p class="v22-best-sub">Not a Mod Alpha recommended date</p>`):`<strong class="v22-best-gain">+${SP.uplift}%<small>vs. fixed date SIP</small></strong>`;
+ return `<div class="v22-best ${pick?'is-custom':''}"><div class="v22-best-info"><div class="v22-best-top">${tag}</div>
+  <div class="v22-best-day"><b>${day}</b><div><span>${MN} ${y}</span><small>${wd}</small></div></div>${gain}</div>
+  <div class="v22-best-act"><button type="button" class="v22-grad-btn" data-action="set-reminder"${pick?` data-day="${pick}"`:''}>Set Reminder</button>${now}${pick?`<button type="button" class="v22-link-btn" data-v22-pick-reset>Use Mod Alpha date (${SP.day} ${MN})</button>`:''}</div></div>`;
+}
+function v22CalFooter(SP,MN){
+ const cls=['pink','green','purple'];
+ return `<div class="v22-cal-foot"><div class="v22-cal-foot-head"><b>Other good dates</b><span>Tap a day to choose your own reminder date</span></div>
+  <div class="v22-alt-chips">${SP.alts.map((a,i)=>`<button type="button" class="v22-alt-chip ${cls[i]}${v22PickDay===a[0]?' on':''}" data-v22-pick="${a[0]}"><i></i><span>${a[0]} ${MN}</span><b>+${a[1]}%</b></button>`).join('')}</div>
+  <div class="v22-cal-legend"><span><i class="lg-best"></i>Best</span><span><i class="lg-good"></i>Good</span><span><i class="lg-pick"></i>Your pick</span></div></div>`;
 }
 function v22Calendar(){
  const {y,m}=v22CalMonth,first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate(),prev=new Date(y,m,0).getDate();
@@ -303,7 +313,7 @@ function userOverview(){
  <section class="v22-dash-top">
   <article class="v22-card v22-perf-card"><div class="v22-card-head"><div><h2>Top Performing Mutual Funds</h2><p>Compare historical returns and find the best performing funds</p></div>${v22Pills(['1Y','3Y','5Y','10Y'],v22DashPeriod,'data-v22-dash')}</div><div id="v22-dash-chart">${v22DashChart(v22DashPeriod)}</div></article>
   <article class="v22-card v22-cal-card"><div class="v22-card-head"><h2>AI Recommended SIP Dates <span class="v22-i" title="Common reminder date published for all mutual funds">${ic('info')}</span></h2><div class="v22-month"><button type="button" data-v22-month="-1" aria-label="Previous month">${ic('chevL')}</button><b>${monthName}</b><button type="button" data-v22-month="1" aria-label="Next month">${ic('chevR')}</button></div></div>
-  <div class="v22-cal-wrap">${v22Calendar()}<div class="v22-cal-side">${SP?`${v22ReminderCard(SP,MN)}<div class="v22-other"><b>Other good dates</b>${SP.alts.map((a,i)=>`<div><i style="--c:${['#f472b6','#22d3a5','#d946ef'][i]}"></i><span>${a[0]} ${MN} ${v22CalMonth.y}</span><b>+${a[1]}%</b></div>`).join('')}</div>`:`<div class="v22-best"><p>No SIP date has been published for this month yet.</p></div>`}</div></div></article>
+  <div class="v22-cal-wrap"><div class="v22-cal-main">${v22Calendar()}${SP?v22CalFooter(SP,MN):''}</div><div class="v22-cal-side">${SP?v22ReminderCard(SP,MN):`<div class="v22-best"><p>No SIP date has been published for this month yet.</p></div>`}</div></div></article>
  </section>
  <section class="v22-dash-bottom">
   <article class="v22-card v22-mini-whatif"><h2 class="v22-h2">What if you had invested on this date?</h2><p class="v22-sub">See how much your investment would be worth if you had invested at a different time.</p>

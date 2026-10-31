@@ -6550,3 +6550,81 @@ html[data-theme="light"] .v22-link-btn {
 html[data-theme="light"] .ma-rem-dlg .ma-rem-list {
     color: #4a3b2d
 }
+html[data-theme="light"] .v22-cal-main {
+    border: 1px solid var(--v-border);
+    border-radius: 12px;
+    background: rgba(253,249,242,0.9)
+}
+html[data-theme="light"] .v22-cal-main .v22-cal {
+    border: 0 !important;
+    background: none !important
+}
+html[data-theme="light"] .v22-cal-foot {
+    border-top: 1px solid var(--v-border)
+}
+html[data-theme="light"] .v22-cal-foot-head b {
+    color: #342920
+}
+html[data-theme="light"] .v22-cal-foot-head span {
+    color: #6b5542
+}
+html[data-theme="light"] .v22-alt-chip {
+    border-radius: 10px;
+    border: 1px solid var(--v-border-2);
+    background: rgba(252,248,239,0.9);
+    color: #342920
+}
+html[data-theme="light"] .v22-alt-chip:hover {
+    border-color: #d69c66
+}
+html[data-theme="light"] .v22-alt-chip.on {
+    border-color: #d69c66;
+    box-shadow: 0 0 0 2px rgba(181,113,48,0.113)
+}
+html[data-theme="light"] .v22-alt-chip i {
+    border-radius: 50%
+}
+html[data-theme="light"] .v22-alt-chip.pink i {
+    background: #8d344b
+}
+html[data-theme="light"] .v22-alt-chip.green i {
+    background: #56793f
+}
+html[data-theme="light"] .v22-alt-chip.purple i {
+    background: #8d354b
+}
+html[data-theme="light"] .v22-alt-chip b {
+    color: var(--v-green)
+}
+html[data-theme="light"] .v22-cal-legend {
+    color: #6b5542
+}
+html[data-theme="light"] .v22-cal-legend i {
+    border-radius: 50%
+}
+html[data-theme="light"] .v22-cal-legend .lg-best {
+    background: linear-gradient(135deg,#995f29,#955f2d);
+    box-shadow: 0 0 0 2px rgba(181,113,48,0.25)
+}
+html[data-theme="light"] .v22-cal-legend .lg-good {
+    background: rgba(107,152,77,0.42);
+    border: 1px solid rgba(136,179,107,0.6)
+}
+html[data-theme="light"] .v22-cal-legend .lg-pick {
+    border: 2px dashed #d69c66
+}
+html[data-theme="light"] .v22-best-day>b {
+    color: #292119
+}
+html[data-theme="light"] .v22-best-day span {
+    color: #342920
+}
+html[data-theme="light"] .v22-best-day small {
+    color: #6b5542
+}
+html[data-theme="light"] .v22-best-sub {
+    color: #6b5542 !important
+}
+html[data-theme="light"] .v22-best-act {
+    border-top: 1px solid var(--v-border)
+}
