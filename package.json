@@ -3,6 +3,7 @@
   "private": true,
   "workspaces": ["apps/api"],
   "scripts": {
+    "local": "bash scripts/start-local.sh",
     "dev:api": "npm --workspace apps/api run dev",
     "dev:web": "node scripts/build-web.mjs local && node scripts/serve-web.mjs dist/web-local 8081",
     "seed:test": "npm --workspace apps/api run seed -- --workbook=../web/data/mod-alpha-test-data.xlsx",
