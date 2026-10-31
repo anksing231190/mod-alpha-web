@@ -265,3 +265,40 @@ describe('jobs', () => {
     expect(await JOBS.dispatchDueCampaigns(deps)).toBeInstanceOf(Array);
   });
 });
+
+describe('custom SIP reminder (Set Reminder)', () => {
+  it('is for paid subscribers only; the Mod Alpha campaign skips them; the daily job reminds them on their day', async () => {
+    const { customSipReminders } = await import('../src/jobs/index.js');
+    const { dispatchCampaign } = await import('../src/modules/notifications.js');
+    const c = client(app);
+    await c.post('/auth/signup', { name: 'Remind Me', email: 'remind@example.com', password: 'secret-pass-1' });
+    // Free plan → 402 subscription_required
+    const free = await c.put('/me/preferences', { sipReminder: { mode: 'custom', day: 20 } });
+    expect(free.statusCode).toBe(402); expect(free.json().error.code).toBe('subscription_required');
+    // Mod Alpha mode is always allowed
+    expect((await c.put('/me/preferences', { sipReminder: { mode: 'modalpha' } })).statusCode).toBe(200);
+    // subscribe (mock KYC + mock payment)
+    const k = (await c.post('/kyc/sessions')).json();
+    await c.post('/kyc/mock/complete', { ref: k.ref, decision: 'Verified' });
+    const co = (await c.post('/billing/checkout', { planId: 'Pro', cycle: 'Monthly' })).json();
+    await c.post('/billing/mock/complete', { orderId: co.order.orderId });
+    const ok = await c.put('/me/preferences', { sipReminder: { mode: 'custom', day: 31 } });
+    expect(ok.statusCode).toBe(200); expect(ok.json().preferences.sipReminder).toEqual({ mode: 'custom', day: 31 });
+    expect((await c.get('/me/preferences')).json().preferences.sipReminder.day).toBe(31);
+    const me = (await c.get('/auth/me')).json().user;
+    // the Mod Alpha SIP reminder campaign skips this user
+    const a = await adminClient(app);
+    const camp = (await a.post('/admin/campaigns', { name: 'Skip check', templateKey: 'sip_reminder', channels: ['inapp'], audience: 'active_subscribers', sendAt: new Date(Date.now() + 3600e3).toISOString() })).json().campaign;
+    await db.query(`UPDATE campaigns SET scheduled_for=now() WHERE id=$1`, [camp.id]);
+    await dispatchCampaign(app.deps, camp.id);
+    expect((await db.query(`SELECT count(*)::int n FROM deliveries WHERE campaign_id=$1 AND user_id=$2`, [camp.id, me.id])).rows[0].n).toBe(0);
+    // day 31 in a 30-day month → reminded on the 30th, once
+    expect((await customSipReminders(app.deps, '2026-11-29')).sent).toBe(0);
+    expect((await customSipReminders(app.deps, '2026-11-30')).sent).toBe(1);
+    expect((await customSipReminders(app.deps, '2026-11-30')).sent).toBe(0);
+    const n = (await c.get('/me/notifications')).json().items.find((x: any) => x.kind === 'custom_sip');
+    expect(n.title).toContain('30 November');
+    // switching back to Mod Alpha's date
+    expect((await c.put('/me/preferences', { sipReminder: { mode: 'modalpha' } })).json().preferences.sipReminder).toEqual({ mode: 'modalpha', day: null });
+  });
+});

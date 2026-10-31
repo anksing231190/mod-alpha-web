@@ -2,16 +2,19 @@ import type { FastifyInstance } from 'fastify';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { parse } from '../lib/validate.js';
-import { badRequest, notFound, unauthorized } from '../lib/errors.js';
+import { badRequest, HttpError, notFound, unauthorized } from '../lib/errors.js';
 import { randomToken, requireUser, sha256 } from '../lib/auth.js';
 import { audit } from '../lib/audit.js';
 import { userView } from './auth.js';
+import { entitlements } from './billing.js';
 
 export const DEFAULT_PREFS = {
   defaultInvestment: 100000, defaultSip: 10000, defaultPeriod: '5Y', numberFormat: 'indian', theme: 'dark', language: 'en-IN',
   channels: { email: true, sms: false, push: true, whatsapp: false },
   topics: { sipReminder: true, datePublished: true, billing: true, weeklyDigest: false, announcements: false },
   reminderTiming: '2 days before',
+  /** Monthly SIP reminder: Mod Alpha's published date, or the subscriber's own day of the month (paid plans). */
+  sipReminder: { mode: 'modalpha' as 'modalpha' | 'custom', day: null as number | null },
 };
 
 export default async function me(app: FastifyInstance) {
@@ -64,10 +67,19 @@ export default async function me(app: FastifyInstance) {
       channels: z.object({ email: z.boolean(), sms: z.boolean(), push: z.boolean(), whatsapp: z.boolean() }).partial().optional(),
       topics: z.object({ sipReminder: z.boolean(), datePublished: z.boolean(), billing: z.boolean(), weeklyDigest: z.boolean(), announcements: z.boolean() }).partial().optional(),
       reminderTiming: z.enum(['3 days before', '2 days before', '1 day before', 'On the day']).optional(),
+      sipReminder: z.discriminatedUnion('mode', [
+        z.object({ mode: z.literal('modalpha') }),
+        z.object({ mode: z.literal('custom'), day: z.number().int().min(1).max(31) }),
+      ]).optional(),
     }).strict(), req.body);
+    if (b.sipReminder?.mode === 'custom') {
+      const e = await entitlements(db, u.id);
+      if (e.plan === 'Free' || !e.subscription || e.subscription.status !== 'Active') throw new HttpError(402, 'subscription_required', 'Custom SIP reminders are part of the Pro and Premium plans.');
+    }
     const cur = { ...DEFAULT_PREFS, ...((await db.query('SELECT data FROM preferences WHERE user_id=$1', [u.id])).rows[0]?.data ?? {}) };
-    const next = { ...cur, ...b, channels: { ...cur.channels, ...(b.channels ?? {}) }, topics: { ...cur.topics, ...(b.topics ?? {}) } };
+    const next = { ...cur, ...b, channels: { ...cur.channels, ...(b.channels ?? {}) }, topics: { ...cur.topics, ...(b.topics ?? {}) }, sipReminder: b.sipReminder ? { mode: b.sipReminder.mode, day: b.sipReminder.mode === 'custom' ? b.sipReminder.day : null } : cur.sipReminder };
     await db.query(`INSERT INTO preferences (user_id, data) VALUES ($1,$2) ON CONFLICT (user_id) DO UPDATE SET data=$2, updated_at=now()`, [u.id, JSON.stringify(next)]);
+    if (b.sipReminder) await audit(db, req, { action: 'SIP_REMINDER_PREFERENCE_CHANGED', category: 'Configuration', resource: u.id, meta: next.sipReminder });
     return { preferences: next };
   });
   app.put('/me/consents', async (req) => {

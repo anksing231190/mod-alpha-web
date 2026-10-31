@@ -24,6 +24,8 @@ export async function dispatchCampaign(deps: Deps, campaignId: string) {
   const users = (await db.query(AUDIENCE[c.audience] ?? AUDIENCE.active_subscribers)).rows;
   const stats: Record<string, number> = { scheduled: 0, delivered: 0, failed: 0, skipped: 0 };
   for (const u of users) {
+    // subscribers who chose their own reminder day get it from the customSipReminders job instead
+    if (t.key === 'sip_reminder' && u.prefs?.sipReminder?.mode === 'custom') { stats.skipped++; continue; }
     const vars = { name: u.full_name, date: sip ? `${sip.recommended_day} ${new Date(sip.month + '-01').toLocaleString('en-GB', { month: 'long' })}` : '', month: sip?.month ?? '' };
     for (const ch of c.channels as string[]) {
       if (ch !== 'inapp' && u.prefs?.channels && u.prefs.channels[ch] === false) { stats.skipped++; continue; }

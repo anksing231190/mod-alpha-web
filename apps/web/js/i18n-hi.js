@@ -172,7 +172,7 @@ Object.assign(window.MA_I18N_DICT, {
   'Social media': 'सोशल मीडिया',
 
   /* ---------- auth ---------- */
-  'Welcome Back': 'फिर से स्वागत है',
+  'Welcome Back': 'स्वागत है',
   'Continue to your AI-powered investment insights': 'अपनी AI-संचालित निवेश जानकारी पर आगे बढ़ें',
   'Start your AI-powered investment insights': 'अपनी AI-संचालित निवेश जानकारी शुरू करें',
   'Mobile': 'मोबाइल', 'Show password': 'पासवर्ड दिखाएँ', 'Remember me': 'मुझे याद रखें', 'Forgot Password?': 'पासवर्ड भूल गए?',
@@ -353,7 +353,7 @@ Object.assign(window.MA_I18N_DICT, {
 
 /* Sentences that contain a person's name (data) */
 window.MA_I18N_PATTERNS = (window.MA_I18N_PATTERNS || []).concat([
-  [/^Welcome back, (.+?) 👋$/, 'फिर से स्वागत है, $1 👋'],
+  [/^Welcome back, (.+?) 👋$/, 'स्वागत है, $1 👋'],
   [/^Hi (.+?)! 👋 I can explain sample mutual fund data, returns and SIP concepts\. What would you like to understand\?$/, 'नमस्ते $1! 👋 मैं सैंपल म्यूचुअल फंड डेटा, रिटर्न और SIP को समझा सकता हूँ। आप क्या समझना चाहेंगे?'],
   [/^Reminder set for (.+)$/, '$1 के लिए रिमाइंडर सेट हुआ'],
   [/^Request recorded locally — reference (.+)$/, 'अनुरोध लोकल रूप से दर्ज — संदर्भ $1'],
@@ -369,3 +369,40 @@ window.MA_I18N_BLOCKS = Object.assign(window.MA_I18N_BLOCKS || {}, {
   'Reminder before every best date': 'हर सबसे अच्छी तारीख<br>से पहले रिमाइंडर',
   'Historically better timing can lead to higher long-term returns.': 'ऐतिहासिक रूप से <b>बेहतर समय</b> लंबी अवधि में ज़्यादा रिटर्न दे सकता है।',
 });
+
+/* ---------- Set Reminder (SIP calendar) ---------- */
+Object.assign(window.MA_I18N_DICT, {
+  'Tip: tap another day to choose your own reminder date.': 'सुझाव: अपनी रिमाइंडर तारीख चुनने के लिए कोई दूसरा दिन टैप करें।',
+  'Your reminder:': 'आपका रिमाइंडर:', 'Mod Alpha date': 'Mod Alpha की तारीख', 'day {n} of every month': 'हर महीने की {n} तारीख',
+  'Your date': 'आपकी तारीख', 'Also a good date this month': 'इस महीने की एक और अच्छी तारीख', 'Not a Mod Alpha recommended date': 'Mod Alpha द्वारा सुझाई गई तारीख नहीं',
+  "Mod Alpha's date this month is the {n}.": 'इस महीने Mod Alpha की तारीख {n} है।',
+  'Use your own SIP reminder?': 'अपना SIP रिमाइंडर इस्तेमाल करें?',
+  'Do you want your customised SIP notification instead of the Mod Alpha notification?': 'क्या आप Mod Alpha की सूचना की जगह अपनी पसंद की SIP सूचना चाहते हैं?',
+  "You'll be reminded on day {n} of every month.": 'आपको हर महीने की {n} तारीख को रिमाइंडर मिलेगा।',
+  'You can switch back to the Mod Alpha date at any time.': 'आप कभी भी Mod Alpha की तारीख पर वापस जा सकते हैं।',
+  'Yes, use day {n}': 'हाँ, {n} तारीख रखें', 'Keep Mod Alpha notification': 'Mod Alpha की सूचना रखें',
+  'Switch back to Mod Alpha’s date?': 'Mod Alpha की तारीख पर वापस जाएँ?', "You're currently reminded on day {n} of every month.": 'अभी आपको हर महीने की {n} तारीख को रिमाइंडर मिलता है।',
+  'Use Mod Alpha date': 'Mod Alpha की तारीख रखें', 'Keep my date': 'मेरी तारीख रखें',
+  "Done — you'll get Mod Alpha's recommended-date reminder each month.": 'हो गया — अब आपको हर महीने Mod Alpha की सुझाई तारीख का रिमाइंडर मिलेगा।',
+  "Done — you'll be reminded on day {n} of every month.": 'हो गया — आपको हर महीने की {n} तारीख को रिमाइंडर मिलेगा।',
+  "You're all set — you'll be reminded on day {n} of every month.": 'सब तैयार है — आपको हर महीने की {n} तारीख को रिमाइंडर मिलेगा।',
+  "You're all set — you'll get Mod Alpha's reminder when this month's date is published.": 'सब तैयार है — इस महीने की तारीख प्रकाशित होते ही आपको Mod Alpha का रिमाइंडर मिलेगा।',
+  'SIP reminders are part of Pro and Premium. Choose a plan to continue.': 'SIP रिमाइंडर प्रो और प्रीमियम प्लान में शामिल हैं। आगे बढ़ने के लिए एक प्लान चुनें।',
+  'Custom SIP reminders are part of the Pro and Premium plans.': 'अपनी पसंद के SIP रिमाइंडर प्रो और प्रीमियम प्लान में शामिल हैं।',
+  'Payments are not connected in demo mode.': 'डेमो मोड में भुगतान जुड़ा नहीं है।', 'In the live app this step is KYC + secure checkout.': 'असली ऐप में यह चरण KYC + सुरक्षित चेकआउट है।',
+  'Something went wrong': 'कुछ गड़बड़ हुई',
+});
+(function () {
+  const M = (w) => ((window.MA_I18N_WORDS || {})[w] || w);
+  const P = (p) => ({ Pro: 'प्रो', Premium: 'प्रीमियम', Free: 'फ़्री' }[p] || p);
+  window.MA_I18N_PATTERNS.push(
+    [/^Use Mod Alpha date \((\d+) (\w+)\)$/, (_, d, m) => `Mod Alpha की तारीख रखें (${d} ${M(m)})`],
+    [/^Mod Alpha's recommended-date notification \((\d+) (\w+) (\d+) this month\) will be turned off for you\.$/, (_, d, m, y) => `Mod Alpha की सुझाई तारीख वाली सूचना (इस महीने ${d} ${M(m)} ${y}) आपके लिए बंद हो जाएगी।`],
+    [/^Switch to Mod Alpha's recommended date \((.+)\) instead\?$/, (_, x) => `इसकी जगह Mod Alpha की सुझाई तारीख (${x.replace(/\b([A-Z][a-z]+)\b/g, (w) => M(w))}) रखें?`],
+    [/^You're all set — you'll be reminded on (\d+) (\w+) (\d+), Mod Alpha's recommended date\.$/, (_, d, m, y) => `सब तैयार है — आपको ${d} ${M(m)} ${y} को रिमाइंडर मिलेगा, जो Mod Alpha की सुझाई तारीख है।`],
+    [/^Activate (\w+) \(demo\)\?$/, (_, p) => `${P(p)} चालू करें (डेमो)?`],
+    [/^Activate (\w+) \(demo\)$/, (_, p) => `${P(p)} चालू करें (डेमो)`],
+    [/^Activate (\w+) in this browser to try subscriber features such as custom SIP reminders\.$/, (_, p) => `सदस्यों की सुविधाएँ (जैसे अपनी पसंद का SIP रिमाइंडर) आज़माने के लिए इस ब्राउज़र में ${P(p)} चालू करें।`],
+    [/^(\w+) plan activated \(demo\)\.$/, (_, p) => `${P(p)} प्लान चालू हुआ (डेमो)।`],
+  );
+})();

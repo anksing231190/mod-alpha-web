@@ -6512,3 +6512,41 @@ html[data-theme="light"] .ma-lang-toggle span.on {
 html[data-theme="light"] .ma-lang-toggle:hover {
     border-color: #d69c66
 }
+html[data-theme="light"] .v22-cal-days span[data-v22-pick]:focus-visible {
+    outline: 2px solid #d69c66;
+    outline-offset: 2px;
+    border-radius: 50%
+}
+html[data-theme="light"] .v22-cal-days span.pick {
+    color: #292119
+}
+html[data-theme="light"] .v22-cal-days span.pick::before {
+    border-radius: 50%;
+    border: 2px dashed #d69c66;
+    background: rgba(203,188,167,0.18)
+}
+html[data-theme="light"] .v22-best.is-custom .v22-best-top em.mine {
+    background: rgba(203,188,167,0.18);
+    color: #3f3227;
+    border: 1px solid rgba(214,156,102,0.4)
+}
+html[data-theme="light"] .v22-rem-now {
+    color: #4a3b2d
+}
+html[data-theme="light"] .v22-rem-now .v22-ic {
+    color: #fbbf24
+}
+html[data-theme="light"] .v22-rem-now b {
+    color: #292119
+}
+html[data-theme="light"] .v22-rem-hint {
+    color: #6b5542
+}
+html[data-theme="light"] .v22-link-btn {
+    background: none;
+    border: 0;
+    color: #8c5725
+}
+html[data-theme="light"] .ma-rem-dlg .ma-rem-list {
+    color: #4a3b2d
+}

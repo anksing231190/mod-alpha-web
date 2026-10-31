@@ -271,3 +271,14 @@ html[data-theme="light"] .ma-lang-toggle{border:1px solid var(--sand-line2)!impo
 html[data-theme="light"] .ma-lang-toggle span{color:#6b5641!important}
 html[data-theme="light"] .ma-lang-toggle span.on{background:var(--sand-solid)!important;color:#fff!important}
 html[data-theme="light"] .ma-lang-toggle:hover{border-color:var(--sand-caramel)!important}
+/* SIP calendar pick + reminder card (light) */
+html[data-theme="light"] .v22-cal-days span.pick{color:#2b2118!important}
+html[data-theme="light"] .v22-cal-days span.pick::before{border-color:#a8692f!important;background:rgba(168,105,47,.14)!important}
+html[data-theme="light"] .v22-best.is-custom .v22-best-top em.mine{background:#f6e8d3!important;color:#7f4b22!important;border-color:#e2c9a0!important}
+html[data-theme="light"] .v22-rem-now{color:#54442f!important}
+html[data-theme="light"] .v22-rem-now b{color:#2b2118!important}
+html[data-theme="light"] .v22-rem-now .v22-ic{color:#b98019!important}
+html[data-theme="light"] .v22-rem-hint{color:#6b5641!important}
+html[data-theme="light"] .v22-link-btn{color:#7f4b22!important}
+html[data-theme="light"] .ma-rem-dlg .ma-rem-list{color:#54442f!important}
+html[data-theme="light"] .v22-cal-days span[data-v22-pick]:focus-visible{outline-color:#a8692f}

@@ -79,6 +79,7 @@ Migrations are plain SQL, applied in order, and protected by an advisory lock, s
 | `dispatchDueCampaigns` | every minute | sends scheduled campaigns (SIP reminders are scheduled automatically on publish), consent-aware |
 | `subscriptionLifecycle` | hourly | ends plans cancelled at period end, marks overdue renewals past due, expires abandoned checkouts |
 | `processDataRequests` | hourly | fulfils data exports; anonymises accounts 30 days after a deletion request |
+| `customSipReminders` | 09:00 IST daily | reminds paid subscribers who chose their own SIP day (in-app + email/SMS per their channels); a day past the month's end (e.g. 31 in November) falls on the last day; one reminder per user per date |
 | `importNav` | 23:30 IST daily | imports NAVs from the provider (AMFI or mock), recomputes fund metrics |
 
 Run one job on demand:
@@ -94,7 +95,7 @@ Base path: `/api/v1`. Auth uses httpOnly cookies (`ma_at` for the access token, 
 | Area | Endpoints |
 |---|---|
 | Auth | `POST /auth/signup` · `/auth/login` · `/auth/logout` · `/auth/refresh` · `/auth/otp/send` · `/auth/otp/verify` · `/auth/password/forgot` · `/auth/password/reset` · `/auth/verify-email` · `/auth/oauth/google` · `/auth/oauth/apple` (501) · `GET /auth/me` |
-| Me | `PATCH /me` · `POST /me/password` · `POST /me/verify-email` · `GET/PUT /me/preferences` · `PUT /me/consents` · `GET /me/notifications` · `POST /me/notifications/read` · `GET/POST/DELETE /me/watchlist[/:fundId]` · `POST /me/data-export` · `GET /me/data-export/:id` · `POST /me/deletion-request` · `GET /me/entitlements` |
+| Me | `PATCH /me` · `POST /me/password` · `POST /me/verify-email` · `GET/PUT /me/preferences` (incl. `sipReminder`) · `PUT /me/consents` · `GET /me/notifications` · `POST /me/notifications/read` · `GET/POST/DELETE /me/watchlist[/:fundId]` · `POST /me/data-export` · `GET /me/data-export/:id` · `POST /me/deletion-request` · `GET /me/entitlements` |
 | Plans & billing | `GET /plans` · `POST /billing/checkout` · `POST /billing/verify` · `POST /billing/mock/complete` (stage) · `POST /webhooks/payments` · `GET /billing/subscription` · `POST /billing/subscriptions/:id/cancel` · `GET /billing/invoices[/:id]` |
 | KYC | `GET /kyc/status` · `POST /kyc/sessions` · `POST /webhooks/kyc` · `POST /kyc/mock/complete` (stage) |
 | Funds & calculators | `GET /funds` (search, category, sort, paging) · `GET /funds/categories` · `GET /funds/:id` · `GET /funds/:id/nav` · `POST /calc/lumpsum` · `POST /calc/sip-compare` |
@@ -108,7 +109,27 @@ Base path: `/api/v1`. Auth uses httpOnly cookies (`ma_at` for the access token, 
 | Admin — governance | `GET /admin/audit` (+`format=csv`) · `GET/PUT /admin/settings` · `GET /admin/integrations` · `GET /admin/data-requests` · `GET /admin/models` · `PUT /admin/models/:v/gates` · `POST /admin/models/:v/approve` |
 | Ops | `GET /health` · `GET /ready` |
 
-## 7. Security notes
+## 7. SIP reminders: Mod Alpha's date or the subscriber's own day
+
+**Dashboard → AI Recommended SIP Dates → Set Reminder**
+
+1. **Free users** are sent to **Subscription** to choose a plan.
+2. **Subscribers** can tap any day in the calendar. **Set Reminder** then asks: *"Do you want your customised SIP notification instead of the Mod Alpha notification?"* Answering **Yes** saves the setting below.
+
+   ```json
+   { "sipReminder": { "mode": "custom", "day": 20 } }
+   ```
+
+   It is sent with `PUT /api/v1/me/preferences`. Free accounts get **402 `subscription_required`**.
+3. **Switching back:** choosing Mod Alpha's date while a custom day is active offers to switch back to `{ "mode": "modalpha" }`.
+4. **Who gets which reminder:**
+   - The monthly **Mod Alpha SIP reminder campaign** skips subscribers in `custom` mode.
+   - The **`customSipReminders`** job reminds those subscribers on their own day instead.
+5. **Audit:** every change is written to the audit log as `SIP_REMINDER_PREFERENCE_CHANGED`.
+
+**Demo mode** (no API) keeps the plan and the choice in the browser. The Subscription page can activate a demo Pro or Premium plan, so the subscriber flow can be tried without payments.
+
+## 8. Security notes
 
 - Passwords: bcrypt (cost 11).
 - Sessions: access JWT for 15 min plus a rotating 30-day refresh token stored hashed. Refresh-token reuse revokes every session of that user.

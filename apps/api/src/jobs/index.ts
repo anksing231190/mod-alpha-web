@@ -42,4 +42,34 @@ export async function processDataRequests(d: Deps) {
   }
   return { exports: ex.length, deletions: del.length };
 }
-export const JOBS = { importNav, dispatchDueCampaigns, subscriptionLifecycle, processDataRequests } as const;
+/** Daily (09:00 IST): remind paid subscribers who chose their own SIP day. If their day is past the end of a
+ *  short month (e.g. 31 in November) they are reminded on the last day. In-app always; email/SMS per their channels. */
+export async function customSipReminders(d: Deps, today?: string) {
+  const ist = today ?? new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 10);
+  const [y, m, dd] = ist.split('-').map(Number);
+  const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const users = (await d.db.query(`SELECT DISTINCT u.id, u.full_name, u.email, u.mobile, p.data prefs FROM users u
+      JOIN subscriptions s ON s.user_id=u.id AND s.status='Active' JOIN preferences p ON p.user_id=u.id
+     WHERE u.account_status='Active' AND u.deleted_at IS NULL AND p.data->'sipReminder'->>'mode'='custom'`)).rows;
+  const sip = (await d.db.query(`SELECT recommended_day FROM sip_dates WHERE status='Published' AND month=$1`, [ist.slice(0, 7)])).rows[0];
+  const month = new Date(Date.UTC(y, m - 1, 1)).toLocaleString('en-GB', { month: 'long', timeZone: 'UTC' });
+  let sent = 0;
+  for (const u of users) {
+    const day = Math.min(Number(u.prefs.sipReminder.day), last);
+    if (day !== dd || u.prefs.topics?.sipReminder === false) continue;
+    const link = `#/user/overview?sip=${ist}`;   // one reminder per user per date (also the dedupe key)
+    const dup = await d.db.query(`SELECT 1 FROM notifications WHERE user_id=$1 AND kind='custom_sip' AND link=$2`, [u.id, link]);
+    if (dup.rowCount) continue;
+    const title = `Your SIP reminder for ${dd} ${month}`;
+    const body = `This is the reminder you set for day ${u.prefs.sipReminder.day} of every month.${sip ? ` Mod Alpha's recommended date this month is ${sip.recommended_day} ${month}.` : ''} Invest through your own provider if appropriate. Mod Alpha does not place orders.`;
+    await d.db.query(`INSERT INTO notifications (user_id, kind, title, body, link) VALUES ($1,'custom_sip',$2,$3,$4)`, [u.id, title, body, link]);
+    try {
+      if (u.email && u.prefs.channels?.email !== false) await d.providers.email.send({ to: u.email, subject: title, text: `Hi ${u.full_name},\n\n${body}\n\nChange this in Settings → Notifications.` });
+      if (u.mobile && u.prefs.channels?.sms) await d.providers.sms.send({ to: u.mobile, text: `Mod Alpha: your SIP reminder for ${dd} ${month}. Invest via your own provider. Not advice.`, vars: {} });
+    } catch (e) { /* in-app reminder is already stored; provider errors are retried next day by design */ }
+    sent++;
+  }
+  return { date: ist, candidates: users.length, sent };
+}
+
+export const JOBS = { importNav, dispatchDueCampaigns, subscriptionLifecycle, processDataRequests, customSipReminders } as const;

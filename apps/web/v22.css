@@ -1577,3 +1577,24 @@ html[lang="hi"] :where(h1,h2,h3){line-height:1.3!important}
 html[lang="hi"] .v22-hero-copy h1{line-height:1.22!important}
 html[lang="hi"] :where(button,.v22-pill,.v22-pills button,.nav-link){line-height:1.35}
 html[lang="hi"] :where(.v22-eyebrow,.v22-crumb,.side-label,th,.hd-best small){text-transform:none!important}
+
+/* v23.6 — presets on one line (5Y · 3Y · 1Y · Custom) */
+.v22-mini-box .v22-opts{display:flex!important;flex-wrap:nowrap!important;gap:6px}
+.v22-mini-box .v22-opts button{flex:1 1 0!important;min-width:0!important;width:auto;padding:0 6px!important}
+.v22-mini-box .v22-opts button[data-preset="custom"],.v22-mini-box .v22-opts button:last-child{flex:1.5 1 0!important}
+
+/* v23.6 — SIP calendar: pick your own reminder day */
+.v22-cal-days span[data-v22-pick]{cursor:pointer;transition:transform .15s}
+.v22-cal-days span[data-v22-pick]:hover{transform:scale(1.08)}
+.v22-cal-days span[data-v22-pick]:focus-visible{outline:2px solid #6b8cff;outline-offset:2px;border-radius:50%}
+.v22-cal-days span.pick{position:relative;color:#fff;font-weight:700}
+.v22-cal-days span.pick::before{content:"";position:absolute;inset:50% auto auto 50%;width:36px;height:36px;transform:translate(-50%,-50%);border-radius:50%;border:2px dashed #7c8cff;background:rgba(124,140,255,.18);z-index:-1}
+.v22-best.is-custom .v22-best-top em.mine{background:rgba(124,140,255,.18);color:#c7d2fe;border:1px solid rgba(124,140,255,.4)}
+.v22-rem-now{display:flex;align-items:center;gap:8px;margin-top:12px!important;font-size:13.5px;color:#c3cde6}
+.v22-rem-now .v22-ic{width:16px;height:16px;flex:none;color:#fbbf24}
+.v22-rem-now b{color:#fff;font-weight:600}
+.v22-rem-hint{margin-top:8px!important;font-size:13px;color:#8ea0c4}
+.v22-link-btn{margin-top:8px;background:none;border:0;padding:0;color:#7cb3ff;font-weight:600;font-size:13.5px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.ma-rem-dlg .ma-rem-q{font-size:16px;font-weight:600;line-height:1.5;margin:0 0 12px}
+.ma-rem-dlg .ma-rem-list{margin:0 0 20px;padding-left:20px;display:grid;gap:8px;font-size:14.5px;line-height:1.5;color:#c3cde6}
+.ma-rem-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
