@@ -75,6 +75,13 @@ Mod Alpha holds SEBI registration, so client KYC is **mandatory** before any pai
 
 ---
 
+## 2b. Data loading
+- [ ] Add `amfi_code` as a column of the `Funds` sheet: upload validator, import, export, blank template, sample workbook, `docs/21`. Today it can only be set in the database, and the daily AMFI NAV import needs it for every fund.
+- [ ] Make the Sharpe risk-free rate (fixed 6.5%) an admin setting.
+- [ ] Benchmark/TRI data import once a licensed feed is chosen.
+
+---
+
 ## 3. External providers still on mock
 
 See `docs/23_mocks_and_replacements.md`. Each one switches by env vars and keys, with no code change.
