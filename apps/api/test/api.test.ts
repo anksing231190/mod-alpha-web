@@ -450,3 +450,52 @@ describe('session timeouts: 15 min inactivity, 12 h (users) / 8 h (admins) absol
     expect(a.action).toBe('SESSION_TIMEOUT_IDLE');
   });
 });
+
+describe('PAN-first KYC (mock provider test PANs)', () => {
+  const kycUser = async (email: string) => { const c = client(app); await c.post('/auth/signup', { name: 'Kyc User', email, password: 'secret-pass-1' }); return c; };
+  const body = (pan: string) => ({ pan, name: 'Kyc User', dob: '1990-05-14', consent: true });
+
+  it('KRA record found → verified at once; only the masked PAN and a hash are stored', async () => {
+    const c = await kycUser('kra@example.com');
+    expect((await c.post('/billing/checkout', { planId: 'Pro', cycle: 'Monthly' })).json().error.code).toBe('kyc_required');
+    const r = (await c.post('/kyc/pan', body('abcde1234f'))).json();
+    expect(r).toMatchObject({ status: 'Verified', method: 'kra', panMasked: 'ABCDE••••F' });
+    const st = (await c.get('/kyc/status')).json();
+    expect(st).toMatchObject({ kyc_status: 'Verified', method: 'kra', pan_masked: 'ABCDE••••F' });
+    expect(st.kra_ref).toMatch(/^MOCKKRA/);
+    const row = (await db.query(`SELECT k.* FROM kyc_sessions k JOIN users u ON u.id=k.user_id WHERE u.email='kra@example.com'`)).rows[0];
+    expect(JSON.stringify(row)).not.toContain('ABCDE1234F');
+    expect(row.pan_hash).toHaveLength(64);
+    expect((await c.post('/billing/checkout', { planId: 'Pro', cycle: 'Monthly' })).statusCode).toBe(200);
+  });
+
+  it('no KRA record → full KYC (DigiLocker) → approved via the signed webhook', async () => {
+    const c = await kycUser('digi@example.com');
+    const r = (await c.post('/kyc/pan', body('ABCDE5678G'))).json();
+    expect(r).toMatchObject({ status: 'Pending', next: 'digilocker' });
+    const ref = new URL(r.redirectUrl.replace('#/', '')).searchParams.get('ref');
+    expect((await c.post('/kyc/mock/complete', { ref, decision: 'Verified' })).json().ok).toBe(true);
+    const st = (await c.get('/kyc/status')).json();
+    expect(st).toMatchObject({ kyc_status: 'Verified', method: 'digilocker' });
+    expect(st.kra_ref).toMatch(/^MOCKKRA/);
+  });
+
+  it('invalid PAN fails with a clear message; format, consent and daily limit are checked', async () => {
+    const c = await kycUser('bad@example.com');
+    const f = await c.post('/kyc/pan', body('ABCDE0000X'));
+    expect(f.statusCode).toBe(400); expect(f.json().error.code).toBe('pan_invalid');
+    expect((await c.post('/kyc/pan', body('12345'))).statusCode).toBe(400);
+    expect((await c.post('/kyc/pan', { ...body('ABCDE5678G'), consent: false })).statusCode).toBe(400);
+    for (let i = 0; i < 4; i++) await c.post('/kyc/pan', body('ABCDE0000X'));
+    expect((await c.post('/kyc/pan', body('ABCDE5678G'))).statusCode).toBe(429);
+    expect((await c.get('/kyc/status')).json().kyc_status).toBe('Not started');
+  });
+
+  it('the same PAN on a second account goes to admin review', async () => {
+    const c = await kycUser('dup@example.com');
+    const r = (await c.post('/kyc/pan', body('ABCDE1234F'))).json();
+    expect(r.status).toBe('In review');
+    const a = (await db.query(`SELECT action FROM audit_log WHERE action='KYC_DUPLICATE_PAN'`)).rows;
+    expect(a.length).toBe(1);
+  });
+});

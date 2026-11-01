@@ -27,7 +27,7 @@ declare module 'fastify' { interface FastifyInstance { deps: Deps } interface Fa
 
 // `overrides` lets tests swap individual providers (for example a failing payment gateway).
 export async function buildApp(cfg: Config, db: Db, overrides: Partial<Providers> = {}): Promise<FastifyInstance> {
-  const app = Fastify({ logger: cfg.APP_ENV === 'test' ? false : { level: cfg.LOG_LEVEL, redact: ['req.headers.authorization', 'req.headers.cookie'] }, trustProxy: true, bodyLimit: 2 * 1024 * 1024 });
+  const app = Fastify({ logger: cfg.APP_ENV === 'test' ? false : { level: cfg.LOG_LEVEL, redact: ['req.headers.authorization', 'req.headers.cookie', 'req.body.pan', 'req.body.dob'] }, trustProxy: true, bodyLimit: 2 * 1024 * 1024 });
   const providers = { ...createProviders({ db, cfg, log: app.log }), ...overrides };
   app.decorate('deps', { cfg, db, providers });
 

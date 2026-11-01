@@ -87,7 +87,7 @@ export default async function admin(app: FastifyInstance) {
     const u = (await db.query(`SELECT id, external_ref, full_name, email, mobile, role, account_status, kyc_status, marketing_consent, signup_date, email_verified_at, mobile_verified_at FROM users WHERE id=$1`, [(req.params as any).id])).rows[0];
     if (!u) throw notFound();
     await audit(db, req, { action: 'USER_RECORD_VIEWED', category: 'Access', resource: u.id });
-    return { user: u, subscriptions: (await db.query('SELECT id, plan_id, billing_cycle, amount_inr, status, start_date, renewal_date FROM subscriptions WHERE user_id=$1 ORDER BY start_date DESC', [u.id])).rows, kyc: (await db.query('SELECT provider, status, reason, updated_at FROM kyc_sessions WHERE user_id=$1 ORDER BY created_at DESC LIMIT 5', [u.id])).rows };
+    return { user: u, subscriptions: (await db.query('SELECT id, plan_id, billing_cycle, amount_inr, status, start_date, renewal_date FROM subscriptions WHERE user_id=$1 ORDER BY start_date DESC', [u.id])).rows, kyc: (await db.query('SELECT provider, status, reason, method, pan_masked, kra_ref, name_match, dob_match, updated_at FROM kyc_sessions WHERE user_id=$1 ORDER BY created_at DESC LIMIT 5', [u.id])).rows };
   });
   // Change account status or role. Suspending ends the user's sessions immediately. Audited.
   app.patch('/admin/users/:id', async (req) => {
