@@ -302,3 +302,39 @@ describe('custom SIP reminder (Set Reminder)', () => {
     expect((await c.put('/me/preferences', { sipReminder: { mode: 'modalpha' } })).json().preferences.sipReminder).toEqual({ mode: 'modalpha', day: null });
   });
 });
+
+describe('logout really ends the session', () => {
+  it('revokes access + refresh tokens on logout, supports sign-out-everywhere, and blocks suspended users at once', async () => {
+    const a = client(app), b = client(app);
+    await a.post('/auth/signup', { name: 'Session User', email: 'session@example.com', password: 'secret-pass-1' });
+    await b.post('/auth/login', { email: 'session@example.com', password: 'secret-pass-1' });
+    const stolen = { ...a.jar };                       // copy of A's cookies (access + refresh)
+    const me = await a.get('/auth/me');
+    expect(me.statusCode).toBe(200); expect(me.headers['cache-control']).toBe('no-store');
+    expect((await a.post('/auth/logout')).json().ok).toBe(true);
+    // the copied access token no longer works, even though it has not expired
+    const replay = client(app); Object.assign(replay.jar, stolen);
+    expect((await replay.get('/auth/me')).statusCode).toBe(401);
+    // the other device (B) is unaffected by A's logout
+    expect((await b.get('/auth/me')).statusCode).toBe(200);
+    // replaying A's revoked refresh token is treated as theft: it fails AND ends every session of the user
+    expect((await replay.post('/auth/refresh')).statusCode).toBe(401);
+    expect((await b.get('/auth/me')).statusCode).toBe(401);
+    // "sign out everywhere"
+    const c = client(app), d = client(app);
+    await c.post('/auth/login', { email: 'session@example.com', password: 'secret-pass-1' });
+    await d.post('/auth/login', { email: 'session@example.com', password: 'secret-pass-1' });
+    expect((await d.get('/auth/me')).statusCode).toBe(200);
+    expect((await c.post('/auth/logout-all')).json().sessionsEnded).toBe(2);
+    expect((await d.get('/auth/me')).statusCode).toBe(401);
+    expect((await c.get('/auth/me')).statusCode).toBe(401);
+    const acts = (await db.query(`SELECT action FROM audit_log WHERE action IN ('LOGOUT','LOGOUT_ALL_DEVICES')`)).rows.map((r: any) => r.action);
+    expect(acts).toEqual(expect.arrayContaining(['LOGOUT', 'LOGOUT_ALL_DEVICES']));
+    // suspending a user cuts off their current access token immediately
+    const e = client(app);
+    await e.post('/auth/login', { email: 'session@example.com', password: 'secret-pass-1' });
+    expect((await e.get('/auth/me')).statusCode).toBe(200);
+    await db.query(`UPDATE users SET account_status='Suspended' WHERE email='session@example.com'`);
+    expect((await e.get('/auth/me')).statusCode).toBe(401);
+  });
+});

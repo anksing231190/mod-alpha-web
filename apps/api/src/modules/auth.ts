@@ -102,11 +102,23 @@ export default async function auth(app: FastifyInstance) {
     return issueSession(db, cfg, reply, req, { id: s.user_id, role: s.role, name: s.full_name, email: s.email });
   });
 
+  // Logout ends this session server-side: the refresh token and the access token (via its session id) stop working.
   app.post('/auth/logout', async (req, reply) => {
     const t = (req.cookies as any)?.ma_rt;
-    if (t) await db.query('UPDATE sessions SET revoked_at=now() WHERE refresh_hash=$1', [sha256(t)]);
+    const r = t ? await db.query('UPDATE sessions SET revoked_at=now() WHERE refresh_hash=$1 AND revoked_at IS NULL RETURNING user_id', [sha256(t)]) : null;
+    if (req.user?.sid) await db.query('UPDATE sessions SET revoked_at=now() WHERE id=$1 AND revoked_at IS NULL', [req.user.sid]);
+    const uid = req.user?.id ?? r?.rows[0]?.user_id;
+    if (uid) await audit(db, req, { action: 'LOGOUT', category: 'Access', resource: uid, actorLabel: req.user?.email ?? undefined });
     clearSession(cfg, reply);
     return { ok: true };
+  });
+  // "Sign out of all devices": revoke every session of this user.
+  app.post('/auth/logout-all', async (req, reply) => {
+    const u = requireUser(req);
+    const r = await db.query('UPDATE sessions SET revoked_at=now() WHERE user_id=$1 AND revoked_at IS NULL', [u.id]);
+    await audit(db, req, { action: 'LOGOUT_ALL_DEVICES', category: 'Access', resource: u.id, meta: { sessions: r.rowCount } });
+    clearSession(cfg, reply);
+    return { ok: true, sessionsEnded: r.rowCount };
   });
 
   app.post('/auth/password/forgot', strict, async (req) => {

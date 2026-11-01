@@ -102,6 +102,14 @@
 
   /* demo mode: Subscription page plan buttons activate a demo plan (live mode uses real checkout in v23-api.js) */
   if (!live) {
+    // demo "Log out": forget the demo plan and reminder choice, then go to the login screen (no back-navigation into the app)
+    window.addEventListener('click', (e) => {
+      if (e.target.closest && e.target.closest('[data-action="logout-all"]')) { e.preventDefault(); e.stopImmediatePropagation(); notify(T('Sign out of all devices is available when you are signed in to a real account.')); return; }
+      if (!(e.target.closest && e.target.closest('[data-action="logout"]'))) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      ls.set(LS_PLAN, null); ls.set(LS_REM, null); applyDemoState();
+      history.replaceState(null, '', '#/login'); route(); notify(T('You have been logged out.'));
+    }, true);
     window.addEventListener('click', (e) => {
       const b = e.target.closest && e.target.closest('[data-plan]');
       if (!b || !/^#\/(user|guest)/.test(location.hash)) return;

@@ -87,8 +87,27 @@
     const next = sessionStorage.getItem('ma-next'); sessionStorage.removeItem('ma-next');
     go(next && (!next.startsWith('admin') || user.role !== 'user') ? next : user.role !== 'user' ? 'admin/dashboard' : 'user/overview');
   };
-  async function logout() { try { await API.post('/auth/logout'); } catch (e) {} S.user = null; S.ent = null; go('login'); }
+  // Logout: the API revokes the session (refresh + access token) and clears the cookies; locally we drop all
+  // user state, tell other open tabs, and replace history so Back does not return to signed-in pages.
+  function signedOut(msg) {
+    S.user = null; S.ent = null; S.notifs = null;
+    try { localStorage.setItem('mod-alpha-logout', String(Date.now())); } catch (e) {}
+    window.dispatchEvent(new CustomEvent('ma:logout'));
+    history.replaceState(null, '', '#/login'); route();
+    if (msg) notify(msg);
+  }
+  async function logout() { try { await API.post('/auth/logout'); } catch (e) {} signedOut('You have been logged out.'); }
   on('[data-action="logout"]', logout);
+  on('[data-action="logout-all"]', () => {
+    showModal('Sign out of all devices?', `<div class="v22"><p style="margin:0 0 18px;line-height:1.55">This ends every Mod Alpha session on all your phones, tablets and computers, including this one. You will need to log in again.</p><div class="ma-rem-actions"><button type="button" class="v22-ghost-btn" data-modal-close>Cancel</button><button type="button" class="v22-grad-btn" data-ma-logout-all>Sign out everywhere</button></div></div>`);
+    document.querySelectorAll('[data-modal-close]').forEach((b) => (b.onclick = () => (document.getElementById('modal-root').innerHTML = '')));
+    document.querySelector('[data-ma-logout-all]').onclick = async (e) => {
+      const done = busy(e.currentTarget, 'Signing out…');
+      try { const r = await API.post('/auth/logout-all'); document.getElementById('modal-root').innerHTML = ''; signedOut(`Signed out of ${r.sessionsEnded} session${r.sessionsEnded === 1 ? '' : 's'} on all devices.`); } catch (err) { done(); fail(err); }
+    };
+  });
+  // another tab logged out → this tab follows
+  window.addEventListener('storage', (e) => { if (e.key === 'mod-alpha-logout' && S.user) { S.user = null; S.ent = null; history.replaceState(null, '', '#/login'); route(); notify('You have been logged out.'); } });
 
   // ------------------------------------------------------------------ login / signup / OTP / Google / forgot
   const baseAuth = renderAuth;

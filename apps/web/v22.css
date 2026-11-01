@@ -1659,3 +1659,53 @@ html[lang="hi"] :where(.v22-eyebrow,.v22-crumb,.side-label,th,.hd-best small){te
 .v22-alt-chip span,.v22-alt-chip b{justify-self:start;text-align:left}
 .v22-best-day span{white-space:nowrap}
 .v22-best-gain small{line-height:1.45!important}
+
+/* v23.8 — visible Log out (sidebar) + security actions */
+.sidebar.v22-side .side-bottom{display:grid;gap:8px}
+.sidebar.v22-side .logout-btn.v22-logout{width:100%;justify-content:flex-start;padding:11px 14px;border-radius:10px;border:1px solid rgba(251,113,133,.35);background:rgba(251,113,133,.08);color:#fecdd3;font-weight:600;font-family:var(--v-font);cursor:pointer;transition:background .15s,border-color .15s}
+.sidebar.v22-side .logout-btn.v22-logout:hover{background:rgba(251,113,133,.16);border-color:rgba(251,113,133,.6);color:#fff}
+.v22-sec-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}
+.v22-outline-btn.v22-danger-outline{border-color:rgba(251,113,133,.45)!important;color:#fda4af!important}
+.v22-outline-btn.v22-danger-outline:hover{background:rgba(251,113,133,.1)!important}
+
+/* v23.8 — Mod Alpha date picker (js/datepicker.js) */
+.ma-dp-scrim{position:fixed;inset:0;z-index:1190;background:transparent}
+.ma-dp{position:fixed;z-index:1200;width:312px;padding:14px;border-radius:16px;border:1px solid rgba(110,140,230,.35);background:linear-gradient(180deg,#101a3e,#0b1330);box-shadow:0 24px 60px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.03) inset;color:#e6ecfb;font-family:var(--v-font);opacity:0;transform:translateY(-6px) scale(.98);transform-origin:top center;transition:opacity .16s ease,transform .16s ease}
+.ma-dp.in{opacity:1;transform:none}
+.ma-dp-head{display:grid;grid-template-columns:36px 1fr 36px;align-items:center;gap:6px;margin-bottom:10px}
+.ma-dp-nav,.ma-dp-title{height:36px;border-radius:10px;border:1px solid transparent;background:transparent;color:inherit;display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;font:inherit}
+.ma-dp-nav:hover,.ma-dp-title:hover{background:rgba(107,140,255,.14);border-color:rgba(107,140,255,.3)}
+.ma-dp-title{font-weight:700;font-size:15px!important}
+.ma-dp-title svg{width:16px;height:16px;opacity:.7}
+.ma-dp-week,.ma-dp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.ma-dp-week span{text-align:center;font-size:12px;font-weight:600;color:#8ea0c4;padding:4px 0 6px}
+.ma-dp-day{position:relative;height:38px;border:0;border-radius:10px;background:transparent;color:#e6ecfb;font:inherit;font-size:14px!important;font-weight:500;cursor:pointer;font-variant-numeric:tabular-nums;transition:background .12s}
+.ma-dp-day:hover:not(:disabled){background:rgba(107,140,255,.16)}
+.ma-dp-day.out{color:#56627f}
+.ma-dp-day.today{box-shadow:inset 0 0 0 1.5px #6b8cff;font-weight:700}
+.ma-dp-day.inrange{background:rgba(107,140,255,.14);border-radius:0}
+.ma-dp-day.edge{background:rgba(107,140,255,.3)}
+.ma-dp-day.sel{background:linear-gradient(135deg,#3b82f6,#7c5cfa)!important;color:#fff!important;font-weight:700;box-shadow:0 6px 16px rgba(80,90,255,.45)}
+.ma-dp-day:disabled{color:#3c4766;cursor:not-allowed;text-decoration:line-through;text-decoration-color:rgba(255,255,255,.12)}
+.ma-dp-day:focus-visible{outline:2px solid #93c5fd;outline-offset:1px}
+.ma-dp-mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:4px 0}
+.ma-dp-mgrid button{height:46px;border-radius:12px;border:1px solid rgba(110,140,230,.25);background:rgba(13,24,56,.6);color:#e6ecfb;font:inherit;font-size:14px!important;font-weight:600;cursor:pointer}
+.ma-dp-mgrid button:hover:not(:disabled){border-color:#6b8cff}
+.ma-dp-mgrid button.sel{background:linear-gradient(135deg,#3b82f6,#7c5cfa);border-color:transparent;color:#fff}
+.ma-dp-mgrid button:disabled{opacity:.35;cursor:not-allowed}
+.ma-dp-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(110,140,230,.2)}
+.ma-dp-sel{font-size:13px;color:#a7b3cf;font-variant-numeric:tabular-nums}
+.ma-dp-foot>div{display:flex;gap:6px}
+.ma-dp-today,.ma-dp-link{height:32px;padding:0 12px;border-radius:9px;font:inherit;font-size:13px!important;font-weight:600;cursor:pointer}
+.ma-dp-today{border:1px solid rgba(107,140,255,.45);background:rgba(107,140,255,.15);color:#c7d2fe}
+.ma-dp-today:disabled{opacity:.4;cursor:not-allowed}
+.ma-dp-link{border:0;background:transparent;color:#a7b3cf}
+.ma-dp.sheet{left:0!important;right:0;bottom:0;top:auto!important;width:auto;border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));transform:translateY(20px)}
+.ma-dp.sheet.in{transform:none}
+.ma-dp.sheet .ma-dp-day{height:44px}
+@media (max-width:560px){.ma-dp-scrim{background:rgba(0,0,0,.45)}}
+.ma-dp-trigger{width:100%;height:46px;display:flex;align-items:center;gap:10px;padding:0 14px;border-radius:10px;border:1px solid var(--v-border-2);background:#0d1838;color:#e6ecfb;font:inherit;font-size:14.5px!important;font-weight:500;cursor:pointer;text-align:left;font-variant-numeric:tabular-nums}
+.ma-dp-trigger:hover{border-color:#6b8cff}
+.ma-dp-trigger svg{color:#8ea0c4;flex:none}
+.sidebar.v22-side .logout-btn.v22-logout{border:1px solid rgba(251,113,133,.4)!important;background:rgba(251,113,133,.09)!important;color:#fecdd3!important}
+.sidebar.v22-side .logout-btn.v22-logout:hover{background:rgba(251,113,133,.18)!important;border-color:rgba(251,113,133,.65)!important;color:#fff!important}

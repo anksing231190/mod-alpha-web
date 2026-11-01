@@ -73,3 +73,13 @@ To run it, start the site, then:
 ```bash
 node scripts/qa/contrast-audit.js
 ```
+
+## Date picker
+Every date field on the site uses one Mod Alpha calendar (`apps/web/js/datepicker.js`), styled for both themes and translated into Hindi. It covers the what-if and SIP-compare dates and the admin date-range dialog; nothing uses the browser's own date popup.
+
+- **Navigation:** month and year quick switch.
+- **Dates:** today is marked with a ring. Dates outside the allowed range are disabled; investment dates cannot be in the future.
+- **Ranges:** the span between "From" and "To" is shaded.
+- **Keyboard:** arrows, PgUp/PgDn, Home/End, Enter and Esc.
+- **Phones:** opens as a bottom sheet.
+- **Under the hood:** inputs keep their original values (`dd/mm/yyyy` or ISO), so existing code is unchanged.

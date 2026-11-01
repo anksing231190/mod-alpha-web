@@ -94,7 +94,7 @@ Base path: `/api/v1`. Auth uses httpOnly cookies (`ma_at` for the access token, 
 
 | Area | Endpoints |
 |---|---|
-| Auth | `POST /auth/signup` · `/auth/login` · `/auth/logout` · `/auth/refresh` · `/auth/otp/send` · `/auth/otp/verify` · `/auth/password/forgot` · `/auth/password/reset` · `/auth/verify-email` · `/auth/oauth/google` · `/auth/oauth/apple` (501) · `GET /auth/me` |
+| Auth | `POST /auth/signup` · `/auth/login` · `/auth/logout` · `/auth/logout-all` · `/auth/refresh` · `/auth/otp/send` · `/auth/otp/verify` · `/auth/password/forgot` · `/auth/password/reset` · `/auth/verify-email` · `/auth/oauth/google` · `/auth/oauth/apple` (501) · `GET /auth/me` |
 | Me | `PATCH /me` · `POST /me/password` · `POST /me/verify-email` · `GET/PUT /me/preferences` (incl. `sipReminder`) · `PUT /me/consents` · `GET /me/notifications` · `POST /me/notifications/read` · `GET/POST/DELETE /me/watchlist[/:fundId]` · `POST /me/data-export` · `GET /me/data-export/:id` · `POST /me/deletion-request` · `GET /me/entitlements` |
 | Plans & billing | `GET /plans` · `POST /billing/checkout` · `POST /billing/verify` · `POST /billing/mock/complete` (stage) · `POST /webhooks/payments` · `GET /billing/subscription` · `POST /billing/subscriptions/:id/cancel` · `GET /billing/invoices[/:id]` |
 | KYC | `GET /kyc/status` · `POST /kyc/sessions` · `POST /webhooks/kyc` · `POST /kyc/mock/complete` (stage) |
@@ -132,7 +132,14 @@ Base path: `/api/v1`. Auth uses httpOnly cookies (`ma_at` for the access token, 
 ## 8. Security notes
 
 - Passwords: bcrypt (cost 11).
-- Sessions: access JWT for 15 min plus a rotating 30-day refresh token stored hashed. Refresh-token reuse revokes every session of that user.
+- **Sessions:** a 15-minute access JWT plus a rotating 30-day refresh token, stored hashed.
+  - **Session check:** the access token carries its session id, and **every request re-checks that session**. An access token stops working the moment its session is revoked or the account is suspended, not just when it expires after 15 minutes.
+  - **Theft detection:** refresh-token reuse revokes every session of that user.
+- **Logout:** `POST /auth/logout` revokes the current session server-side, clears both cookies and is audited (`LOGOUT`).
+  - The **Log out** button is in the sidebar for users and admins. The profile popup still has **Sign out** too.
+  - Other open tabs follow to the login page.
+  - API responses are sent with `Cache-Control: no-store`.
+- **Sign out of all devices:** Settings → Profile calls `POST /auth/logout-all`, which revokes every session and is audited (`LOGOUT_ALL_DEVICES`).
 - Cookies: httpOnly, `SameSite=Lax`, `Secure` on https. CORS is restricted to the website origin.
 - Rate limits: global 300/min; auth endpoints 10/min; OTP 5/hour per number with 5 attempts per code.
 - Webhooks: HMAC signature verified on the raw body; idempotent by event id.

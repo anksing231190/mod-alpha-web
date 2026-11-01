@@ -409,3 +409,11 @@ Object.assign(window.MA_I18N_DICT, {
 
 Object.assign(window.MA_I18N_DICT, { 'Tap a day to choose your own reminder date': 'अपनी रिमाइंडर तारीख चुनने के लिए कोई दिन टैप करें', 'Good dates': 'अच्छी तारीखें', 'Best date': 'सबसे अच्छी तारीख' });
 Object.assign(window.MA_I18N_DICT, { 'Best': 'सबसे अच्छी', 'Good': 'अच्छी', 'Your pick': 'आपकी पसंद' });
+Object.assign(window.MA_I18N_DICT, {
+  'Log out': 'लॉग आउट', 'You have been logged out.': 'आप लॉग आउट हो गए हैं।', 'Sign out of all devices': 'सभी डिवाइस से साइन आउट करें',
+  'Sign out of all devices?': 'सभी डिवाइस से साइन आउट करें?', 'Sign out everywhere': 'हर जगह से साइन आउट करें', 'Signing out…': 'साइन आउट हो रहा है…',
+  'This ends every Mod Alpha session on all your phones, tablets and computers, including this one. You will need to log in again.': 'इससे आपके सभी फ़ोन, टैबलेट और कंप्यूटर पर (इसे मिलाकर) Mod Alpha के सभी सेशन बंद हो जाएँगे। आपको फिर से लॉग इन करना होगा।',
+  'Signed out of {n} session on all devices.': 'सभी डिवाइस पर {n} सेशन से साइन आउट किया गया।', 'Signed out of {n} sessions on all devices.': 'सभी डिवाइस पर {n} सेशन से साइन आउट किया गया।',
+  'Sign out of all devices is available when you are signed in to a real account.': 'सभी डिवाइस से साइन आउट असली खाते में साइन इन करने पर उपलब्ध है।', 'Sign out': 'साइन आउट',
+});
+Object.assign(window.MA_I18N_DICT, { 'Today': 'आज', 'Clear': 'साफ़ करें', 'Choose date': 'तारीख चुनें', 'Select date': 'तारीख चुनें', 'No date selected': 'कोई तारीख नहीं चुनी', 'Choose month and year': 'महीना और साल चुनें' });

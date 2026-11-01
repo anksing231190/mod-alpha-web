@@ -30,7 +30,9 @@ export async function buildApp(cfg: Config, db: Db, overrides: Partial<Providers
   await app.register(cookie);
   await app.register(multipart, { limits: { fileSize: cfg.MAX_UPLOAD_MB * 1024 * 1024, files: 1 } });
   await app.register(rateLimit, { global: true, max: cfg.APP_ENV === 'test' ? 10000 : 300, timeWindow: '1 minute' });
-  app.addHook('onRequest', authenticate(cfg));
+  app.addHook('onRequest', authenticate(cfg, db));
+  // API responses carry personal data: never store them in browser or proxy caches (no stale pages after logout)
+  app.addHook('onSend', async (req, reply) => { if (req.url.startsWith('/api/')) reply.header('Cache-Control', 'no-store'); });
 
   app.setErrorHandler((err: any, req, reply) => {
     if (err instanceof HttpError) return reply.status(err.status).send({ error: { code: err.code, message: err.message, details: err.details } });
