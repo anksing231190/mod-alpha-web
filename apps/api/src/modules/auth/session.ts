@@ -16,10 +16,10 @@
 import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import type { Config } from '../config.js';
-import type { Db, Q } from '../db.js';
-import { forbidden, HttpError, unauthorized } from './errors.js';
-import { audit } from './audit.js';
+import type { Config } from '../../config.js';
+import type { Db, Q } from '../../db.js';
+import { forbidden, HttpError, unauthorized } from '../../shared/errors.js';
+import { audit } from '../../shared/audit.js';
 
 export type Role = 'user' | 'admin' | 'superadmin';
 /** The signed-in person attached to a request (`req.user`). `sid` = the session row id. */

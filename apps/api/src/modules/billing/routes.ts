@@ -1,22 +1,35 @@
+/**
+ * Billing module — plans, checkout, payments and subscriptions.
+ *   GET /plans · GET /me/entitlements
+ *   POST /billing/checkout → gateway order (KYC must be Verified first, 409 kyc_required)
+ *   POST /billing/verify (browser-side confirmation) · POST /webhooks/payments (gateway → us, signed, idempotent)
+ *   POST /billing/mock/complete (stage only: the 'test payment' dialog)
+ *   GET /billing/subscription · POST /billing/subscriptions/:id/cancel · GET /billing/invoices(/:id)
+ *   PUT /admin/plans/:id (versioned price edit) · POST /admin/payments/:id/refund
+ */
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import crypto from 'node:crypto';
 import { z } from 'zod';
-import { parse } from '../lib/validate.js';
-import { badRequest, conflict, forbidden, HttpError, notFound, unauthorized } from '../lib/errors.js';
-import { requireAdmin, requireUser } from '../lib/auth.js';
-import { audit } from '../lib/audit.js';
-import { tx, type Db, type Q } from '../db.js';
-import { addMonths, today } from '../lib/dates.js';
-import type { Deps } from '../app.js';
+import { parse } from '../../shared/validate.js';
+import { badRequest, conflict, forbidden, HttpError, notFound, unauthorized } from '../../shared/errors.js';
+import { requireAdmin, requireUser } from '../auth/session.js';
+import { audit } from '../../shared/audit.js';
+import { tx, type Db, type Q } from '../../db.js';
+import { addMonths, today } from '../../shared/dates.js';
+import type { Deps } from '../../app.js';
 
 const CYCLE_MONTHS = { Monthly: 1, Quarterly: 3, Yearly: 12 } as const;
 type Cycle = keyof typeof CYCLE_MONTHS;
+// Database plan row → what the website shows.
 export const planView = (p: any) => ({ id: p.id, name: p.name, tagline: p.tagline, prices: p.prices, features: p.features, limits: p.limits, active: p.active, version: p.version, price: p.prices.Monthly });
 
+// The user's active (or past-due) subscription, newest first.
 export async function currentSubscription(q: Q, userId: string) {
   const r = await q.query(`SELECT s.*, p.name AS plan_name, p.limits FROM subscriptions s JOIN plans p ON p.id=s.plan_id WHERE s.user_id=$1 AND s.status IN ('Active','Past due') ORDER BY s.start_date DESC LIMIT 1`, [userId]);
   return r.rows[0] ?? null;
 }
+// What the user's plan allows (AI questions per day, custom reminders, …). Free plan when there is no
+// subscription.
 export async function entitlements(q: Q, userId: string) {
   const s = await currentSubscription(q, userId);
   const plan = s ? s.plan_id : 'Free';
@@ -25,6 +38,8 @@ export async function entitlements(q: Q, userId: string) {
 }
 
 /** Idempotently mark a payment captured and activate its subscription. Shared by verify, webhook and mock. */
+// Turn a captured payment into an active subscription + GST invoice + notification. Safe to call twice for the
+// same order (idempotent).
 export async function capturePayment(deps: Deps, req: FastifyRequest | null, o: { orderId: string; paymentId: string; raw?: unknown }) {
   const { db, providers } = deps;
   const result = await tx(db, async (c) => {
@@ -54,8 +69,10 @@ export async function capturePayment(deps: Deps, req: FastifyRequest | null, o: 
 export default async function billing(app: FastifyInstance) {
   const deps = app.deps, { db, providers, cfg } = deps;
 
+  // GET /plans — public price list (also used by the landing page).
   app.get('/plans', async () => ({ plans: (await db.query('SELECT * FROM plans WHERE active ORDER BY sort')).rows.map(planView) }));
 
+  // GET /me/entitlements — plan + limits for the signed-in user.
   app.get('/me/entitlements', async (req) => {
     const u = requireUser(req);
     const e = await entitlements(db, u.id);
@@ -63,6 +80,7 @@ export default async function billing(app: FastifyInstance) {
     return { ...e, usage: { aiQueriesToday: used } };
   });
 
+  // POST /billing/checkout — create a gateway order for a plan + billing cycle. Blocks until KYC is verified.
   app.post('/billing/checkout', async (req) => {
     const u = requireUser(req);
     const b = parse(z.object({ planId: z.string(), cycle: z.enum(['Monthly', 'Quarterly', 'Yearly']) }), req.body);
@@ -81,6 +99,8 @@ export default async function billing(app: FastifyInstance) {
     return { subscriptionId: subId, plan: plan.id, cycle: b.cycle, amountInr: amount, order: { ...order, name: 'Mod Alpha', description: `${plan.name} · ${b.cycle}`, prefill: { name: user.full_name, email: user.email, contact: user.mobile } } };
   });
 
+  // POST /billing/verify — check the gateway's checkout signature, then capture (the webhook may arrive first or
+  // later).
   app.post('/billing/verify', async (req) => {
     const u = requireUser(req);
     const b = parse(z.object({ orderId: z.string(), paymentId: z.string(), signature: z.string() }), req.body);
@@ -91,6 +111,8 @@ export default async function billing(app: FastifyInstance) {
   });
 
   // Stage-only: simulate the gateway confirming the payment (goes through the same signed-webhook path).
+  // Stage only (404 in prod / with a real gateway): simulate the gateway's signed webhook for the test-payment
+  // dialog.
   app.post('/billing/mock/complete', async (req) => {
     const u = requireUser(req);
     if (providers.payments.name !== 'mock' || cfg.APP_ENV === 'prod') throw notFound();
@@ -104,6 +126,8 @@ export default async function billing(app: FastifyInstance) {
     return { ...(res.json() as object), paymentId, signature: crypto.createHmac('sha256', cfg.JWT_SECRET).update(`${b.orderId}|${paymentId}`).digest('hex') };
   });
 
+  // POST /webhooks/payments — called by the payment gateway. Signature verified on the raw body; each event id is
+  // processed once (webhook_events).
   app.post('/webhooks/payments', { config: { rateLimit: false } }, async (req, reply) => {
     const raw = req.rawBody ?? JSON.stringify(req.body);
     const sig = (req.headers['x-razorpay-signature'] ?? req.headers['x-mock-signature']) as string | undefined;
@@ -124,7 +148,9 @@ export default async function billing(app: FastifyInstance) {
     return { processed: true };
   });
 
+  // GET /billing/subscription — the current subscription (or null).
   app.get('/billing/subscription', async (req) => { const u = requireUser(req); return { subscription: await currentSubscription(db, u.id) }; });
+  // Cancel at period end: access continues until the renewal date.
   app.post('/billing/subscriptions/:id/cancel', async (req) => {
     const u = requireUser(req);
     const r = await db.query(`UPDATE subscriptions SET cancel_at_period_end=true, updated_at=now() WHERE id=$1 AND user_id=$2 AND status IN ('Active','Past due') RETURNING id, renewal_date`, [(req.params as any).id, u.id]);
@@ -132,10 +158,12 @@ export default async function billing(app: FastifyInstance) {
     await audit(db, req, { action: 'SUBSCRIPTION_CANCEL_REQUESTED', category: 'Subscription', resource: r.rows[0].id });
     return { ok: true, endsOn: r.rows[0].renewal_date, message: 'Your plan stays active until the end of the current billing period.' };
   });
+  // Invoices of the signed-in user.
   app.get('/billing/invoices', async (req) => {
     const u = requireUser(req);
     return { items: (await db.query(`SELECT i.id, i.number, i.amount_inr, i.gst_inr, i.issued_at, s.plan_id, s.billing_cycle FROM invoices i LEFT JOIN payments p ON p.id=i.payment_id LEFT JOIN subscriptions s ON s.id=p.subscription_id WHERE i.user_id=$1 ORDER BY i.issued_at DESC`, [u.id])).rows };
   });
+  // One invoice (own invoices only) with GST breakdown, for the printable view.
   app.get('/billing/invoices/:id', async (req) => {
     const u = requireUser(req);
     const r = await db.query(`SELECT i.*, u.full_name, u.email, s.plan_id, s.billing_cycle, p.provider_payment_id FROM invoices i JOIN users u ON u.id=i.user_id LEFT JOIN payments p ON p.id=i.payment_id LEFT JOIN subscriptions s ON s.id=p.subscription_id WHERE i.id=$1 AND (i.user_id=$2 OR $3)`, [(req.params as any).id, u.id, u.role !== 'user']);
@@ -145,6 +173,7 @@ export default async function billing(app: FastifyInstance) {
   });
 
   // ---- admin
+  // Admin: change a plan's prices / features. Keeps the previous version and writes PLAN_UPDATED to the audit log.
   app.put('/admin/plans/:id', async (req) => {
     requireAdmin(req);
     const b = parse(z.object({ name: z.string().min(2).optional(), tagline: z.string().max(120).optional(), prices: z.object({ Monthly: z.number().min(0), Quarterly: z.number().min(0), Yearly: z.number().min(0) }).optional(), features: z.array(z.string().min(1)).min(1).optional(), limits: z.record(z.number()).optional(), active: z.boolean().optional() }).strict(), req.body);
@@ -155,6 +184,7 @@ export default async function billing(app: FastifyInstance) {
     await audit(db, req, { action: 'PLAN_CONFIGURATION_UPDATED', category: 'Configuration', resource: id, meta: b });
     return { plan: planView(r.rows[0]) };
   });
+  // Super admin: refund a payment through the gateway and record it.
   app.post('/admin/payments/:id/refund', async (req) => {
     requireAdmin(req);
     const b = parse(z.object({ amountInr: z.number().positive(), reason: z.string().min(3) }), req.body);

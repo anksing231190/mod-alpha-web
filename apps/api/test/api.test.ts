@@ -269,7 +269,7 @@ describe('jobs', () => {
 describe('custom SIP reminder (Set Reminder)', () => {
   it('is for paid subscribers only; the Mod Alpha campaign skips them; the daily job reminds them on their day', async () => {
     const { customSipReminders } = await import('../src/jobs/index.js');
-    const { dispatchCampaign } = await import('../src/modules/notifications.js');
+    const { dispatchCampaign } = await import('../src/modules/notifications/routes.js');
     const c = client(app);
     await c.post('/auth/signup', { name: 'Remind Me', email: 'remind@example.com', password: 'secret-pass-1' });
     // Free plan → 402 subscription_required

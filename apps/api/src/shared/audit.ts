@@ -1,3 +1,8 @@
+/**
+ * Audit trail. Every security- or money-relevant action writes one row to audit_log.
+ * The table is append-only (a database trigger blocks UPDATE/DELETE). The actor is the signed-in user,
+ * or `actorLabel` (e.g. 'system', the email used in a failed login).
+ */
 import type { FastifyRequest } from 'fastify';
 import type { Q } from '../db.js';
 export async function audit(q: Q, req: FastifyRequest | null, a: { action: string; category: 'Configuration' | 'Data' | 'Access' | 'Subscription' | 'Notification' | 'Account'; resource?: string; outcome?: 'Success' | 'Blocked' | 'Failed'; meta?: unknown; actorLabel?: string }) {

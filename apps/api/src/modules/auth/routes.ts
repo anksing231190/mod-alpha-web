@@ -1,22 +1,31 @@
+/**
+ * Auth routes: create accounts and start / end sessions.
+ *   POST /auth/signup · /auth/login · /auth/otp/send · /auth/otp/verify · /auth/oauth/google (· /auth/oauth/apple = 501)
+ *   POST /auth/refresh · GET /auth/session · POST /auth/activity · POST /auth/logout · /auth/logout-all
+ *   POST /auth/password/forgot · /auth/password/reset · /auth/verify-email · GET /auth/me
+ * Admins never get a session from the first step: they get a 2-code challenge (admin-mfa.ts).
+ * Session cookies, timeouts and the per-request check live in session.ts.
+ */
 import type { FastifyInstance } from 'fastify';
 import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
 import { z } from 'zod';
-import { parse } from '../lib/validate.js';
-import { badRequest, conflict, forbidden, tooMany, unauthorized, HttpError } from '../lib/errors.js';
-import { AuthUser, clearSession, endForTimeout, expiredBy, issueSession, randomToken, requireUser, sessionExpired, sessionInfo, sha256 } from '../lib/auth.js';
-import { audit } from '../lib/audit.js';
+import { parse } from '../../shared/validate.js';
+import { badRequest, conflict, forbidden, tooMany, unauthorized, HttpError } from '../../shared/errors.js';
+import { AuthUser, clearSession, endForTimeout, expiredBy, issueSession, randomToken, requireUser, sessionExpired, sessionInfo, sha256 } from './session.js';
+import { audit } from '../../shared/audit.js';
+import { active, mobile, pw, strictLimit, toAuth, userView } from './helpers.js';
+import { adminMfa } from './admin-mfa.js';
 
-const pw = z.string().min(8, 'Password must be at least 8 characters').max(128);
-const mobile = z.string().transform((s) => s.replace(/[^\d+]/g, '')).refine((s) => /^\+?\d{10,13}$/.test(s), 'Enter a valid mobile number').transform((s) => (s.startsWith('+') ? s : s.length === 10 ? `+91${s}` : `+${s}`));
-const toAuth = (r: any): AuthUser => ({ id: r.id, role: r.role, name: r.full_name, email: r.email });
-export const userView = (r: any) => ({ id: r.id, name: r.full_name, email: r.email, mobile: r.mobile, role: r.role, kycStatus: r.kyc_status, accountStatus: r.account_status, emailVerified: !!r.email_verified_at, mobileVerified: !!r.mobile_verified_at, signupDate: r.signup_date });
+export { userView } from './helpers.js';
 
 export default async function auth(app: FastifyInstance) {
   const { db, cfg, providers } = app.deps;
-  const strict = { config: { rateLimit: { max: cfg.APP_ENV === 'test' ? 1000 : 10, timeWindow: '1 minute' } } };
-  const active = (r: any) => { if (r.account_status !== 'Active' || r.deleted_at) throw forbidden(`This account is ${r.account_status.toLowerCase()}. Contact support.`); };
+  const strict = strictLimit(cfg);
+  const { isAdmin, adminChallenge } = adminMfa(app);   // admins: email code + SMS code before a session starts
 
+  // POST /auth/signup — email + password account. Records the marketing consent, emails a verification link and
+  // signs the person in (201).
   app.post('/auth/signup', strict, async (req, reply) => {
     const b = parse(z.object({ name: z.string().trim().min(2).max(80), email: z.string().trim().email(), password: pw, marketingConsent: z.boolean().default(false) }), req.body);
     const hash = await bcrypt.hash(b.password, 11);
@@ -31,60 +40,8 @@ export default async function auth(app: FastifyInstance) {
   });
 
 
-  /* ---- Admin sign-in second step: a code by email AND a code by SMS, both required ---- */
-  const isAdmin = (u: any) => u.role === 'admin' || u.role === 'superadmin';
-  const mask = {
-    email: (e: string) => e.replace(/^(.)(.*)(.@.*)$/, (_, a, m, b) => a + '•'.repeat(Math.max(2, m.length)) + b),
-    mobile: (m: string) => m.replace(/^(\+\d{2})\d+(\d{4})$/, '$1 •••••• $2'),
-  };
-  async function adminChallenge(req: any, u: any, remember: boolean) {
-    if (!u.email || !u.mobile) {
-      await audit(db, req, { action: 'ADMIN_LOGIN_BLOCKED', category: 'Access', resource: u.id, outcome: 'Blocked', actorLabel: u.email ?? u.mobile, meta: { reason: 'missing email or mobile' } });
-      throw new HttpError(403, 'admin_contact_required', 'Admin sign-in needs both a verified email and mobile number on the account. Ask a super admin to add them.');
-    }
-    const ec = String(crypto.randomInt(100000, 1000000)), sc = String(crypto.randomInt(100000, 1000000));
-    const ch = (await db.query(`INSERT INTO login_challenges (user_id, email_code_hash, sms_code_hash, remember, expires_at, ip) VALUES ($1,$2,$3,$4, now() + interval '10 minutes', $5) RETURNING id`, [u.id, sha256(ec), sha256(sc), remember, req.ip])).rows[0];
-    await sendChallengeCodes(u, ec, sc);
-    await audit(db, req, { action: 'ADMIN_LOGIN_CHALLENGE', category: 'Access', resource: u.id, actorLabel: u.email });
-    const dev = cfg.APP_ENV !== 'prod' && providers.email.name === 'mock' && providers.sms.name === 'mock';
-    return { mfaRequired: true, challengeId: ch.id, email: mask.email(u.email), mobile: mask.mobile(u.mobile), expiresIn: 600, ...(dev ? { devCodes: { email: ec, sms: sc } } : {}) };
-  }
-  async function sendChallengeCodes(u: any, ec: string, sc: string) {
-    await providers.email.send({ to: u.email, subject: `${ec} is your Mod Alpha admin sign-in code`, text: `Your admin sign-in code is ${ec}. It expires in 10 minutes. You also need the code sent to your mobile.\n\nIf you did not try to sign in, reset your password and tell your security team.` });
-    await providers.sms.send({ to: u.mobile, text: `${sc} is your Mod Alpha admin sign-in code. It expires in 10 minutes. Never share it.`, templateId: cfg.MSG91_OTP_TEMPLATE_ID, vars: { otp: sc } });
-  }
-
-  app.post('/auth/login/verify', strict, async (req, reply) => {
-    const b = parse(z.object({ challengeId: z.string().uuid(), emailCode: z.string().regex(/^\d{6}$/, 'Enter the 6-digit email code'), smsCode: z.string().regex(/^\d{6}$/, 'Enter the 6-digit SMS code') }), req.body);
-    const c = (await db.query('SELECT * FROM login_challenges WHERE id=$1', [b.challengeId])).rows[0];
-    if (!c || c.consumed_at || new Date(c.expires_at) < new Date()) throw badRequest('This sign-in code has expired. Log in again.');
-    if (c.attempts >= 5) throw tooMany('Too many attempts. Log in again to get new codes.');
-    const okE = c.email_code_hash === sha256(b.emailCode), okS = c.sms_code_hash === sha256(b.smsCode);
-    if (!okE || !okS) {
-      await db.query('UPDATE login_challenges SET attempts=attempts+1 WHERE id=$1', [c.id]);
-      await audit(db, req, { action: 'ADMIN_LOGIN_CODE_FAILED', category: 'Access', resource: c.user_id, outcome: 'Blocked', meta: { email: okE, sms: okS } });
-      throw new HttpError(400, 'bad_code', !okE && !okS ? 'Both codes are incorrect.' : !okE ? 'The email code is incorrect.' : 'The SMS code is incorrect.', { email: okE, sms: okS });
-    }
-    const u = (await db.query('SELECT * FROM users WHERE id=$1 AND deleted_at IS NULL', [c.user_id])).rows[0];
-    if (!u) throw unauthorized();
-    active(u);
-    await db.query('UPDATE login_challenges SET consumed_at=now() WHERE id=$1', [c.id]);
-    await audit(db, req, { action: 'ADMIN_LOGIN', category: 'Access', resource: u.id, actorLabel: u.email, meta: { factors: ['password', 'email_otp', 'sms_otp'] } });
-    return { user: userView(u), ...(await issueSession(db, cfg, reply, req, toAuth(u), c.remember)) };
-  });
-  app.post('/auth/login/resend', strict, async (req) => {
-    const b = parse(z.object({ challengeId: z.string().uuid() }), req.body);
-    const c = (await db.query('SELECT * FROM login_challenges WHERE id=$1', [b.challengeId])).rows[0];
-    if (!c || c.consumed_at || new Date(c.expires_at) < new Date()) throw badRequest('This sign-in has expired. Log in again.');
-    if (c.resends >= 3) throw tooMany('Too many resends. Log in again.');
-    const u = (await db.query('SELECT * FROM users WHERE id=$1', [c.user_id])).rows[0];
-    const ec = String(crypto.randomInt(100000, 1000000)), sc = String(crypto.randomInt(100000, 1000000));
-    await db.query(`UPDATE login_challenges SET email_code_hash=$2, sms_code_hash=$3, attempts=0, resends=resends+1, expires_at=now() + interval '10 minutes' WHERE id=$1`, [c.id, sha256(ec), sha256(sc)]);
-    await sendChallengeCodes(u, ec, sc);
-    const dev = cfg.APP_ENV !== 'prod' && providers.email.name === 'mock' && providers.sms.name === 'mock';
-    return { sent: true, expiresIn: 600, ...(dev ? { devCodes: { email: ec, sms: sc } } : {}) };
-  });
-
+  // POST /auth/login — email + password. Wrong details are audited (LOGIN_FAILED). Admins continue with the 2-code
+  // step.
   app.post('/auth/login', strict, async (req, reply) => {
     const b = parse(z.object({ email: z.string().trim().email(), password: z.string().min(1), remember: z.boolean().default(true) }), req.body);
     const r = await db.query('SELECT * FROM users WHERE email=$1 AND deleted_at IS NULL', [b.email]);
@@ -99,6 +56,8 @@ export default async function auth(app: FastifyInstance) {
     return { user: userView(u), ...s };
   });
 
+  // POST /auth/otp/send — 6-digit code by SMS (10-minute expiry, max 5 per hour per number). On stage the mock
+  // returns the code as devCode.
   app.post('/auth/otp/send', strict, async (req) => {
     const b = parse(z.object({ mobile, purpose: z.enum(['login', 'verify']).default('login') }), req.body);
     const recent = await db.query(`SELECT count(*)::int n FROM otp_codes WHERE target=$1 AND created_at > now() - interval '1 hour'`, [b.mobile]);
@@ -109,6 +68,7 @@ export default async function auth(app: FastifyInstance) {
     return { sent: true, expiresIn: 600, ...(providers.sms.name === 'mock' && cfg.APP_ENV !== 'prod' ? { devCode: code } : {}) };
   });
 
+  // Check the latest unused code for this number: expiry, max 5 attempts, then mark it used.
   async function checkOtp(target: string, purpose: string, code: string) {
     const r = await db.query(`SELECT * FROM otp_codes WHERE target=$1 AND purpose=$2 AND consumed_at IS NULL ORDER BY created_at DESC LIMIT 1`, [target, purpose]);
     const o = r.rows[0];
@@ -118,6 +78,7 @@ export default async function auth(app: FastifyInstance) {
     await db.query('UPDATE otp_codes SET consumed_at=now() WHERE id=$1', [o.id]);
   }
 
+  // POST /auth/otp/verify — mobile sign-in. Creates the account on first use (name optional).
   app.post('/auth/otp/verify', strict, async (req, reply) => {
     const b = parse(z.object({ mobile, code: z.string().regex(/^\d{6}$/), name: z.string().trim().min(2).max(80).optional(), remember: z.boolean().default(true) }), req.body);
     await checkOtp(b.mobile, 'login', b.code);
@@ -134,6 +95,8 @@ export default async function auth(app: FastifyInstance) {
     return reply.status(created ? 201 : 200).send({ user: userView(u), created, ...s });
   });
 
+  // POST /auth/oauth/google — verify the Google ID token, then find the user by Google id or email (linking them),
+  // or create one.
   app.post('/auth/oauth/google', strict, async (req, reply) => {
     const b = parse(z.object({ idToken: z.string().min(5) }), req.body);
     const g = await providers.google.verify(b.idToken);
@@ -144,6 +107,7 @@ export default async function auth(app: FastifyInstance) {
     if (isAdmin(u)) return adminChallenge(req, u, true);
     return { user: userView(u), ...(await issueSession(db, cfg, reply, req, toAuth(u))) };
   });
+  // Sign in with Apple is planned (AUTH-05); the website shows 'coming later'.
   app.post('/auth/oauth/apple', async () => { throw new HttpError(501, 'not_implemented', 'Sign in with Apple is not available yet (AUTH-05).'); });
 
   /**
@@ -208,6 +172,7 @@ export default async function auth(app: FastifyInstance) {
     return { ok: true };
   });
   // "Sign out of all devices": revoke every session of this user.
+  // POST /auth/logout-all — "Sign out of all devices": revoke every open session of this user.
   app.post('/auth/logout-all', async (req, reply) => {
     const u = requireUser(req);
     const r = await db.query(`UPDATE sessions SET revoked_at=now(), end_reason='logout_all' WHERE user_id=$1 AND revoked_at IS NULL`, [u.id]);
@@ -216,6 +181,8 @@ export default async function auth(app: FastifyInstance) {
     return { ok: true, sessionsEnded: r.rowCount };
   });
 
+  // POST /auth/password/forgot — always answers the same way (does not reveal whether the email exists). Link
+  // valid 1 hour.
   app.post('/auth/password/forgot', strict, async (req) => {
     const b = parse(z.object({ email: z.string().trim().email() }), req.body);
     const u = (await db.query('SELECT * FROM users WHERE email=$1 AND deleted_at IS NULL', [b.email])).rows[0];
@@ -227,6 +194,7 @@ export default async function auth(app: FastifyInstance) {
     return { ok: true, message: 'If an account exists for this email, a reset link has been sent.' };
   });
 
+  // POST /auth/password/reset — set a new password with the emailed token; ends every session of the user.
   app.post('/auth/password/reset', strict, async (req) => {
     const b = parse(z.object({ token: z.string().min(10), password: pw }), req.body);
     const r = await db.query('SELECT * FROM password_resets WHERE token_hash=$1', [sha256(b.token)]);
@@ -239,6 +207,7 @@ export default async function auth(app: FastifyInstance) {
     return { ok: true };
   });
 
+  // POST /auth/verify-email — confirm the address from the link sent at sign-up (valid 3 days).
   app.post('/auth/verify-email', async (req) => {
     const b = parse(z.object({ token: z.string().min(10) }), req.body);
     const r = await db.query(`UPDATE users SET email_verified_at=now() WHERE id=(SELECT user_id FROM password_resets WHERE token_hash=$1 AND expires_at > now() AND used_at IS NULL) RETURNING id`, ['verify:' + sha256(b.token)]);
@@ -247,6 +216,7 @@ export default async function auth(app: FastifyInstance) {
     return { ok: true };
   });
 
+  // GET /auth/me — who is signed in (the website calls this on page load).
   app.get('/auth/me', async (req) => {
     const me = requireUser(req);
     const u = (await db.query('SELECT * FROM users WHERE id=$1', [me.id])).rows[0];
@@ -254,6 +224,7 @@ export default async function auth(app: FastifyInstance) {
     return { user: userView(u) };
   });
 
+  // Email a 3-day verification link (token stored hashed in password_resets with a 'verify:' prefix).
   async function sendVerifyEmail(u: any) {
     if (!u.email) return;
     const token = randomToken();

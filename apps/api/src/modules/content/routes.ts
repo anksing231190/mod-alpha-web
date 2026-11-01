@@ -1,16 +1,23 @@
+/**
+ * Content module — public content and help.
+ *   GET /faqs · GET /insights · GET /public/activity (anonymous counts for the landing page)
+ *   POST /assistant/messages (AI assistant; daily limit per plan) · POST /support/tickets
+ */
 import type { FastifyInstance } from 'fastify';
 import crypto from 'node:crypto';
 import { z } from 'zod';
-import { parse } from '../lib/validate.js';
-import { tooMany } from '../lib/errors.js';
-import { requireUser } from '../lib/auth.js';
-import { entitlements } from './billing.js';
+import { parse } from '../../shared/validate.js';
+import { tooMany } from '../../shared/errors.js';
+import { requireUser } from '../auth/session.js';
+import { entitlements } from '../billing/routes.js';
 
+// Instructions for the AI assistant: explain data, never give personal advice or place orders.
 const SYSTEM = `You are the Mod Alpha assistant for Indian mutual fund investors. Explain fund data, returns (CAGR, volatility, Sharpe) and SIP concepts in plain language.
 Rules: use only the fund data provided in the context; never give personalised buy/sell advice; never promise returns; remind users that past performance does not guarantee future results; Mod Alpha does not place orders.`;
 
 export default async function content(app: FastifyInstance) {
   const { db, providers, cfg } = app.deps;
+  // Published FAQs and AI insight cards.
   app.get('/faqs', async () => ({ items: (await db.query('SELECT id, category, question, answer FROM faqs WHERE published ORDER BY sort, id')).rows }));
   app.get('/insights', async () => ({ items: (await db.query(`SELECT id, icon, title, body, published_at FROM insights WHERE status='Published' ORDER BY published_at DESC LIMIT 10`)).rows }));
 
@@ -22,6 +29,8 @@ export default async function content(app: FastifyInstance) {
     return { events: r.rows };
   });
 
+  // POST /assistant/messages — check the plan's daily question limit (Free = 1), answer with the AI provider using
+  // live fund data as context, and count usage.
   app.post('/assistant/messages', { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } }, async (req) => {
     const u = requireUser(req);
     const b = parse(z.object({ messages: z.array(z.object({ role: z.enum(['user', 'assistant']), content: z.string().min(1).max(2000) })).min(1).max(20) }), req.body);
@@ -38,6 +47,7 @@ export default async function content(app: FastifyInstance) {
     return { reply: out.text, provider: providers.ai.name, usage: { today: used + 1, limit }, disclaimer: 'Not investment advice. Past performance does not guarantee future returns.' };
   });
 
+  // POST /support/tickets — store the ticket and pass it to the helpdesk provider (5 per 10 minutes per IP).
   app.post('/support/tickets', { config: { rateLimit: { max: cfg.APP_ENV === 'test' ? 100 : 5, timeWindow: '10 minutes' } } }, async (req) => {
     const b = parse(z.object({ email: z.string().email(), topic: z.enum(['Product question', 'Fund data', 'Subscription', 'Account & privacy']), message: z.string().trim().min(10).max(2000) }), req.body);
     const number = `MA-${new Date().toISOString().slice(2, 10).replace(/-/g, '')}-${crypto.randomInt(1000, 9999)}`;

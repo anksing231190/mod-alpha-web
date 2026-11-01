@@ -1,27 +1,38 @@
+/**
+ * SIP date module — the monthly recommended investment day, Mod Alpha's core output.
+ *   GET /sip-dates/current · GET /sip-dates (history)
+ *   POST /admin/sip-dates/validate (checks only) · POST /admin/sip-dates/publish (new version + reminder campaign)
+ */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { parse } from '../lib/validate.js';
-import { badRequest } from '../lib/errors.js';
-import { requireAdmin } from '../lib/auth.js';
-import { audit } from '../lib/audit.js';
-import { tx } from '../db.js';
-import { addDays } from '../lib/dates.js';
+import { parse } from '../../shared/validate.js';
+import { badRequest } from '../../shared/errors.js';
+import { requireAdmin } from '../auth/session.js';
+import { audit } from '../../shared/audit.js';
+import { tx } from '../../db.js';
+import { addDays } from '../../shared/dates.js';
 
+// Request body for validate / publish: month YYYY-MM, day 1–28, a reason (kept for the audit trail) and optional
+// alternative days.
 const month = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Use YYYY-MM');
 const body = z.object({ month, day: z.number().int().min(1).max(28), reason: z.string().trim().min(5, 'Give a reason (min 5 characters)').max(500), upliftPct: z.number().min(-50).max(50).optional(), alternatives: z.array(z.object({ day: z.number().int().min(1).max(28), upliftPct: z.number() })).max(3).optional() });
 
 export default async function sip(app: FastifyInstance) {
   const { db } = app.deps;
+  // GET /sip-dates/current — latest published date (public).
   app.get('/sip-dates/current', async () => {
     const r = await db.query(`SELECT * FROM sip_dates WHERE status='Published' ORDER BY (month = to_char(CURRENT_DATE,'YYYY-MM')) DESC, (month <= to_char(CURRENT_DATE,'YYYY-MM')) DESC, CASE WHEN month <= to_char(CURRENT_DATE,'YYYY-MM') THEN month END DESC, month ASC LIMIT 1`);
     const upcoming = await db.query(`SELECT * FROM sip_dates WHERE status='Published' AND month > to_char(CURRENT_DATE,'YYYY-MM') ORDER BY month LIMIT 3`);
     return { current: r.rows[0] ?? null, upcoming: upcoming.rows };
   });
+  // GET /sip-dates — published history, optional ?from=&to= months.
   app.get('/sip-dates', async (req) => {
     const p = parse(z.object({ from: month.optional(), to: month.optional() }), req.query);
     return { items: (await db.query(`SELECT * FROM sip_dates WHERE status<>'Draft' AND ($1::text IS NULL OR month >= $1) AND ($2::text IS NULL OR month <= $2) ORDER BY month DESC`, [p.from ?? null, p.to ?? null])).rows };
   });
 
+  // Pre-publish checks: weekend, market holiday, already published (re-publishing creates a new version), past
+  // date; plus how many subscribers will be notified.
   async function checks(b: z.infer<typeof body>) {
     const date = `${b.month}-${String(b.day).padStart(2, '0')}`, d = new Date(date + 'T00:00:00Z');
     const out: { level: 'ok' | 'warn' | 'error'; msg: string }[] = [];
@@ -35,7 +46,10 @@ export default async function sip(app: FastifyInstance) {
     const recipients = (await db.query(`SELECT count(DISTINCT s.user_id)::int n FROM subscriptions s JOIN users u ON u.id=s.user_id WHERE s.status='Active' AND u.account_status='Active'`)).rows[0].n;
     return { date, checks: out, ok: !out.some((c) => c.level === 'error'), recipients, existing: ex ?? null };
   }
+  // POST /admin/sip-dates/validate — run the checks without saving.
   app.post('/admin/sip-dates/validate', async (req) => { requireAdmin(req); return checks(parse(body, req.body)); });
+  // POST /admin/sip-dates/publish — save as Published (new version), audit it and schedule the SIP reminder
+  // campaign, in one transaction.
   app.post('/admin/sip-dates/publish', async (req) => {
     const admin = requireAdmin(req);
     const b = parse(body, req.body);

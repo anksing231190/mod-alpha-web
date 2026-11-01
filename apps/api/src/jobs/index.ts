@@ -1,10 +1,21 @@
+/**
+ * Background jobs (run by cli/jobs.ts on a schedule, or once with --once <name>).
+ *   importNav            23:30 IST  fetch the daily NAV file, store new NAVs, recompute metrics
+ *   dispatchDueCampaigns every min  send scheduled campaigns that are due
+ *   subscriptionLifecycle hourly    expire / mark past-due subscriptions
+ *   processDataRequests  hourly     prepare data exports and carry out deletion requests
+ *   customSipReminders   09:00 IST  remind subscribers who chose their own SIP day
+ * Each job returns a small result object that is logged.
+ */
 import type { Deps } from '../app.js';
-import { dispatchCampaign } from '../modules/notifications.js';
-import { computeFundMetrics } from '../modules/analytics.js';
-import { exportUserData } from '../modules/me.js';
-import { audit } from '../lib/audit.js';
+import { dispatchCampaign } from '../modules/notifications/routes.js';
+import { computeFundMetrics } from '../modules/funds/analytics.js';
+import { exportUserData } from '../modules/account/routes.js';
+import { audit } from '../shared/audit.js';
 
 /** Import the latest NAVs from the configured provider (AMFI or mock). Only funds we track are stored. */
+// Fetch the NAV feed, match rows to funds by AMFI code (or fund id on mocks), insert new NAVs and recompute
+// metrics.
 export async function importNav(d: Deps) {
   const rows = await d.providers.nav.fetchLatest();
   const map = new Map((await d.db.query(`SELECT fund_id, coalesce(amfi_code, fund_id) code FROM funds WHERE is_active`)).rows.map((r) => [r.code, r.fund_id]));
@@ -14,11 +25,13 @@ export async function importNav(d: Deps) {
   await audit(d.db, null, { action: 'NAV_FEED_IMPORTED', category: 'Data', resource: d.providers.nav.name, meta: { rows: n }, actorLabel: 'jobs' });
   return { imported: n, funds: touched.size };
 }
+// Send every campaign whose scheduled time has passed.
 export async function dispatchDueCampaigns(d: Deps) {
   const due = (await d.db.query(`SELECT id FROM campaigns WHERE status='Scheduled' AND scheduled_for <= now() ORDER BY scheduled_for`)).rows;
   const out = []; for (const c of due) out.push(await dispatchCampaign(d, c.id)); return out;
 }
 /** Expire cancelled-at-period-end plans; mark overdue renewals Past due (gateway webhooks normally do this). */
+// Active → Past due after the renewal date; Past due / Cancelled → Expired after the grace period.
 export async function subscriptionLifecycle(d: Deps) {
   const ended = await d.db.query(`UPDATE subscriptions SET status='Cancelled', cancelled_at=now() WHERE cancel_at_period_end AND status IN ('Active','Past due') AND renewal_date <= CURRENT_DATE RETURNING id`);
   const overdue = await d.db.query(`UPDATE subscriptions SET status='Past due' WHERE status='Active' AND provider<>'import' AND renewal_date < CURRENT_DATE - 3 RETURNING id`);
@@ -26,6 +39,7 @@ export async function subscriptionLifecycle(d: Deps) {
   return { ended: ended.rowCount, pastDue: overdue.rowCount, abandonedCheckouts: stale.rowCount };
 }
 /** Fulfil DPDP data-export requests and anonymise accounts whose deletion grace period (30 days) has passed. */
+// Data rights: build the export file, or delete the account and its personal data (audited).
 export async function processDataRequests(d: Deps) {
   const ex = (await d.db.query(`SELECT d.id, d.user_id, u.email FROM data_requests d JOIN users u ON u.id=d.user_id WHERE d.kind='export' AND d.status='Requested'`)).rows;
   for (const r of ex) {
@@ -44,6 +58,8 @@ export async function processDataRequests(d: Deps) {
 }
 /** Daily (09:00 IST): remind paid subscribers who chose their own SIP day. If their day is past the end of a
  *  short month (e.g. 31 in November) they are reminded on the last day. In-app always; email/SMS per their channels. */
+// Subscribers with sipReminder.mode = 'custom' get their reminder on their own day (deduplicated per month by the
+// notification link).
 export async function customSipReminders(d: Deps, today?: string) {
   const ist = today ?? new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 10);
   const [y, m, dd] = ist.split('-').map(Number);

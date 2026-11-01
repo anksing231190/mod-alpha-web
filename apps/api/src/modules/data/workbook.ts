@@ -1,6 +1,7 @@
 /** Server-side validator for the test-data workbook. Rules mirror docs/21_test_data_excel_format.md. */
 import XLSX from 'xlsx';
 
+// Allowed values for list columns.
 const ENUM = {
   asset: ['Equity', 'Debt', 'Hybrid', 'Index', 'Other'], plan: ['Direct', 'Regular'], option: ['Growth', 'IDCW'],
   risk: ['Low', 'Low to Moderate', 'Moderate', 'Moderately High', 'High', 'Very High'], yn: ['Y', 'N'],
@@ -8,6 +9,8 @@ const ENUM = {
   subPlan: ['Pro', 'Premium'], cycle: ['Monthly', 'Quarterly', 'Yearly'], subStatus: ['Active', 'Past due', 'Cancelled', 'Expired'], sip: ['Draft', 'Published', 'Archived'],
 };
 type Col = { t: 'id' | 'str' | 'num' | 'int' | 'date' | 'month' | 'enum' | 'email'; req?: 1; v?: string[]; gt?: number; min?: number; max?: number; ref?: string; notFuture?: 1; def?: string };
+// One entry per sheet: key columns (unique together), unique columns, whether it holds personal data, and each
+// column's type and rules.
 export const SCHEMA: Record<string, { key: string[]; unique?: string[]; optional?: 1; personal?: 1; cols: Record<string, Col> }> = {
   Funds: { key: ['fund_id'], cols: { fund_id: { t: 'id', req: 1 }, scheme_name: { t: 'str', req: 1 }, amc: { t: 'str', req: 1 }, category: { t: 'str', req: 1 }, asset_class: { t: 'enum', v: ENUM.asset, req: 1 }, plan: { t: 'enum', v: ENUM.plan, req: 1 }, option: { t: 'enum', v: ENUM.option, req: 1 }, risk_level: { t: 'enum', v: ENUM.risk, req: 1 }, benchmark: { t: 'str' }, aum_cr: { t: 'num', min: 0 }, expense_ratio_pct: { t: 'num', min: 0, max: 5 }, inception_date: { t: 'date', req: 1 }, is_active: { t: 'enum', v: ENUM.yn, def: 'Y' } } },
   NAV_History: { key: ['fund_id', 'nav_date'], cols: { fund_id: { t: 'id', req: 1, ref: 'Funds' }, nav_date: { t: 'date', req: 1, notFuture: 1 }, nav: { t: 'num', req: 1, gt: 0 } } },
@@ -21,6 +24,8 @@ export type SheetReport = { name: string; total: number; valid: number; errors: 
 export type Report = { ok: boolean; fatal?: string; sheets: SheetReport[]; ignored: string[]; errors: number; warnings: number };
 
 const pad = (n: number) => String(n).padStart(2, '0');
+// Validate and normalise one cell (Excel dates, YYYY-MM-DD text, numbers without ₹/% or commas, enums case-
+// insensitive).
 function cell(v: any, c: Col, todayIso: string): { v?: any; empty?: 1; err?: string } {
   if (v === undefined || v === null || (typeof v === 'string' && v.trim() === '')) return { empty: 1 };
   if (c.t === 'date') {
@@ -46,6 +51,8 @@ function cell(v: any, c: Col, todayIso: string): { v?: any; empty?: 1; err?: str
   const s = String(v).trim(); if (c.t === 'id' && /\s/.test(s)) return { err: `"${s}" must not contain spaces` }; return { v: s };
 }
 
+// Validate one sheet: header row, required columns, every row, duplicate keys. Returns the clean rows and a
+// report.
 function readSheet(ws: XLSX.WorkSheet, name: string, todayIso: string) {
   const sch = SCHEMA[name], rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null, blankrows: false });
   const rep: SheetReport = { name, total: 0, valid: 0, errors: [], warnings: [] }, out: any[] = [];
@@ -82,6 +89,8 @@ function readSheet(ws: XLSX.WorkSheet, name: string, todayIso: string) {
  * Validate a workbook buffer. Sheets present replace the matching tables; `existing` holds the keys
  * currently in the DB so cross-sheet references can be checked when only some sheets are uploaded.
  */
+// Validate a whole workbook (or a CSV as one sheet): sheet names, cross-sheet references (NAV → Funds,
+// Subscriptions → Users) and the personal-data rule.
 export function validateWorkbook(buf: Buffer, opts: { fileName: string; csvAs?: string; existingFundIds: Set<string>; existingUserRefs: Set<string>; allowPersonal: boolean; todayIso: string }) {
   const wb = XLSX.read(buf, { type: 'buffer', dense: true });
   const report: Report = { ok: false, sheets: [], ignored: [], errors: 0, warnings: 0 };

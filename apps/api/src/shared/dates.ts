@@ -1,3 +1,6 @@
+/**
+ * Date helpers working on 'YYYY-MM-DD' strings in UTC (no time-zone surprises).
+ */
 export const iso = (d: Date) => d.toISOString().slice(0, 10);
 export const toDate = (s: string) => new Date(s + 'T00:00:00Z');
 export function addDays(s: string, n: number) { const d = toDate(s); d.setUTCDate(d.getUTCDate() + n); return iso(d); }

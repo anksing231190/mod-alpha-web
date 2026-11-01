@@ -1,12 +1,20 @@
+/**
+ * KYC module — identity verification before the first paid subscription.
+ *   GET /kyc/status · POST /kyc/sessions (start with the provider; returns the redirect URL)
+ *   POST /webhooks/kyc (provider → us, signed) · POST /kyc/mock/complete (stage only)
+ *   POST /admin/kyc/:userId/decision (manual approve / reject, audited)
+ * Only the outcome is stored (status, provider reference, reason) — never PAN/Aadhaar numbers or documents.
+ */
 import type { FastifyInstance } from 'fastify';
 import crypto from 'node:crypto';
 import { z } from 'zod';
-import { parse } from '../lib/validate.js';
-import { notFound, unauthorized } from '../lib/errors.js';
-import { requireAdmin, requireUser } from '../lib/auth.js';
-import { audit } from '../lib/audit.js';
-import type { Q } from '../db.js';
+import { parse } from '../../shared/validate.js';
+import { notFound, unauthorized } from '../../shared/errors.js';
+import { requireAdmin, requireUser } from '../auth/session.js';
+import { audit } from '../../shared/audit.js';
+import type { Q } from '../../db.js';
 
+// Record a KYC result: update the KYC session and the user's kyc_status, and notify the user in the app.
 async function applyStatus(q: Q, ref: string, status: string, reason?: string, decidedBy?: string) {
   const s = (await q.query(`UPDATE kyc_sessions SET status=$2, reason=$3, decided_by=$4, updated_at=now() WHERE provider_ref=$1 RETURNING user_id`, [ref, status, reason ?? null, decidedBy ?? null])).rows[0];
   if (!s) return null;
@@ -17,11 +25,13 @@ async function applyStatus(q: Q, ref: string, status: string, reason?: string, d
 
 export default async function kyc(app: FastifyInstance) {
   const { db, providers, cfg } = app.deps;
+  // GET /kyc/status — the user's KYC state and latest provider session.
   app.get('/kyc/status', async (req) => {
     const u = requireUser(req);
     const r = await db.query(`SELECT u.kyc_status, k.status, k.provider, k.redirect_url, k.updated_at, k.reason FROM users u LEFT JOIN LATERAL (SELECT * FROM kyc_sessions WHERE user_id=u.id ORDER BY created_at DESC LIMIT 1) k ON true WHERE u.id=$1`, [u.id]);
     return r.rows[0];
   });
+  // POST /kyc/sessions — start (or restart after rejection) verification with the provider.
   app.post('/kyc/sessions', async (req) => {
     const u = requireUser(req);
     const row = (await db.query('SELECT * FROM users WHERE id=$1', [u.id])).rows[0];
@@ -31,6 +41,7 @@ export default async function kyc(app: FastifyInstance) {
     await db.query(`UPDATE users SET kyc_status='Pending' WHERE id=$1 AND kyc_status IN ('Not started','Rejected')`, [u.id]);
     return { status: 'Pending', redirectUrl: s.redirectUrl, ref: s.ref, provider: providers.kyc.name };
   });
+  // POST /webhooks/kyc — provider result. Signature checked on the raw body; the result is audited.
   app.post('/webhooks/kyc', { config: { rateLimit: false } }, async (req) => {
     const raw = req.rawBody ?? JSON.stringify(req.body);
     if (!providers.kyc.verifyWebhook(raw, (req.headers['x-digio-signature'] ?? req.headers['x-mock-signature']) as string)) throw unauthorized('Invalid signature');
@@ -41,6 +52,7 @@ export default async function kyc(app: FastifyInstance) {
     return { ok: !!userId };
   });
   // Stage-only: the mock KYC page posts the decision through the same signed webhook path.
+  // Stage only: the mock KYC page's Approve / Reject buttons post through the same signed webhook path.
   app.post('/kyc/mock/complete', async (req) => {
     const u = requireUser(req);
     if (providers.kyc.name !== 'mock' || cfg.APP_ENV === 'prod') throw notFound();
@@ -50,6 +62,7 @@ export default async function kyc(app: FastifyInstance) {
     const res = await app.inject({ method: 'POST', url: '/api/v1/webhooks/kyc', payload: body, headers: { 'content-type': 'application/json', 'x-mock-signature': crypto.createHmac('sha256', cfg.JWT_SECRET).update(body).digest('hex') } });
     return res.json();
   });
+  // Admin override: approve or reject with a reason (creates a 'manual' KYC session if none exists).
   app.post('/admin/kyc/:userId/decision', async (req) => {
     const admin = requireAdmin(req);
     const b = parse(z.object({ decision: z.enum(['Verified', 'Rejected', 'In review']), reason: z.string().min(3) }), req.body);

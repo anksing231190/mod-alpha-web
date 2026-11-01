@@ -1,11 +1,18 @@
+/**
+ * Seed data.
+ *   seedReference()      plans, templates, FAQs, insights, model release (idempotent)
+ *   bootstrapAdmin()     first super admin from ADMIN_BOOTSTRAP_* (also fills in its mobile for the SMS code)
+ *   importWorkbookFile() load a workbook (stage/local test data)
+ * usage: npm run seed -- --workbook=path/to/file.xlsx
+ */
 import fs from 'node:fs';
 import bcrypt from 'bcryptjs';
 import type { Db } from '../db.js';
 import type { Config } from '../config.js';
-import { validateWorkbook } from '../modules/workbook.js';
-import { importData } from '../modules/data.js';
+import { validateWorkbook } from '../modules/data/workbook.js';
+import { importData } from '../modules/data/routes.js';
 import { tx } from '../db.js';
-import { today } from '../lib/dates.js';
+import { today } from '../shared/dates.js';
 
 /** Reference data needed in every environment (idempotent). */
 export async function seedReference(db: Db) {

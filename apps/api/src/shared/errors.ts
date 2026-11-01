@@ -1,3 +1,8 @@
+/**
+ * Error types used by routes. Throw one of these and the API answers with that status and
+ * { error: { code, message, details } } (see the error handler in app.ts).
+ */
+// status = HTTP status, code = stable machine-readable code the website checks, details = optional extra data.
 export class HttpError extends Error {
   constructor(public status: number, public code: string, message: string, public details?: unknown) { super(message); }
 }

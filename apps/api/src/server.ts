@@ -1,3 +1,7 @@
+/**
+ * Production entry point: load config, connect to PostgreSQL, run migrations (MIGRATE_ON_START=true),
+ * make sure the first super admin exists, then start listening. SIGTERM/SIGINT close cleanly.
+ */
 import './load-env.js';
 import { loadConfig } from './config.js';
 import { createDb } from './db.js';

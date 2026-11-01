@@ -1,13 +1,22 @@
+/**
+ * Account module — everything the signed-in user manages about themselves.
+ *   PATCH /me · POST /me/password · POST /me/verify-email
+ *   GET/PUT /me/preferences (notification channels, language, SIP reminder mode) · PUT /me/consents
+ *   GET /me/notifications · POST /me/notifications/read · GET/POST/DELETE /me/watchlist
+ *   POST /me/data-export · GET /me/data-export/:id · POST /me/deletion-request (DPDP data rights)
+ */
 import type { FastifyInstance } from 'fastify';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
-import { parse } from '../lib/validate.js';
-import { badRequest, HttpError, notFound, unauthorized } from '../lib/errors.js';
-import { randomToken, requireUser, sha256 } from '../lib/auth.js';
-import { audit } from '../lib/audit.js';
-import { userView } from './auth.js';
-import { entitlements } from './billing.js';
+import { parse } from '../../shared/validate.js';
+import { badRequest, HttpError, notFound, unauthorized } from '../../shared/errors.js';
+import { randomToken, requireUser, sha256 } from '../auth/session.js';
+import { audit } from '../../shared/audit.js';
+import { userView } from '../auth/routes.js';
+import { entitlements } from '../billing/routes.js';
 
+// Preferences a new user starts with. sipReminder: 'modalpha' = Mod Alpha's published date; 'custom' = the user's
+// own day (paid plans).
 export const DEFAULT_PREFS = {
   defaultInvestment: 100000, defaultSip: 10000, defaultPeriod: '5Y', numberFormat: 'indian', theme: 'dark', language: 'en-IN',
   channels: { email: true, sms: false, push: true, whatsapp: false },
@@ -20,6 +29,7 @@ export const DEFAULT_PREFS = {
 export default async function me(app: FastifyInstance) {
   const { db, providers, cfg } = app.deps;
 
+  // PATCH /me — update name / mobile (a changed mobile must be verified again).
   app.patch('/me', async (req) => {
     const u = requireUser(req);
     const b = parse(z.object({ name: z.string().trim().min(2).max(80).optional(), mobile: z.string().trim().max(20).optional().nullable(), country: z.string().max(40).optional() }), req.body);
@@ -32,6 +42,7 @@ export default async function me(app: FastifyInstance) {
     return { user: userView(r.rows[0]) };
   });
 
+  // POST /me/password — change password (current password required when one is set).
   app.post('/me/password', async (req) => {
     const u = requireUser(req);
     const b = parse(z.object({ currentPassword: z.string().optional(), newPassword: z.string().min(8).max(128) }), req.body);
@@ -44,6 +55,7 @@ export default async function me(app: FastifyInstance) {
     return { ok: true, otherSessionsEnded: ended.rowCount };
   });
 
+  // POST /me/verify-email — send a new verification link.
   app.post('/me/verify-email', async (req) => {
     const u = requireUser(req);
     const row = (await db.query('SELECT * FROM users WHERE id=$1', [u.id])).rows[0];
@@ -55,12 +67,15 @@ export default async function me(app: FastifyInstance) {
     return { ok: true };
   });
 
+  // GET /me/preferences — saved preferences merged over the defaults.
   app.get('/me/preferences', async (req) => {
     const u = requireUser(req);
     const r = await db.query('SELECT data FROM preferences WHERE user_id=$1', [u.id]);
     const c = await db.query(`SELECT DISTINCT ON (kind) kind, granted FROM consents WHERE user_id=$1 ORDER BY kind, created_at DESC`, [u.id]);
     return { preferences: { ...DEFAULT_PREFS, ...(r.rows[0]?.data ?? {}) }, consents: Object.fromEntries(c.rows.map((x) => [x.kind, x.granted])) };
   });
+  // PUT /me/preferences — a custom SIP reminder day needs a paid plan (402 subscription_required otherwise); the
+  // change is audited.
   app.put('/me/preferences', async (req) => {
     const u = requireUser(req);
     const b = parse(z.object({
@@ -84,6 +99,7 @@ export default async function me(app: FastifyInstance) {
     if (b.sipReminder) await audit(db, req, { action: 'SIP_REMINDER_PREFERENCE_CHANGED', category: 'Configuration', resource: u.id, meta: next.sipReminder });
     return { preferences: next };
   });
+  // PUT /me/consents — marketing / analytics consent; every change is kept as a new row (consent history).
   app.put('/me/consents', async (req) => {
     const u = requireUser(req);
     const b = parse(z.object({ analytics: z.boolean().optional(), marketing: z.boolean().optional() }).strict(), req.body);
@@ -93,11 +109,13 @@ export default async function me(app: FastifyInstance) {
   });
 
   // ---- notifications (in-app inbox)
+  // GET /me/notifications — the in-app inbox (bell) with unread count.
   app.get('/me/notifications', async (req) => {
     const u = requireUser(req);
     const r = await db.query(`SELECT n.id, n.kind, n.title, n.body, n.link, n.created_at, (r.read_at IS NOT NULL) AS read FROM notifications n LEFT JOIN notification_reads r ON r.notification_id=n.id AND r.user_id=$1 WHERE n.user_id=$1 OR n.user_id IS NULL ORDER BY n.created_at DESC LIMIT 30`, [u.id]);
     return { items: r.rows, unread: r.rows.filter((x) => !x.read).length };
   });
+  // POST /me/notifications/read — mark one (id) or all notifications as read.
   app.post('/me/notifications/read', async (req) => {
     const u = requireUser(req);
     const b = parse(z.object({ ids: z.array(z.string().uuid()).optional() }), req.body);
@@ -106,6 +124,7 @@ export default async function me(app: FastifyInstance) {
   });
 
   // ---- watchlist
+  // Watchlist: funds the user follows.
   app.get('/me/watchlist', async (req) => {
     const u = requireUser(req);
     return { items: (await db.query('SELECT w.fund_id, f.scheme_name, w.added_at FROM watchlist w JOIN funds f USING (fund_id) WHERE w.user_id=$1 ORDER BY w.added_at DESC', [u.id])).rows };
@@ -119,6 +138,7 @@ export default async function me(app: FastifyInstance) {
   app.delete('/me/watchlist/:fundId', async (req) => { const u = requireUser(req); await db.query('DELETE FROM watchlist WHERE user_id=$1 AND fund_id=$2', [u.id, (req.params as any).fundId]); return { ok: true }; });
 
   // ---- data rights (DPDP Act)
+  // POST /me/data-export — request a copy of all personal data; the processDataRequests job prepares it.
   app.post('/me/data-export', async (req) => {
     const u = requireUser(req);
     const pending = await db.query(`SELECT id FROM data_requests WHERE user_id=$1 AND kind='export' AND status IN ('Requested','Processing')`, [u.id]);
@@ -127,6 +147,7 @@ export default async function me(app: FastifyInstance) {
     await audit(db, req, { action: 'DATA_EXPORT_REQUESTED', category: 'Account', resource: u.id });
     return r.rows[0];
   });
+  // GET /me/data-export/:id — download the prepared export (own requests only).
   app.get('/me/data-export/:id', async (req) => {
     const u = requireUser(req);
     const r = await db.query(`SELECT * FROM data_requests WHERE id=$1 AND user_id=$2 AND kind='export'`, [(req.params as any).id, u.id]);
@@ -134,6 +155,8 @@ export default async function me(app: FastifyInstance) {
     if (r.rows[0].status !== 'Completed') return { status: r.rows[0].status };
     return { status: 'Completed', data: await exportUserData(db, u.id) };
   });
+  // POST /me/deletion-request — ask for account deletion (password + typing DELETE). Processed by the data-
+  // requests job.
   app.post('/me/deletion-request', async (req) => {
     const u = requireUser(req);
     const b = parse(z.object({ password: z.string().optional(), confirm: z.literal('DELETE') }), req.body);
@@ -145,6 +168,7 @@ export default async function me(app: FastifyInstance) {
   });
 }
 
+// Everything stored about one user, as one JSON document (used by the data-export job).
 export async function exportUserData(db: any, userId: string) {
   const q = async (sql: string) => (await db.query(sql, [userId])).rows;
   return {

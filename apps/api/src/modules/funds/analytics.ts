@@ -1,16 +1,28 @@
-import type { Q } from '../db.js';
-import { addYears } from '../lib/dates.js';
+/**
+ * Fund analytics — NAV look-ups and the metrics shown everywhere in the app.
+ *   CAGR (1/3/5/10 years) = (NAV_latest / NAV_on_or_before(latest − N years))^(1/N) − 1
+ *   Volatility (3 y)      = annualised standard deviation of daily log returns
+ *   Sharpe (3 y)          = (3-year CAGR − RISK_FREE) ÷ volatility
+ * Results are stored in fund_metrics so pages never compute them on the fly.
+ */
+import type { Q } from '../../db.js';
+import { addYears } from '../../shared/dates.js';
 
+// Risk-free rate used by the Sharpe ratio (6.5 %). Planned: make it an admin setting.
 export const RISK_FREE = 0.065;
+// NAV on a date, or the closest earlier business day.
 async function navOnOrBefore(q: Q, fundId: string, date: string) {
   return (await q.query('SELECT nav_date, nav FROM nav_history WHERE fund_id=$1 AND nav_date <= $2 ORDER BY nav_date DESC LIMIT 1', [fundId, date])).rows[0] ?? null;
 }
+// NAV on a date, or the next business day (used when buying in the calculators).
 export async function navOnOrAfter(q: Q, fundId: string, date: string) {
   return (await q.query('SELECT nav_date, nav FROM nav_history WHERE fund_id=$1 AND nav_date >= $2 ORDER BY nav_date ASC LIMIT 1', [fundId, date])).rows[0] ?? null;
 }
+// Most recent NAV of a fund.
 export async function latestNav(q: Q, fundId: string) {
   return (await q.query('SELECT nav_date, nav FROM nav_history WHERE fund_id=$1 ORDER BY nav_date DESC LIMIT 1', [fundId])).rows[0] ?? null;
 }
+// Keep at most `max` evenly spaced rows (always including the last) — for charts.
 export function sample<T>(rows: T[], max: number): T[] {
   if (rows.length <= max) return rows;
   const step = Math.ceil(rows.length / max), out: T[] = [];
@@ -19,6 +31,7 @@ export function sample<T>(rows: T[], max: number): T[] {
   return out;
 }
 /** Recompute metrics for one or all funds. CAGR = (NAV_t / NAV_{t-N})^(1/N) − 1. */
+// Recompute returns, volatility, Sharpe and the sparkline for all (or some) funds. Runs after imports and nightly.
 export async function computeFundMetrics(q: Q, fundIds?: string[]) {
   const ids = fundIds ?? (await q.query('SELECT fund_id FROM funds')).rows.map((r: any) => r.fund_id);
   for (const id of ids) {

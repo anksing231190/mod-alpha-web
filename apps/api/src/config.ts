@@ -71,6 +71,7 @@ const Env = z.object({
 });
 export type Config = z.infer<typeof Env> & { allowMocks: Set<string> };
 
+// When a real provider is selected, these variables must be set — startup fails and names the missing one.
 const REQUIRED: Record<string, [string, string, string[]]> = {
   email: ['EMAIL_PROVIDER', 'sendgrid', ['SENDGRID_API_KEY']],
   sms: ['SMS_PROVIDER', 'msg91', ['MSG91_AUTH_KEY', 'MSG91_SENDER_ID']],
@@ -85,6 +86,7 @@ const REQUIRED: Record<string, [string, string, string[]]> = {
 /** Providers that must be real in prod (unless listed in ALLOW_MOCK_PROVIDERS). */
 export const PROD_CRITICAL = ['email', 'sms', 'payments', 'kyc'];
 
+// Parse and check all environment variables once at startup. Throws a readable list of every problem.
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const parsed = Env.safeParse(env);
   if (!parsed.success) {

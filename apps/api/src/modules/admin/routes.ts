@@ -1,18 +1,29 @@
+/**
+ * Admin module — the admin console's data.
+ *   GET /admin/metrics (dashboard KPIs + charts for a date range) · GET /admin/recent
+ *   GET /admin/users (+ CSV export) · GET/PATCH /admin/users/:id (status, role) · GET /admin/subscriptions
+ *   GET /admin/audit · GET/PUT /admin/settings · GET /admin/integrations · GET /admin/mock-outbox
+ *   GET /admin/data-requests · GET /admin/models · PUT /admin/models/:version/gates · POST …/approve
+ * Every route requires an admin; changes are audited. Some actions are super-admin only.
+ */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { parse, isoDate } from '../lib/validate.js';
-import { badRequest, notFound } from '../lib/errors.js';
-import { requireAdmin } from '../lib/auth.js';
-import { audit } from '../lib/audit.js';
-import { addDays, daysBetween, today } from '../lib/dates.js';
-import { providerStatus } from '../providers/index.js';
+import { parse, isoDate } from '../../shared/validate.js';
+import { badRequest, notFound } from '../../shared/errors.js';
+import { requireAdmin } from '../auth/session.js';
+import { audit } from '../../shared/audit.js';
+import { addDays, daysBetween, today } from '../../shared/dates.js';
+import { providerStatus } from '../../providers/index.js';
 
+// Rows → CSV text with every value quoted (safe for commas, quotes and new lines).
 const csv = (rows: any[][]) => rows.map((r) => r.map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
 
 export default async function admin(app: FastifyInstance) {
   const { db, cfg, providers } = app.deps;
 
   /** KPIs + time series for the dashboard. Granularity is chosen from the range length unless given. */
+  // GET /admin/metrics — users, subscribers, conversion, revenue and the growth / subscription charts for
+  // ?from&to, with the previous period for comparison.
   app.get('/admin/metrics', async (req) => {
     requireAdmin(req);
     const asOf = (await db.query(`SELECT greatest((SELECT max(signup_date) FROM users), (SELECT max(nav_date) FROM nav_history), (SELECT max(start_date) FROM subscriptions), CURRENT_DATE - 0) d`)).rows[0].d as string;
@@ -49,6 +60,7 @@ export default async function admin(app: FastifyInstance) {
     };
   });
 
+  // GET /admin/users — search and filter users; ?format=csv exports (audited as USERS_EXPORTED).
   app.get('/admin/users', async (req) => {
     requireAdmin(req);
     const p = parse(z.object({ q: z.string().optional(), status: z.string().optional(), kyc: z.string().optional(), role: z.string().optional(), page: z.coerce.number().int().min(1).default(1), pageSize: z.coerce.number().int().min(1).max(200).default(15), format: z.enum(['json', 'csv']).default('json') }), req.query);
@@ -69,6 +81,7 @@ export default async function admin(app: FastifyInstance) {
     a.push(p.pageSize, (p.page - 1) * p.pageSize);
     return { items: (await db.query(sel + ` LIMIT $${a.length - 1} OFFSET $${a.length}`, a)).rows, total, page: p.page, pageSize: p.pageSize };
   });
+  // One user with subscriptions and recent KYC sessions.
   app.get('/admin/users/:id', async (req) => {
     requireAdmin(req);
     const u = (await db.query(`SELECT id, external_ref, full_name, email, mobile, role, account_status, kyc_status, marketing_consent, signup_date, email_verified_at, mobile_verified_at FROM users WHERE id=$1`, [(req.params as any).id])).rows[0];
@@ -76,6 +89,7 @@ export default async function admin(app: FastifyInstance) {
     await audit(db, req, { action: 'USER_RECORD_VIEWED', category: 'Access', resource: u.id });
     return { user: u, subscriptions: (await db.query('SELECT id, plan_id, billing_cycle, amount_inr, status, start_date, renewal_date FROM subscriptions WHERE user_id=$1 ORDER BY start_date DESC', [u.id])).rows, kyc: (await db.query('SELECT provider, status, reason, updated_at FROM kyc_sessions WHERE user_id=$1 ORDER BY created_at DESC LIMIT 5', [u.id])).rows };
   });
+  // Change account status or role. Suspending ends the user's sessions immediately. Audited.
   app.patch('/admin/users/:id', async (req) => {
     const admin = requireAdmin(req);
     const b = parse(z.object({ accountStatus: z.enum(['Active', 'Suspended', 'Closed']).optional(), role: z.enum(['user', 'admin', 'superadmin']).optional(), reason: z.string().min(3) }), req.body);
@@ -89,6 +103,7 @@ export default async function admin(app: FastifyInstance) {
     return { ok: true };
   });
 
+  // Subscriptions list with KPIs (active, MRR, by plan).
   app.get('/admin/subscriptions', async (req) => {
     requireAdmin(req);
     const p = parse(z.object({ q: z.string().optional(), status: z.string().optional(), plan: z.string().optional(), page: z.coerce.number().int().min(1).default(1), pageSize: z.coerce.number().int().min(1).max(200).default(15) }), req.query);
@@ -106,6 +121,7 @@ export default async function admin(app: FastifyInstance) {
     const users = (await db.query(`SELECT count(*)::int n FROM users WHERE role='user' AND deleted_at IS NULL`)).rows[0].n;
     return { items, total, page: p.page, pageSize: p.pageSize, kpis: { ...k, mrr: Math.round(k.mrr), byPlan: Object.fromEntries(byPlan.map((x) => [x.plan_id, x.n])), totalUsers: users } };
   });
+  // Latest 5 sign-ups and subscriptions (dashboard 'recent' tables).
   app.get('/admin/recent', async (req) => {
     requireAdmin(req);
     return {
@@ -114,6 +130,7 @@ export default async function admin(app: FastifyInstance) {
     };
   });
 
+  // Search the audit log (category, action, actor, date range), newest first.
   app.get('/admin/audit', async (req) => {
     requireAdmin(req);
     const p = parse(z.object({ q: z.string().optional(), category: z.string().optional(), from: isoDate.optional(), to: isoDate.optional(), page: z.coerce.number().int().min(1).default(1), pageSize: z.coerce.number().int().min(1).max(500).default(50), format: z.enum(['json', 'csv']).default('json') }), req.query);
@@ -135,12 +152,14 @@ export default async function admin(app: FastifyInstance) {
   });
 
   // ---- settings & integrations
+  // Platform settings (name, time zone, reminder lead days, support email) — stored in the settings table.
   const DEFAULT_SETTINGS = { platformName: 'Mod Alpha', timezone: 'Asia/Kolkata', currency: 'INR', sipDateModel: 'One common platform date', reminderLeadDays: 2, supportEmail: 'support@modalpha.in' };
   app.get('/admin/settings', async (req) => {
     requireAdmin(req);
     const r = (await db.query(`SELECT value, updated_at FROM settings WHERE key='platform'`)).rows[0];
     return { settings: { ...DEFAULT_SETTINGS, ...(r?.value ?? {}) }, updatedAt: r?.updated_at ?? null, environment: cfg.APP_ENV, security: { adminMfa: 'Email code + SMS code required for every admin sign-in', rbac: 'Enforced: user / admin / superadmin', sessions: `Sign-out after ${cfg.SESSION_IDLE_MINUTES} min inactivity · max ${cfg.SESSION_MAX_HOURS_USER} h (users) / ${cfg.SESSION_MAX_HOURS_ADMIN} h (admins) · access token ${cfg.ACCESS_TOKEN_TTL_MIN} min, rotating refresh`, auditTrail: 'Append-only (database trigger)' } };
   });
+  // Super admin: update platform settings (audited).
   app.put('/admin/settings', async (req) => {
     const admin = requireAdmin(req, true);
     const b = parse(z.object({ platformName: z.string().min(2).max(60), timezone: z.string(), currency: z.literal('INR'), reminderLeadDays: z.number().int().min(0).max(7), supportEmail: z.string().email() }).partial().strict(), req.body);
@@ -148,7 +167,9 @@ export default async function admin(app: FastifyInstance) {
     await audit(db, req, { action: 'SYSTEM_SETTINGS_UPDATED', category: 'Configuration', meta: b });
     return { ok: true };
   });
+  // Which external providers are live or mocked (System Settings → External providers).
   app.get('/admin/integrations', async (req) => { requireAdmin(req); return providerStatus(providers, cfg); });
+  // What the mock providers 'sent' (emails, SMS, push…) — stage testing only.
   app.get('/admin/mock-outbox', async (req) => {
     requireAdmin(req);
     const p = parse(z.object({ channel: z.string().optional(), limit: z.coerce.number().int().min(1).max(200).default(50) }), req.query);
@@ -156,9 +177,12 @@ export default async function admin(app: FastifyInstance) {
   });
 
   // ---- data requests (DPDP) — admin processes exports/deletions
+  // Data export / deletion requests and their status.
   app.get('/admin/data-requests', async (req) => { requireAdmin(req); return { items: (await db.query(`SELECT d.*, u.full_name, u.email FROM data_requests d JOIN users u ON u.id=d.user_id ORDER BY d.created_at DESC LIMIT 100`)).rows }; });
 
   // ---- model releases & gates
+  // SIP-date model releases. A release needs every quality gate ticked before a super admin can approve it;
+  // approving retires the previous one.
   app.get('/admin/models', async (req) => { requireAdmin(req); return { items: (await db.query('SELECT * FROM model_releases ORDER BY created_at DESC')).rows }; });
   app.put('/admin/models/:version/gates', async (req) => {
     requireAdmin(req);

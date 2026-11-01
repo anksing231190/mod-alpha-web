@@ -1,11 +1,18 @@
+/**
+ * Funds module — fund list, details, NAV history and the two calculators.
+ *   GET /funds (search, filters, sort) · GET /funds/categories · GET /funds/:id · GET /funds/:id/nav
+ *   POST /calc/lumpsum (what-if: invest on a past date) · POST /calc/sip-compare (Mod Alpha date vs fixed day)
+ * Returns come from fund_metrics (pre-computed by analytics.ts after every NAV import).
+ */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { parse, isoDate } from '../lib/validate.js';
-import { badRequest, notFound } from '../lib/errors.js';
-import { requireUser } from '../lib/auth.js';
-import { addMonths, addYears, daysBetween, today, toDate, iso } from '../lib/dates.js';
+import { parse, isoDate } from '../../shared/validate.js';
+import { badRequest, notFound } from '../../shared/errors.js';
+import { requireUser } from '../auth/session.js';
+import { addMonths, addYears, daysBetween, today, toDate, iso } from '../../shared/dates.js';
 import { latestNav, navOnOrAfter, sample } from './analytics.js';
 
+// Database row (fund + metrics) → the fund object the website shows.
 export const fundView = (r: any) => ({
   id: r.fund_id, name: r.scheme_name, short: r.scheme_name.replace(/ Fund.*$/, ''), amc: r.amc, category: r.category, type: r.asset_class, plan: r.plan, option: r.option,
   risk: r.risk_level, riskLabel: r.risk_level, benchmark: r.benchmark, aum: r.aum_cr != null ? `₹${Math.round(r.aum_cr).toLocaleString('en-IN')} Cr` : '—', aumCr: r.aum_cr, expense: r.expense_ratio_pct, inception: r.inception_date,
@@ -17,6 +24,7 @@ export default async function funds(app: FastifyInstance) {
   const { db } = app.deps;
   const SORT: Record<string, string> = { '1y': 'm.r1', '3y': 'm.r3', '5y': 'm.r5', '10y': 'm.r10', name: 'f.scheme_name', aum: 'f.aum_cr' };
 
+  // GET /funds — list with ?q, category, asset class, plan, sort (1Y/3Y/5Y return, AUM, …) and paging.
   app.get('/funds', async (req) => {
     const p = parse(z.object({ q: z.string().max(80).optional(), category: z.string().optional(), assetClass: z.string().optional(), sort: z.enum(['1y', '3y', '5y', '10y', 'name', 'aum']).default('5y'), page: z.coerce.number().int().min(1).default(1), pageSize: z.coerce.number().int().min(1).max(500).default(50) }), req.query);
     const w: string[] = ['f.is_active'], a: any[] = [];
@@ -29,12 +37,15 @@ export default async function funds(app: FastifyInstance) {
     const rows = (await db.query(`SELECT f.*, m.* FROM funds f LEFT JOIN fund_metrics m USING (fund_id) WHERE ${where} ORDER BY ${SORT[p.sort]} ${p.sort === 'name' ? 'ASC' : 'DESC'} NULLS LAST, f.fund_id LIMIT $${a.length - 1} OFFSET $${a.length}`, a)).rows;
     return { items: rows.map(fundView), total, page: p.page, pageSize: p.pageSize };
   });
+  // GET /funds/categories — categories with fund counts (filter chips).
   app.get('/funds/categories', async () => ({ categories: (await db.query(`SELECT category, count(*)::int funds FROM funds WHERE is_active GROUP BY category ORDER BY category`)).rows }));
+  // GET /funds/:id — one fund with its metrics.
   app.get('/funds/:id', async (req) => {
     const r = (await db.query('SELECT f.*, m.* FROM funds f LEFT JOIN fund_metrics m USING (fund_id) WHERE f.fund_id=$1', [(req.params as any).id])).rows[0];
     if (!r) throw notFound('Fund not found');
     return { fund: fundView(r) };
   });
+  // GET /funds/:id/nav — NAV points for a period, thinned to at most ~400 points for charts.
   app.get('/funds/:id/nav', async (req) => {
     const p = parse(z.object({ period: z.enum(['1M', '3M', '6M', '1Y', '3Y', '5Y', '10Y', 'MAX']).default('5Y'), points: z.coerce.number().int().min(2).max(2000).default(40), from: isoDate.optional(), to: isoDate.optional() }), req.query);
     const id = (req.params as any).id;
@@ -44,9 +55,11 @@ export default async function funds(app: FastifyInstance) {
     return { fundId: id, period: p.period, from, to, points: sample(rows, p.points) };
   });
 
+  // Fund used by the calculators when none is chosen: the best 5-year performer.
   async function defaultFund() { return (await db.query(`SELECT fund_id FROM fund_metrics ORDER BY r5 DESC NULLS LAST LIMIT 1`)).rows[0]?.fund_id; }
 
   /** Lump-sum "what if": units bought at the first NAV on/after `date`, valued at the latest NAV. */
+  // POST /calc/lumpsum — 'What if you had invested ₹X on date D?' using real NAVs.
   app.post('/calc/lumpsum', async (req) => {
     const b = parse(z.object({ fundId: z.string().optional(), date: isoDate, amount: z.number().min(500).max(1e10) }), req.body);
     const fundId = b.fundId ?? (await defaultFund()); if (!fundId) throw badRequest('No fund data loaded');
@@ -58,6 +71,8 @@ export default async function funds(app: FastifyInstance) {
   });
 
   /** SIP comparison: fixed day each month vs the published MOD Alpha date for that month (fallback: fixed day). */
+  // POST /calc/sip-compare — monthly SIP on each published Mod Alpha date vs the same SIP on a fixed day; returns
+  // both values and the uplift.
   app.post('/calc/sip-compare', async (req) => {
     const b = parse(z.object({ fundId: z.string().optional(), amount: z.number().min(500).max(1e8), start: isoDate, end: isoDate, fixedDay: z.number().int().min(1).max(28).optional() }), req.body);
     if (b.end <= b.start) throw badRequest('End date must be after start date');

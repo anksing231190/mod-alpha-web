@@ -1,15 +1,23 @@
+/**
+ * Data module — load the fund / NAV / SIP-date data from an Excel workbook.
+ *   POST /admin/data/uploads (validate only, stored as a draft) → GET …/uploads/:id (report)
+ *   POST …/uploads/:id/publish (replace the sheets it contains, in one transaction) · …/discard
+ *   GET /admin/data/summary · GET /admin/data/export.xlsx · POST /admin/data/recompute-metrics · GET /admin/data/schema
+ * Sheet rules: workbook.ts and docs/21_test_data_excel_format.md. Prod rejects Users / Subscriptions sheets.
+ */
 import type { FastifyInstance } from 'fastify';
 import XLSX from 'xlsx';
 import { z } from 'zod';
-import { parse } from '../lib/validate.js';
-import { badRequest, notFound } from '../lib/errors.js';
-import { requireAdmin } from '../lib/auth.js';
-import { audit } from '../lib/audit.js';
-import { tx, type Q } from '../db.js';
-import { today } from '../lib/dates.js';
+import { parse } from '../../shared/validate.js';
+import { badRequest, notFound } from '../../shared/errors.js';
+import { requireAdmin } from '../auth/session.js';
+import { audit } from '../../shared/audit.js';
+import { tx, type Q } from '../../db.js';
+import { today } from '../../shared/dates.js';
 import { SCHEMA, validateWorkbook } from './workbook.js';
-import { computeFundMetrics } from './analytics.js';
+import { computeFundMetrics } from '../funds/analytics.js';
 
+// Fast bulk insert into a temporary table using unnest() of typed arrays.
 async function bulk(c: Q, table: string, cols: string[], types: string[], rows: any[][]) {
   for (let i = 0; i < rows.length; i += 5000) {
     const chunk = rows.slice(i, i + 5000);
@@ -19,6 +27,8 @@ async function bulk(c: Q, table: string, cols: string[], types: string[], rows: 
 }
 
 /** Replace the tables for every sheet present in `data`. Runs inside a transaction. */
+// Replace the data of every sheet present (funds, NAV history, SIP dates, holidays, and — non-prod only — users
+// and subscriptions), then recompute fund metrics.
 export async function importData(c: Q, data: Record<string, any[]>) {
   const counts: Record<string, number> = {};
   if (data.Funds) {
@@ -77,6 +87,8 @@ export default async function dataModule(app: FastifyInstance) {
   const { db, cfg } = app.deps;
   const existing = async () => ({ existingFundIds: new Set((await db.query('SELECT fund_id FROM funds')).rows.map((r) => r.fund_id)), existingUserRefs: new Set((await db.query('SELECT external_ref FROM users WHERE external_ref IS NOT NULL')).rows.map((r) => r.external_ref)) });
 
+  // POST /admin/data/uploads — receive a .xlsx/.csv, validate every row and keep it as a draft with its report.
+  // Nothing changes yet.
   app.post('/admin/data/uploads', async (req, reply) => {
     const admin = requireAdmin(req);
     const file = await (req as any).file();
@@ -91,15 +103,18 @@ export default async function dataModule(app: FastifyInstance) {
     await audit(db, req, { action: result.report.ok ? 'DATA_UPLOAD_VALIDATED' : 'DATA_UPLOAD_FAILED', category: 'Data', resource: file.filename, outcome: result.report.ok ? 'Success' : 'Failed', meta: { errors: result.report.errors } });
     return reply.status(201).send({ id: r.rows[0].id, fileName: file.filename, report: result.report });
   });
+  // Upload history.
   app.get('/admin/data/uploads', async (req) => {
     requireAdmin(req);
     return { items: (await db.query(`SELECT d.id, d.file_name, d.size_bytes, d.sheets, d.status, d.created_at, d.published_at, (d.report->>'errors')::int errors, (d.report->>'warnings')::int warnings, u.full_name uploaded_by FROM data_uploads d LEFT JOIN users u ON u.id=d.uploaded_by ORDER BY d.created_at DESC LIMIT 50`)).rows };
   });
+  // One upload with its validation report.
   app.get('/admin/data/uploads/:id', async (req) => {
     requireAdmin(req);
     const r = (await db.query('SELECT id, file_name, status, report, sheets, created_at, published_at FROM data_uploads WHERE id=$1', [(req.params as any).id])).rows[0];
     if (!r) throw notFound(); return r;
   });
+  // Publish a validated upload (only if it has no errors). Audited as DATA_PUBLISHED.
   app.post('/admin/data/uploads/:id/publish', async (req) => {
     requireAdmin(req);
     const id = (req.params as any).id;
@@ -112,11 +127,13 @@ export default async function dataModule(app: FastifyInstance) {
     await audit(db, req, { action: 'DATASET_PUBLISHED', category: 'Data', resource: up.file_name, meta: counts });
     return { ok: true, counts };
   });
+  // Throw away a draft upload.
   app.post('/admin/data/uploads/:id/discard', async (req) => {
     requireAdmin(req);
     await db.query(`UPDATE data_uploads SET status='discarded', content=NULL WHERE id=$1 AND status IN ('validated','failed')`, [(req.params as any).id]);
     return { ok: true };
   });
+  // Row counts and the dataset's 'as of' date (Data Management page).
   app.get('/admin/data/summary', async (req) => {
     requireAdmin(req);
     const r = (await db.query(`SELECT (SELECT count(*) FROM funds WHERE is_active) funds, (SELECT count(DISTINCT category) FROM funds WHERE is_active) categories, (SELECT count(*) FROM nav_history) nav_rows, (SELECT max(nav_date) FROM nav_history) last_nav, (SELECT count(*) FROM users WHERE deleted_at IS NULL) users, (SELECT count(*) FROM subscriptions) subscriptions, (SELECT count(*) FROM sip_dates) sip_months, (SELECT count(*) FROM market_holidays) holidays`)).rows[0];
@@ -124,6 +141,7 @@ export default async function dataModule(app: FastifyInstance) {
     return { ...r, lastPublished: last ?? null };
   });
   /** Download the active dataset in the workbook format (Users/Subscriptions only outside prod). */
+  // Download the live dataset in the same workbook format (personal sheets only outside prod).
   app.get('/admin/data/export.xlsx', async (req, reply) => {
     requireAdmin(req);
     const wb = XLSX.utils.book_new();
@@ -139,6 +157,7 @@ export default async function dataModule(app: FastifyInstance) {
     reply.header('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet').header('content-disposition', 'attachment; filename="mod-alpha-active-dataset.xlsx"');
     return reply.send(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }));
   });
+  // Recompute fund metrics now; GET /admin/data/schema returns the sheet rules for the upload screen.
   app.post('/admin/data/recompute-metrics', async (req) => { requireAdmin(req); return { funds: await computeFundMetrics(db) }; });
   app.get('/admin/data/schema', async (req) => { requireAdmin(req); return { schema: SCHEMA, personalSheetsAllowed: cfg.APP_ENV !== 'prod' }; });
   void parse; void z;

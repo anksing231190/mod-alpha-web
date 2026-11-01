@@ -1,12 +1,20 @@
+/**
+ * Notifications module — message templates and announcement campaigns.
+ *   GET /admin/notification-templates · PUT …/:key · POST …/:key/preview
+ *   GET /admin/campaigns · POST /admin/campaigns (send now or schedule) · POST …/:id/cancel
+ * `dispatchCampaign()` sends a campaign on each chosen channel through the providers and records every delivery.
+ */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { parse } from '../lib/validate.js';
-import { badRequest, notFound } from '../lib/errors.js';
-import { requireAdmin } from '../lib/auth.js';
-import { audit } from '../lib/audit.js';
-import type { Deps } from '../app.js';
+import { parse } from '../../shared/validate.js';
+import { badRequest, notFound } from '../../shared/errors.js';
+import { requireAdmin } from '../auth/session.js';
+import { audit } from '../../shared/audit.js';
+import type { Deps } from '../../app.js';
 
+// Channels a template / campaign can use.
 const CH = z.enum(['email', 'sms', 'push', 'inapp', 'whatsapp']);
+// Fill {{name}}, {{date}}, {{plan}}… placeholders; unknown placeholders become empty.
 export const render = (t: string, vars: Record<string, string>) => t.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, k) => vars[k] ?? '');
 const AUDIENCE: Record<string, string> = {
   active_subscribers: `SELECT DISTINCT u.id, u.full_name, u.email, u.mobile, coalesce(p.data,'{}') prefs FROM users u JOIN subscriptions s ON s.user_id=u.id AND s.status='Active' LEFT JOIN preferences p ON p.user_id=u.id WHERE u.account_status='Active' AND u.deleted_at IS NULL`,
@@ -15,6 +23,9 @@ const AUDIENCE: Record<string, string> = {
 };
 
 /** Send a campaign now: consent-aware, one delivery row per user/channel. Used by the jobs worker. */
+// Send one scheduled campaign: pick the audience, fill the template per user, send per channel (skipping channels
+// the user switched off), store deliveries and stats. Users with a custom SIP reminder are skipped for the SIP-
+// date campaign.
 export async function dispatchCampaign(deps: Deps, campaignId: string) {
   const { db, providers } = deps;
   const c = (await db.query(`UPDATE campaigns SET status='Sending' WHERE id=$1 AND status='Scheduled' RETURNING *`, [campaignId])).rows[0];
@@ -51,8 +62,10 @@ export async function dispatchCampaign(deps: Deps, campaignId: string) {
 
 export default async function notifications(app: FastifyInstance) {
   const deps = app.deps, { db } = deps;
+  // Templates list.
   app.get('/admin/notification-templates', async (req) => { requireAdmin(req); return { items: (await db.query('SELECT * FROM notification_templates ORDER BY name')).rows }; });
   const tplBody = z.object({ name: z.string().min(3), channels: z.array(CH).min(1), subject: z.string().min(3), body: z.string().min(10), smsText: z.string().max(160).optional(), status: z.enum(['Draft', 'Active', 'Archived']).default('Draft') });
+  // Edit a template (name, channels, subject, body, SMS text, status). Audited.
   app.put('/admin/notification-templates/:key', async (req) => {
     requireAdmin(req);
     const b = parse(tplBody, req.body), key = (req.params as any).key;
@@ -62,6 +75,7 @@ export default async function notifications(app: FastifyInstance) {
     await audit(db, req, { action: 'NOTIFICATION_TEMPLATE_EDITED', category: 'Notification', resource: key });
     return { template: r.rows[0] };
   });
+  // Render a template with sample values.
   app.post('/admin/notification-templates/:key/preview', async (req) => {
     requireAdmin(req);
     const t = (await db.query('SELECT * FROM notification_templates WHERE key=$1', [(req.params as any).key])).rows[0]; if (!t) throw notFound();
@@ -69,6 +83,7 @@ export default async function notifications(app: FastifyInstance) {
     const vars = { name: 'Ankit', date: sip ? `${sip.recommended_day} ${new Date(sip.month + '-01').toLocaleString('en-GB', { month: 'long' })}` : '12 November', month: sip?.month ?? '' };
     return { email: { subject: render(t.subject, vars), body: render(t.body, vars) }, sms: render(t.sms_text ?? t.subject, vars), push: { title: render(t.subject, vars), body: render(t.sms_text ?? t.body, vars) } };
   });
+  // Campaign history with delivery stats.
   app.get('/admin/campaigns', async (req) => {
     requireAdmin(req);
     const items = (await db.query(`SELECT c.*, t.name template_name, (SELECT count(*)::int FROM deliveries d WHERE d.campaign_id=c.id) deliveries FROM campaigns c JOIN notification_templates t ON t.id=c.template_id ORDER BY c.scheduled_for DESC LIMIT 50`)).rows;
@@ -78,6 +93,7 @@ export default async function notifications(app: FastifyInstance) {
     const recipients = (await db.query(`SELECT count(*)::int n FROM (${AUDIENCE.active_subscribers}) a`)).rows[0].n;
     return { items, kpis: { ...k, successRate: k.sent + k.failed ? +(100 * k.sent / (k.sent + k.failed)).toFixed(1) : null, optInPct: optIn, next, scheduledRecipients: recipients } };
   });
+  // Create an announcement (template + audience + channels), sent now or at a scheduled time.
   app.post('/admin/campaigns', async (req) => {
     const admin = requireAdmin(req);
     const b = parse(z.object({ name: z.string().min(3), templateKey: z.string(), channels: z.array(CH).min(1), audience: z.enum(['active_subscribers', 'all_users', 'marketing_opt_in']), scheduledFor: z.string().datetime({ offset: true }).optional(), sendNow: z.boolean().default(false) }), req.body);
@@ -88,6 +104,7 @@ export default async function notifications(app: FastifyInstance) {
     if (b.sendNow) setImmediate(() => dispatchCampaign(deps, r.rows[0].id).catch((e) => app.log.error(e, 'campaign dispatch failed')));
     return { campaign: r.rows[0], sending: b.sendNow };
   });
+  // Cancel a campaign that has not been sent yet.
   app.post('/admin/campaigns/:id/cancel', async (req) => {
     requireAdmin(req);
     const r = await db.query(`UPDATE campaigns SET status='Cancelled' WHERE id=$1 AND status='Scheduled' RETURNING id`, [(req.params as any).id]);
