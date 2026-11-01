@@ -8,14 +8,14 @@ The list comes from auditing every screen, button and data flow. Since v23 the b
 
 | | Count |
 |---|---|
-| Total integrations | 72 |
-| P0 — launch-blocking | 35 |
+| Total integrations | 77 |
+| P0 — launch-blocking | 40 |
 | P1 — needed for launch quality | 27 |
 | P2 — post-launch | 10 |
-| Pending (not built yet) | 13 |
+| Pending (not built yet) | 17 |
 | Mock — API built, provider mocked (integrated later) | 18 |
 | Manual (interim manual process) | 3 |
-| Ready | 38 |
+| Ready | 39 |
 
 **Status key:** *Ready* — implemented in the API and website · *Mock* — API and UI implemented, the external provider is mocked and will be integrated later (see docs/23) · *Manual* — an interim manual process is in place · *Pending* — not built yet.
 **Priority key:** *P0* launch-blocking · *P1* needed for a quality launch · *P2* post-launch.
@@ -29,21 +29,22 @@ The list comes from auditing every screen, button and data flow. Since v23 the b
 | AUTH-03 | Forgot / reset password | P0 | Mock (integrated later) | Login → “Forgot Password?” | `POST /auth/password/forgot · POST /auth/password/reset` | Identity provider flows or signed reset tokens + email provider | Built; reset email goes to the mock outbox until SendGrid is connected. |
 | AUTH-04 | Google sign-in | P1 | Mock (integrated later) | Login → Google button | `OAuth 2.0 / OIDC callback /auth/oauth/google` | Google Identity Services | Built; accepts mock:<email> tokens on stage until GOOGLE_CLIENT_ID is set. |
 | AUTH-05 | Sign in with Apple | P2 | Pending | Login → Apple button | `OIDC callback /auth/oauth/apple` | Apple Developer account + Services ID |  |
-| AUTH-06 | Session, refresh tokens & logout | P0 | Ready | All signed-in pages, “Exit preview”, “Remember me” | `POST /auth/refresh · DELETE /auth/session` | HttpOnly secure cookies, rotating refresh tokens | Built: 15-min access + rotating 30-day refresh tokens with reuse detection. |
+| AUTH-06 | Sessions, timeouts & logout | P0 | Ready | All signed-in pages, inactivity warning, Settings → Sign out of all devices | `POST /auth/refresh · GET /auth/session · POST /auth/activity · POST /auth/logout · POST /auth/logout-all` | HttpOnly secure cookies, rotating refresh tokens | Built: sign-out after 15 min of inactivity (60 s warning), 12 h limit for users / 8 h for admins, rotating refresh with reuse detection, sign out everywhere, password change ends other devices. |
 | AUTH-07 | Change password | P1 | Ready | Settings → Profile → Change Password | `POST /me/password` | Identity provider |  |
 | AUTH-08 | Email & mobile verification | P1 | Mock (integrated later) | Settings → Personal details (email locked, mobile number) | `POST /me/verify-email · POST /me/verify-mobile` | Identity provider + OTP provider | Built; delivery via mocked email/SMS. |
-| AUTH-09 | Admin roles (RBAC) & MFA | P0 | Pending | Admin console access, System Settings → Access & security | `GET /admin/me · role claims in token · TOTP/WebAuthn enrolment` | Identity provider MFA, Okta/Azure AD SSO for staff | RBAC built (user/admin/superadmin). TOTP MFA pending. |
+| AUTH-09 | Admin roles (RBAC) & 2-step sign-in | P0 | Ready | Admin console access, admin sign-in | `role claims in token · POST /auth/login/verify · POST /auth/login/resend` | Email code + SMS code; optional authenticator app (TOTP) later | Built: RBAC (user/admin/superadmin); every admin sign-in needs an email code AND an SMS code (5 attempts, 10 min). Codes are delivered by the email/SMS providers (mocked until SendGrid / MSG91). |
 | AUTH-10 | Admin profile view | P2 | Ready | Admin top bar → profile name | `GET /admin/me · PATCH /admin/me` | — | Built. |
 
-## KYC & identity (3)
+## KYC & identity (4)
 
 | ID | Integration | Priority | Status | Where in the UI | API / contract | Provider options | Notes |
 |---|---|---|---|---|---|---|---|
-| KYC-01 | KYC verification (first paid subscription) | P0 | Mock (integrated later) | Subscription page plan buttons, Pricing CTAs | `POST /kyc/sessions · GET /kyc/status` | Digio, IDfy, HyperVerge, Signzy (PAN, Aadhaar offline eKYC / DigiLocker, CKYC) | Built; Digio adapter ready, mock KYC page on stage. |
+| KYC-01 | KYC — PAN-first (PAN check → KRA → DigiLocker) | P0 | Mock (integrated later) | Subscription page (first paid plan), KYC dialog, KYC status strip | `POST /kyc/pan · GET /kyc/status · POST /kyc/sessions` | Digio, Signzy, HyperVerge, IDfy, Setu (PAN, KRA fetch + upload, CKYC, DigiLocker) | Built: PAN + name + DOB + consent, KRA lookup (instant when found), DigiLocker full KYC otherwise, duplicate-PAN review, 5 tries/day; only masked PAN + hash stored. Mock test PANs on stage. Digio PAN/KRA endpoints to configure at onboarding. |
 | KYC-02 | KYC status webhook | P0 | Mock (integrated later) | User Management → KYC column | `POST /webhooks/kyc (signed)` | Provider webhooks | Built; signed webhook verified. |
+| KYC-04 | KYC record retention & KRA upload confirmation | P0 | Pending | Admin → User Management → KYC | `Retention job · provider KRA upload status` | KYC provider / KRA | Keep KYC references for the SEBI-required period after account closure; confirm retention rules with compliance. |
 | KYC-03 | Admin KYC review & override | P1 | Ready | User Management → View user | `GET /admin/kyc/:userId · POST /admin/kyc/:userId/decision` | — | Built: admin decision with reason, audited. |
 
-## Payments, plans & billing (9)
+## Payments, plans & billing (10)
 
 | ID | Integration | Priority | Status | Where in the UI | API / contract | Provider options | Notes |
 |---|---|---|---|---|---|---|---|
@@ -55,6 +56,7 @@ The list comes from auditing every screen, button and data flow. Since v23 the b
 | BILL-06 | Cancellation & refunds | P1 | Mock (integrated later) | Subscription page; Subscriptions KPIs (refunds) | `POST /billing/subscriptions/:id/cancel · POST /admin/refunds` | Gateway refund APIs | Built: cancel at period end + admin refunds (mock provider). |
 | BILL-07 | Invoices & GST receipts | P1 | Mock (integrated later) | Subscription → Billing details / history | `GET /billing/invoices · GET /billing/invoices/:id.pdf` | Gateway invoices, Zoho Books, ClearTax GST | In-app GST-inclusive invoices built; GST e-invoicing pending. |
 | BILL-08 | Payment reconciliation & revenue reporting | P1 | Ready | Admin dashboard revenue, Subscriptions MRR | `GET /admin/billing/summary?from&to` | Gateway settlement reports | Built from payments table. |
+| BILL-10 | SEBI centralised fee collection (CeFCoM) | P0 | Pending | Checkout | `Fee collection via the SEBI-recognised mechanism` | BSE CeFCoM (if required) | Waiting for the compliance officer: whether RA/IA fees must go through CeFCoM instead of / as well as Razorpay. |
 | BILL-09 | Free-plan usage limits (e.g. 1 AI query/day) | P1 | Ready | Plan features, AI assistant | `Entitlement check middleware · GET /me/entitlements` | — | Built: AI queries/day per plan. |
 
 ## Market & fund data (8)
@@ -126,16 +128,17 @@ The list comes from auditing every screen, button and data flow. Since v23 the b
 | ADM-04 | System settings edit | P1 | Ready | System Settings → Edit | `GET/PUT /admin/settings` | Own API + config service | Built (super admin). |
 | ADM-05 | Date-range filter for admin reports | P1 | Ready | Admin dashboard → date-range picker | `Query params on /admin/metrics` | — | Built. |
 
-## Public website (4)
+## Public website (5)
 
 | ID | Integration | Priority | Status | Where in the UI | API / contract | Provider options | Notes |
 |---|---|---|---|---|---|---|---|
 | PUB-01 | Public activity feed | P2 | Ready | Landing page “new member joined” toast | `GET /api/public/activity?limit=8` | Own API (aggregated, no PII) | Built (anonymous, last 48h). |
 | PUB-02 | Social profile links | P2 | Pending | Footer WhatsApp, X, Instagram, YouTube, LinkedIn | `Static URLs (config)` | — |  |
 | PUB-03 | Cookie consent & web analytics | P1 | Pending | Public pages | `Consent banner + analytics SDK` | Cookiebot, Osano, GA4 / PostHog |  |
+| PUB-05 | SEBI compliance pages (registration, MITC, grievance, SCORES / ODR) | P0 | Pending | Footer, sign-up, invoices, grievance page | `Static content + MITC acceptance record` | — | Needs registration type (RA/IA), number, grievance officer details and approved texts. |
 | PUB-04 | Legal pages (Privacy, Terms, disclosures) | P0 | Pending | Footer Privacy / Terms | `Static content / CMS` | Legal review |  |
 
-## Platform & infrastructure (7)
+## Platform & infrastructure (9)
 
 | ID | Integration | Priority | Status | Where in the UI | API / contract | Provider options | Notes |
 |---|---|---|---|---|---|---|---|
@@ -145,6 +148,8 @@ The list comes from auditing every screen, button and data flow. Since v23 the b
 | PLT-04 | Logging, monitoring & alerting | P0 | Pending | — | `—` | Sentry, Datadog, Grafana Cloud | Structured JSON logs; monitoring/alerting pending. |
 | PLT-05 | Rate limiting & WAF | P0 | Ready | Login, OTP, public APIs | `Gateway policies` | Cloudflare, AWS WAF | App rate limiting built; WAF pending. |
 | PLT-06 | Backups & disaster recovery | P0 | Pending | — | `—` | Managed DB snapshots, PITR | Depends on hosting choice. |
+| PLT-08 | Cloud hosting, domains & CI/CD environments | P0 | Pending | — | `AWS Mumbai (stage + prod), DNS, GitHub environments` | AWS / GCP / Azure India region | Docker images, CI and deploy workflow are ready; accounts listed in the accounts document. |
+| PLT-09 | Security testing & incident reporting (VAPT, CERT-In) | P0 | Pending | — | `—` | CERT-In empanelled VAPT firm | VAPT on stage before launch; CERT-In 6-hour incident reporting contact; SEBI CSCRF category. |
 | PLT-07 | Client-side spreadsheet parsing | P1 | Ready | Data Management validation | `—` | SheetJS CE (vendored) |  |
 
 ## Still to integrate or build
@@ -154,14 +159,15 @@ The list comes from auditing every screen, button and data flow. Since v23 the b
 - **Login → Google button** → AUTH-04 Google sign-in
 - **Login → Apple button** → AUTH-05 Sign in with Apple
 - **Settings → Personal details (email locked, mobile number)** → AUTH-08 Email & mobile verification
-- **Admin console access, System Settings → Access & security** → AUTH-09 Admin roles (RBAC) & MFA
-- **Subscription page plan buttons, Pricing CTAs** → KYC-01 KYC verification (first paid subscription)
+- **Subscription page (first paid plan), KYC dialog, KYC status strip** → KYC-01 KYC — PAN-first (PAN check → KRA → DigiLocker)
 - **User Management → KYC column** → KYC-02 KYC status webhook
+- **Admin → User Management → KYC** → KYC-04 KYC record retention & KRA upload confirmation
 - **Pricing & Subscription → Start Pro / Premium plan** → BILL-01 Checkout / create payment order
 - **Monthly / Quarterly / Yearly billing** → BILL-02 Recurring subscriptions / mandates
 - **Subscriptions page statuses (Active, Past due, Cancelled)** → BILL-03 Payment & subscription webhooks
 - **Subscription page; Subscriptions KPIs (refunds)** → BILL-06 Cancellation & refunds
 - **Subscription → Billing details / history** → BILL-07 Invoices & GST receipts
+- **Checkout** → BILL-10 SEBI centralised fee collection (CeFCoM)
 - **Fund detail, Explore, dashboards; Data Management upload** → DATA-01 Daily NAV feed
 - **Fund detail → Benchmark comparison** → DATA-04 Benchmark / index (TRI) data
 - **Fund Info tab** → DATA-05 Factsheet data (AUM, expense ratio, holdings)
@@ -178,8 +184,11 @@ The list comes from auditing every screen, button and data flow. Since v23 the b
 - **Help & FAQ → Submit request** → ACC-04 Support tickets
 - **Footer WhatsApp, X, Instagram, YouTube, LinkedIn** → PUB-02 Social profile links
 - **Public pages** → PUB-03 Cookie consent & web analytics
+- **Footer, sign-up, invoices, grievance page** → PUB-05 SEBI compliance pages (registration, MITC, grievance, SCORES / ODR)
 - **Footer Privacy / Terms** → PUB-04 Legal pages (Privacy, Terms, disclosures)
 - **Data Management uploads** → PLT-02 File storage for uploads
 - **System Settings → Access & security** → PLT-03 Secrets & encryption (KMS)
 - **—** → PLT-04 Logging, monitoring & alerting
 - **—** → PLT-06 Backups & disaster recovery
+- **—** → PLT-08 Cloud hosting, domains & CI/CD environments
+- **—** → PLT-09 Security testing & incident reporting (VAPT, CERT-In)

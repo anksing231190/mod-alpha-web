@@ -2036,3 +2036,30 @@ html[lang="hi"] :where(.v22-eyebrow,.v22-crumb,.side-label,th,.hd-best small){te
 .ma-kyc .ma-kyc-consent{display:flex!important;flex-direction:row!important;align-items:flex-start;gap:10px;margin:0}
 .ma-kyc .ma-kyc-consent input{width:18px!important;height:18px!important;min-height:0!important;padding:0!important;margin:2px 0 0!important;flex:none;accent-color:#6366f1}
 .ma-kyc .ma-kyc-consent span{flex:1}
+
+/* ==========================================================================
+   v23.15 — Admin → System Settings → Build progress
+   ========================================================================== */
+.ma-prog{border:1px solid rgba(110,140,230,.2);border-radius:16px;padding:18px;margin:0 0 18px;background:rgba(20,30,64,.45)}
+.ma-prog-head{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+.ma-prog-big{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:12px;background:rgba(30,45,90,.4)}
+.ma-prog-big b{font:800 26px/1.1 Manrope,sans-serif;color:#eef3ff}.ma-prog-big small{color:#8e9bb7;font-size:12px}
+.ma-prog-body{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(260px,1fr);gap:18px}
+.ma-prog h3{margin:0 0 10px;font:700 14px Manrope,sans-serif;color:#dce6f9}
+.ma-prog-row{display:grid;grid-template-columns:minmax(170px,1.1fr) minmax(120px,1.4fr) minmax(130px,1fr);align-items:center;gap:12px;padding:6px 0}
+.ma-prog-row>span{display:flex;align-items:center;gap:8px;min-width:0}.ma-prog-row>span b{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ma-prog-row .v22-bar{display:flex;height:8px;border-radius:99px;overflow:hidden;background:rgba(110,140,230,.18)}
+.ma-prog-row small{color:#8e9bb7;font-size:12px;white-space:nowrap}
+.ma-prog-key{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:10px 0 0;font-size:11.5px;color:#8e9bb7}
+.ma-prog-key span{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.ma-prog-key .s-none{background:rgba(110,140,230,.18)}
+.ma-prog-log ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.ma-prog-log li{display:grid;grid-template-columns:auto auto;justify-content:start;gap:2px 8px;padding:8px 10px;border-radius:10px;background:rgba(30,45,90,.35)}
+.ma-prog-log li span{color:#8e9bb7;font-size:11.5px}.ma-prog-log li b{font-size:11.5px;color:#a5b4fc}
+.ma-prog-log li p{grid-column:1/-1;margin:0;font-size:12.5px;line-height:1.45;color:#cbd5f5}
+@media (max-width:1100px){.ma-prog-body{grid-template-columns:1fr}}
+@media (max-width:640px){.ma-prog-head{grid-template-columns:1fr}.ma-prog-row{grid-template-columns:1fr;gap:4px}}
+.ma-prog-row .v22-bar em{border-radius:0}.ma-prog-row .v22-bar em.s-Ready,.ma-prog-key .s-Ready{background:#22c55e}.ma-prog-row .v22-bar em.s-Manual,.ma-prog-key .s-Manual{background:#38bdf8}.ma-prog-row .v22-bar em.s-Mock,.ma-prog-key .s-Mock{background:#f59e0b}
+.ma-prog-row{grid-template-columns:minmax(200px,1.25fr) minmax(110px,1.3fr) minmax(150px,1fr)}
+.ma-prog-row>span b{white-space:normal;overflow:visible;line-height:1.25}
+.ma-prog-log li{display:block}.ma-prog-log li span{margin-right:8px}.ma-prog-log li p{margin-top:3px}

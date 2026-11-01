@@ -427,3 +427,14 @@ html[data-theme="light"] .ma-kyc-test b{color:#8a4b14}
 html[data-theme="light"] .ma-kyc-strip{background:#fffaf1;border-color:#e4d6bf;color:#3d3125}
 html[data-theme="light"] .ma-kyc-strip.ok{border-color:#9cc3a3}html[data-theme="light"] .ma-kyc-strip.warn{border-color:#e2b979}
 html[data-theme="light"] .ma-kyc .ma-kyc-consent input{accent-color:#a8641c}
+
+/* ---------- v23.15 build progress ---------- */
+html[data-theme="light"] .ma-prog{background:#fffaf1;border-color:#e4d6bf}
+html[data-theme="light"] .ma-prog-big,html[data-theme="light"] .ma-prog-log li{background:#fbf4e7}
+html[data-theme="light"] .ma-prog-big b{color:#2b2218}html[data-theme="light"] .ma-prog h3{color:#3d3125}
+html[data-theme="light"] .ma-prog-big small,html[data-theme="light"] .ma-prog-row small,html[data-theme="light"] .ma-prog-key,html[data-theme="light"] .ma-prog-log li span{color:#7a6a58}
+html[data-theme="light"] .ma-prog-log li b{color:#8a4b14}html[data-theme="light"] .ma-prog-log li p{color:#3d3125}
+html[data-theme="light"] .ma-prog-row .v22-bar,html[data-theme="light"] .ma-prog-key .s-none{background:#efe4cf}
+html[data-theme="light"] .ma-prog-row .v22-bar em.s-Ready,html[data-theme="light"] .ma-prog-key .s-Ready{background:#4f8a5b}
+html[data-theme="light"] .ma-prog-row .v22-bar em.s-Manual,html[data-theme="light"] .ma-prog-key .s-Manual{background:#4f86a8}
+html[data-theme="light"] .ma-prog-row .v22-bar em.s-Mock,html[data-theme="light"] .ma-prog-key .s-Mock{background:#c98a2c}

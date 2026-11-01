@@ -28,15 +28,16 @@ window.V22_INTEGRATIONS=[
  {id:'AUTH-03',cat:'auth',name:'Forgot / reset password',status:'Mock',p:'P0',ui:'Login → “Forgot Password?”',api:'POST /auth/password/forgot · POST /auth/password/reset',opts:'Identity provider flows or signed reset tokens + email provider',note:'Built; reset email goes to the mock outbox until SendGrid is connected.'},
  {id:'AUTH-04',cat:'auth',name:'Google sign-in',status:'Mock',p:'P1',ui:'Login → Google button',api:'OAuth 2.0 / OIDC callback /auth/oauth/google',opts:'Google Identity Services',note:'Built; accepts mock:<email> tokens on stage until GOOGLE_CLIENT_ID is set.'},
  {id:'AUTH-05',cat:'auth',name:'Sign in with Apple',status:'Pending',p:'P2',ui:'Login → Apple button',api:'OIDC callback /auth/oauth/apple',opts:'Apple Developer account + Services ID'},
- {id:'AUTH-06',cat:'auth',name:'Session, refresh tokens & logout',status:'Ready',p:'P0',ui:'All signed-in pages, “Exit preview”, “Remember me”',api:'POST /auth/refresh · DELETE /auth/session',opts:'HttpOnly secure cookies, rotating refresh tokens',note:'Built: 15-min access + rotating 30-day refresh tokens with reuse detection.'},
+  {id:'AUTH-06',cat:'auth',name:'Sessions, timeouts & logout',status:'Ready',p:'P0',ui:'All signed-in pages, inactivity warning, Settings → Sign out of all devices',api:'POST /auth/refresh · GET /auth/session · POST /auth/activity · POST /auth/logout · POST /auth/logout-all',opts:'HttpOnly secure cookies, rotating refresh tokens',note:'Built: sign-out after 15 min of inactivity (60 s warning), 12 h limit for users / 8 h for admins, rotating refresh with reuse detection, sign out everywhere, password change ends other devices.'},
  {id:'AUTH-07',cat:'auth',name:'Change password',status:'Ready',p:'P1',ui:'Settings → Profile → Change Password',api:'POST /me/password',opts:'Identity provider'},
  {id:'AUTH-08',cat:'auth',name:'Email & mobile verification',status:'Mock',p:'P1',ui:'Settings → Personal details (email locked, mobile number)',api:'POST /me/verify-email · POST /me/verify-mobile',opts:'Identity provider + OTP provider',note:'Built; delivery via mocked email/SMS.'},
- {id:'AUTH-09',cat:'auth',name:'Admin roles (RBAC) & MFA',status:'Pending',p:'P0',ui:'Admin console access, System Settings → Access & security',api:'GET /admin/me · role claims in token · TOTP/WebAuthn enrolment',opts:'Identity provider MFA, Okta/Azure AD SSO for staff',note:'RBAC built (user/admin/superadmin). TOTP MFA pending.'},
+  {id:'AUTH-09',cat:'auth',name:'Admin roles (RBAC) & 2-step sign-in',status:'Ready',p:'P0',ui:'Admin console access, admin sign-in',api:'role claims in token · POST /auth/login/verify · POST /auth/login/resend',opts:'Email code + SMS code; optional authenticator app (TOTP) later',note:'Built: RBAC (user/admin/superadmin); every admin sign-in needs an email code AND an SMS code (5 attempts, 10 min). Codes are delivered by the email/SMS providers (mocked until SendGrid / MSG91).'},
  {id:'AUTH-10',cat:'auth',name:'Admin profile view',status:'Ready',p:'P2',ui:'Admin top bar → profile name',api:'GET /admin/me · PATCH /admin/me',opts:'—',note:'Built.'},
 
  // ---- KYC
- {id:'KYC-01',cat:'kyc',name:'KYC verification (first paid subscription)',status:'Mock',p:'P0',ui:'Subscription page plan buttons, Pricing CTAs',api:'POST /kyc/sessions · GET /kyc/status',opts:'Digio, IDfy, HyperVerge, Signzy (PAN, Aadhaar offline eKYC / DigiLocker, CKYC)',note:'Built; Digio adapter ready, mock KYC page on stage.'},
+  {id:'KYC-01',cat:'kyc',name:'KYC — PAN-first (PAN check → KRA → DigiLocker)',status:'Mock',p:'P0',ui:'Subscription page (first paid plan), KYC dialog, KYC status strip',api:'POST /kyc/pan · GET /kyc/status · POST /kyc/sessions',opts:'Digio, Signzy, HyperVerge, IDfy, Setu (PAN, KRA fetch + upload, CKYC, DigiLocker)',note:'Built: PAN + name + DOB + consent, KRA lookup (instant when found), DigiLocker full KYC otherwise, duplicate-PAN review, 5 tries/day; only masked PAN + hash stored. Mock test PANs on stage. Digio PAN/KRA endpoints to configure at onboarding.'},
  {id:'KYC-02',cat:'kyc',name:'KYC status webhook',status:'Mock',p:'P0',ui:'User Management → KYC column',api:'POST /webhooks/kyc (signed)',opts:'Provider webhooks',note:'Built; signed webhook verified.'},
+ {id:'KYC-04',cat:'kyc',name:'KYC record retention & KRA upload confirmation',status:'Pending',p:'P0',ui:'Admin → User Management → KYC',api:'Retention job · provider KRA upload status',opts:'KYC provider / KRA',note:'Keep KYC references for the SEBI-required period after account closure; confirm retention rules with compliance.'},
  {id:'KYC-03',cat:'kyc',name:'Admin KYC review & override',status:'Ready',p:'P1',ui:'User Management → View user',api:'GET /admin/kyc/:userId · POST /admin/kyc/:userId/decision',opts:'—',note:'Built: admin decision with reason, audited.'},
 
  // ---- Payments, plans & billing
@@ -48,6 +49,7 @@ window.V22_INTEGRATIONS=[
  {id:'BILL-06',cat:'billing',name:'Cancellation & refunds',status:'Mock',p:'P1',ui:'Subscription page; Subscriptions KPIs (refunds)',api:'POST /billing/subscriptions/:id/cancel · POST /admin/refunds',opts:'Gateway refund APIs',note:'Built: cancel at period end + admin refunds (mock provider).'},
  {id:'BILL-07',cat:'billing',name:'Invoices & GST receipts',status:'Mock',p:'P1',ui:'Subscription → Billing details / history',api:'GET /billing/invoices · GET /billing/invoices/:id.pdf',opts:'Gateway invoices, Zoho Books, ClearTax GST',note:'In-app GST-inclusive invoices built; GST e-invoicing pending.'},
  {id:'BILL-08',cat:'billing',name:'Payment reconciliation & revenue reporting',status:'Ready',p:'P1',ui:'Admin dashboard revenue, Subscriptions MRR',api:'GET /admin/billing/summary?from&to',opts:'Gateway settlement reports',note:'Built from payments table.'},
+ {id:'BILL-10',cat:'billing',name:'SEBI centralised fee collection (CeFCoM)',status:'Pending',p:'P0',ui:'Checkout',api:'Fee collection via the SEBI-recognised mechanism',opts:'BSE CeFCoM (if required)',note:'Waiting for the compliance officer: whether RA/IA fees must go through CeFCoM instead of / as well as Razorpay.'},
  {id:'BILL-09',cat:'billing',name:'Free-plan usage limits (e.g. 1 AI query/day)',status:'Ready',p:'P1',ui:'Plan features, AI assistant',api:'Entitlement check middleware · GET /me/entitlements',opts:'—',note:'Built: AI queries/day per plan.'},
 
  // ---- Market & fund data
@@ -105,6 +107,7 @@ window.V22_INTEGRATIONS=[
  {id:'PUB-01',cat:'public',name:'Public activity feed',status:'Ready',p:'P2',ui:'Landing page “new member joined” toast',api:'GET /api/public/activity?limit=8',opts:'Own API (aggregated, no PII)',note:'Built (anonymous, last 48h).'},
  {id:'PUB-02',cat:'public',name:'Social profile links',status:'Pending',p:'P2',ui:'Footer WhatsApp, X, Instagram, YouTube, LinkedIn',api:'Static URLs (config)',opts:'—'},
  {id:'PUB-03',cat:'public',name:'Cookie consent & web analytics',status:'Pending',p:'P1',ui:'Public pages',api:'Consent banner + analytics SDK',opts:'Cookiebot, Osano, GA4 / PostHog'},
+ {id:'PUB-05',cat:'public',name:'SEBI compliance pages (registration, MITC, grievance, SCORES / ODR)',status:'Pending',p:'P0',ui:'Footer, sign-up, invoices, grievance page',api:'Static content + MITC acceptance record',opts:'—',note:'Needs registration type (RA/IA), number, grievance officer details and approved texts.'},
  {id:'PUB-04',cat:'public',name:'Legal pages (Privacy, Terms, disclosures)',status:'Pending',p:'P0',ui:'Footer Privacy / Terms',api:'Static content / CMS',opts:'Legal review'},
 
  // ---- Platform
@@ -114,5 +117,18 @@ window.V22_INTEGRATIONS=[
  {id:'PLT-04',cat:'platform',name:'Logging, monitoring & alerting',status:'Pending',p:'P0',ui:'—',api:'—',opts:'Sentry, Datadog, Grafana Cloud',note:'Structured JSON logs; monitoring/alerting pending.'},
  {id:'PLT-05',cat:'platform',name:'Rate limiting & WAF',status:'Ready',p:'P0',ui:'Login, OTP, public APIs',api:'Gateway policies',opts:'Cloudflare, AWS WAF',note:'App rate limiting built; WAF pending.'},
  {id:'PLT-06',cat:'platform',name:'Backups & disaster recovery',status:'Pending',p:'P0',ui:'—',api:'—',opts:'Managed DB snapshots, PITR',note:'Depends on hosting choice.'},
+ {id:'PLT-08',cat:'platform',name:'Cloud hosting, domains & CI/CD environments',status:'Pending',p:'P0',ui:'—',api:'AWS Mumbai (stage + prod), DNS, GitHub environments',opts:'AWS / GCP / Azure India region',note:'Docker images, CI and deploy workflow are ready; accounts listed in the accounts document.'},
+ {id:'PLT-09',cat:'platform',name:'Security testing & incident reporting (VAPT, CERT-In)',status:'Pending',p:'P0',ui:'—',api:'—',opts:'CERT-In empanelled VAPT firm',note:'VAPT on stage before launch; CERT-In 6-hour incident reporting contact; SEBI CSCRF category.'},
  {id:'PLT-07',cat:'platform',name:'Client-side spreadsheet parsing',status:'Ready',p:'P1',ui:'Data Management validation',api:'—',opts:'SheetJS CE (vendored)'}
+];
+
+/* Recent progress shown in Admin → System Settings → Build progress (newest first). */
+window.V22_PROGRESS_LOG=[
+ ['01 Nov 2026','v23.15','PAN-first KYC with KRA lookup and DigiLocker step (mock provider, test PANs); duplicate-PAN review'],
+ ['01 Nov 2026','v23.15','Session timeouts: 15 min inactivity sign-out with warning, 12 h / 8 h limit; password change ends other devices'],
+ ['01 Nov 2026','v23.15','Code reorganised: one folder per feature (API and website), comments throughout'],
+ ['31 Oct 2026','v23.9','Admin sign-in with email code + SMS code'],
+ ['31 Oct 2026','v23.8','Logout invalidates the session on the server; sign out of all devices'],
+ ['31 Oct 2026','v23.6','Custom SIP reminders for subscribers'],
+ ['31 Oct 2026','v23.5','Hindi language and the light “Sand” theme']
 ];
