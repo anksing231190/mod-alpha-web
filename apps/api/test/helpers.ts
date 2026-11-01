@@ -36,7 +36,11 @@ export function client(app: FastifyInstance) {
 }
 export async function adminClient(app: FastifyInstance) {
   const c = client(app);
+  // admins: password, then the email code AND the SMS code (mock providers return them on non-prod)
   const r = await c.post('/auth/login', { email: 'admin@modalpha.test', password: 'Admin-password-123' });
-  if (r.statusCode !== 200) throw new Error('admin login failed ' + r.body);
+  const ch = r.json();
+  if (r.statusCode !== 200 || !ch.mfaRequired) throw new Error('admin login failed ' + r.body);
+  const v = await c.post('/auth/login/verify', { challengeId: ch.challengeId, emailCode: ch.devCodes.email, smsCode: ch.devCodes.sms });
+  if (v.statusCode !== 200) throw new Error('admin MFA failed ' + v.body);
   return c;
 }

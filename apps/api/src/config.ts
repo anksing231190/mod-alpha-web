@@ -21,6 +21,7 @@ const Env = z.object({
   COOKIE_DOMAIN: z.string().optional(),
   ADMIN_BOOTSTRAP_EMAIL: z.string().email().optional(),
   ADMIN_BOOTSTRAP_PASSWORD: z.string().min(12).optional(),
+  ADMIN_BOOTSTRAP_MOBILE: z.string().regex(/^\+\d{10,13}$/, 'Use +91XXXXXXXXXX').optional(),
   UPLOAD_DIR: z.string().default('./var/uploads'),
   MAX_UPLOAD_MB: z.coerce.number().default(50),
   ALLOW_MOCK_PROVIDERS: z.string().default(''),

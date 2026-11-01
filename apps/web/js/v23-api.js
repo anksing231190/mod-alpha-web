@@ -110,6 +110,15 @@
   window.addEventListener('storage', (e) => { if (e.key === 'mod-alpha-logout' && S.user) { S.user = null; S.ent = null; history.replaceState(null, '', '#/login'); route(); notify('You have been logged out.'); } });
 
   // ------------------------------------------------------------------ login / signup / OTP / Google / forgot
+  // admins: step 2 (email code + SMS code) before a session is issued
+  async function loginResult(r) {
+    if (!r || !r.mfaRequired) return afterLogin(r.user);
+    MA_MFA.show(r, {
+      verify: async (emailCode, smsCode) => { const v = await API.post('/auth/login/verify', { challengeId: r.challengeId, emailCode, smsCode }); await afterLogin(v.user); },
+      resend: () => API.post('/auth/login/resend', { challengeId: r.challengeId }),
+      cancel: () => { location.hash = '#/login'; },
+    });
+  }
   const baseAuth = renderAuth;
   renderAuth = function () {
     baseAuth();
@@ -141,7 +150,7 @@
             return;
           }
           const r = await API.post('/auth/otp/verify', { mobile: id, code: codeInput.value.trim(), name: String(fd.get('name') || '') || undefined });
-          await afterLogin(r.user); return;
+          await loginResult(r); return;
         }
         if (signup) {
           if (fd.get('password') !== fd.get('confirm')) throw new Error('Passwords do not match.');
@@ -150,7 +159,7 @@
         }
         const remember = form.querySelector('.v22-auth-opts input[type=checkbox]')?.checked !== false;
         const r = await API.post('/auth/login', { email: id, password: String(fd.get('password') || ''), remember });
-        await afterLogin(r.user);
+        await loginResult(r);
       } catch (ex) { done(); err.style.color = ''; err.textContent = ex.details?.[0]?.message || errMsg(ex); }
     };
   };
@@ -169,7 +178,7 @@
         if (API.env === 'prod') { notify('Google sign-in is not configured yet.'); return; }
         const email = prompt('Stage test: Google sign-in is mocked. Enter an email to sign in as:'); if (!email) return; token = `mock:${email.trim()}`;
       }
-      const r = await API.post('/auth/oauth/google', { idToken: token }); await afterLogin(r.user);
+      const r = await API.post('/auth/oauth/google', { idToken: token }); await loginResult(r);
     } catch (e) { fail(e); }
   });
   function authShell(title, inner) { app.innerHTML = `${topbar(true)}<main class="v22 v22-auth"><section class="v22-auth-card"><div class="v22-auth-brand">${v22Mark(36)}<b>Mod Alpha</b></div><h1>${title}</h1>${inner}</section></main>${publicFooter()}`; }
@@ -550,11 +559,14 @@
     const [t, c, o] = await Promise.all([API.get('/admin/notification-templates'), API.get('/admin/campaigns'), API.get('/admin/mock-outbox', { limit: 10 })]); TPLS = t.items; const K = c.kpis;
     return `${v22Head('Notifications', 'Templates, consent-aware campaigns and delivery status.', `<button type="button" class="v22-grad-btn" data-ma-campaign>${ic('spark')} New campaign</button>`, 'ADMIN · MESSAGING')}
     ${v22Kpis([['users', 'Active-subscriber audience', (+K.scheduledRecipients).toLocaleString('en-IN'), K.next ? `Next: ${esc(K.next.name)}` : 'No campaign scheduled', ''], ['check', 'Delivery success (30d)', K.successRate != null ? K.successRate + '%' : '—', `${K.sent} sent`, 'pos'], ['refund', 'Failed (30d)', (+K.failed).toLocaleString('en-IN'), 'See delivery log', 'warn'], ['bell', 'Marketing opt-in', (K.optInPct ?? 0) + '%', 'Consent-aware sends', '']])}
-    <section class="v22-card"><div class="v22-card-head"><h2>Templates</h2><span class="v22-muted">${TPLS.length} templates</span></div><div class="v22-templates">${TPLS.map((x) => `<article>${cic({ sip_reminder: 'calendar', subscription_confirmation: 'check', payment_status: 'rupee', security_alert: 'shield' }[x.key] || 'mail', 34)}<b>${esc(x.name)}</b><small>${esc(x.subject)}</small><div class="v22-tpl-ch">${x.channels.map((ch) => `<span class="v22-pill neutral">${ch}</span>`).join('')}${v22Status(x.status)}</div><button type="button" class="v22-row-btn" data-ma-tpl="${x.key}">Edit template ${ic('arrowR')}</button></article>`).join('')}</div></section>
+    <section class="v22-card"><div class="v22-card-head"><h2>Templates</h2><span class="v22-muted">${TPLS.length} templates</span></div>${MA_TPL.grid(TPLS.map((x) => ({ ...x, desc: x.subject, updated: x.updated_at ? new Date(x.updated_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '' })), 'data-ma-tpl')}</section>
     <div class="v22-notif-two"><section class="v22-card"><div class="v22-card-head"><h2>Campaigns</h2></div>${c.items.length ? c.items.map((x) => { const st = x.stats || {}; const tot = (st.delivered || 0) + (st.failed || 0); return `<div class="v22-camp"><div><b>${esc(x.name)}</b><small>${esc(x.channels.join(' + '))} · ${esc(x.audience.replace(/_/g, ' '))} · ${new Date(x.scheduled_for).toLocaleString('en-IN')}</small></div><div class="v22-camp-bar"><i class="v22-bar"><em style="width:${tot ? (100 * (st.delivered || 0)) / tot : 0}%"></em></i><small>${st.delivered ?? 0} delivered · ${st.failed ?? 0} failed · ${st.skipped ?? 0} skipped (no consent/contact)</small></div>${x.status === 'Scheduled' ? `<button class="v22-row-btn" data-ma-camp-cancel="${x.id}">Cancel</button>` : v22Status(x.status)}</div>`; }).join('') : '<p class="v22-sub">No campaigns yet.</p>'}</section>
     <section class="v22-card"><div class="v22-card-head"><h2>Mock outbox</h2><span class="v22-pill warn">Stage — not sent</span></div><p class="v22-sub" style="margin-bottom:10px">Messages the mock email/SMS/push providers would have sent. Replaced by real delivery once the providers are integrated.</p>${o.items.length ? o.items.map((m) => `<div class="v22-batch">${cic({ email: 'mail', sms: 'sms', push: 'phone', whatsapp: 'chat', support: 'help' }[m.channel] || 'doc', 26)}<div><b>${esc(m.subject || m.channel.toUpperCase())}</b><small>${esc(m.recipient)} · ${esc(m.body.slice(0, 90))}${m.body.length > 90 ? '…' : ''}</small></div><span class="v22-pill neutral">${esc(m.channel)}</span></div>`).join('') : '<p class="v22-sub">Empty.</p>'}</section></div>`;
   }
-  on('[data-ma-tpl]', (b) => { const t = TPLS.find((x) => x.key === b.dataset.maTpl); showModal(`Edit template · ${esc(t.name)}`, `<div class="v22"><form id="ma-tpl-f" style="display:grid;gap:12px"><label class="v22-fl">Name<input name="name" value="${esc(t.name)}"></label><div class="v22-fl">Channels<div class="v22-seg-pills wrap">${['email', 'sms', 'push', 'inapp', 'whatsapp'].map((c) => `<label style="display:flex;gap:6px;align-items:center;padding:6px 10px"><input type="checkbox" name="ch" value="${c}" ${t.channels.includes(c) ? 'checked' : ''}> ${c}</label>`).join('')}</div></div><label class="v22-fl">Subject / title <small>use {{name}}, {{date}}</small><input name="subject" value="${esc(t.subject)}"></label><label class="v22-fl">Email body<textarea name="body" rows="6">${esc(t.body)}</textarea></label><label class="v22-fl">SMS / push text (max 160)<input name="sms" maxlength="160" value="${esc(t.sms_text || '')}"></label><label class="v22-fl">Status${v22Sel('', ['Draft', 'Active', 'Archived'].map((s) => s))}</label><div class="v22-err" id="ma-tpl-err"></div><div class="v22-modal-actions"><button type="button" class="v22-outline-btn" data-ma-tpl-prev="${t.key}">Preview</button><button class="v22-grad-btn">Save template</button></div><div id="ma-tpl-prev"></div></form></div>`); const sel = document.querySelector('#ma-tpl-f select'); sel.value = t.status; document.getElementById('ma-tpl-f').onsubmit = async (e) => { e.preventDefault(); const f = new FormData(e.target); try { await API.put(`/admin/notification-templates/${t.key}`, { name: f.get('name'), channels: f.getAll('ch'), subject: f.get('subject'), body: f.get('body'), smsText: f.get('sms') || undefined, status: sel.value }); modalRoot.innerHTML = ''; notify('Template saved.'); renderAdmin('notifications'); } catch (ex) { document.getElementById('ma-tpl-err').textContent = ex.details?.[0] ? `${ex.details[0].path}: ${ex.details[0].message}` : errMsg(ex); } }; });
+  on('[data-ma-tpl]', (b) => {
+    const t = TPLS.find((x) => x.key === b.dataset.maTpl); if (!t) return;
+    MA_TPL.edit(t, async (d) => { await API.put(`/admin/notification-templates/${t.key}`, { name: d.name, channels: d.channels, subject: d.subject, body: d.body, smsText: d.sms_text || undefined, status: d.status }); notify('Template saved.'); renderAdmin('notifications'); });
+  });
   on('[data-ma-tpl-prev]', async (b) => { try { const p = await API.post(`/admin/notification-templates/${b.dataset.maTplPrev}/preview`); document.getElementById('ma-tpl-prev').innerHTML = `<div class="v22-mailprev" style="margin-top:12px"><h3>${esc(p.email.subject)}</h3><p style="white-space:pre-line">${esc(p.email.body)}</p><small>SMS: ${esc(p.sms)}</small></div>`; } catch (e) { fail(e); } });
   on('[data-ma-campaign], [data-action="new-campaign"]', () => { showModal('New campaign', `<div class="v22"><form id="ma-camp-f" style="display:grid;gap:12px"><label class="v22-fl">Name<input name="name" required value="SIP reminder"></label><label class="v22-fl">Template${v22Sel('ma-camp-tpl', TPLS.filter((t) => t.status === 'Active').map((t) => t.key))}</label><div class="v22-fl">Channels<div class="v22-seg-pills wrap">${['inapp', 'email', 'sms', 'push'].map((c) => `<label style="display:flex;gap:6px;align-items:center;padding:6px 10px"><input type="checkbox" name="ch" value="${c}" ${c === 'inapp' || c === 'email' ? 'checked' : ''}> ${c}</label>`).join('')}</div></div><label class="v22-fl">Audience${v22Sel('ma-camp-aud', ['active_subscribers', 'all_users', 'marketing_opt_in'])}</label><label class="v22-fl">Send at <small>leave empty to send now</small><input type="datetime-local" name="at"></label><div class="v22-err" id="ma-camp-err"></div><button class="v22-grad-btn">Schedule campaign</button></form><p class="v22-hint">Users who switched a channel off in their notification settings are skipped.</p></div>`); document.getElementById('ma-camp-f').onsubmit = async (e) => { e.preventDefault(); const f = new FormData(e.target), at = f.get('at'); try { const r = await API.post('/admin/campaigns', { name: f.get('name'), templateKey: document.getElementById('ma-camp-tpl').value, channels: f.getAll('ch'), audience: document.getElementById('ma-camp-aud').value, scheduledFor: at ? new Date(at).toISOString() : undefined, sendNow: !at }); modalRoot.innerHTML = ''; notify(r.sending ? 'Sending now — delivery stats appear here in a minute.' : 'Campaign scheduled.'); renderAdmin('notifications'); } catch (ex) { document.getElementById('ma-camp-err').textContent = errMsg(ex); } }; });
   on('[data-ma-camp-cancel]', async (b) => { try { await API.post(`/admin/campaigns/${b.dataset.maCampCancel}/cancel`); renderAdmin('notifications'); } catch (e) { fail(e); } });

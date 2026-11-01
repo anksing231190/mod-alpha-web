@@ -30,6 +30,61 @@ export default async function auth(app: FastifyInstance) {
     return reply.status(201).send({ user: userView(u), ...s });
   });
 
+
+  /* ---- Admin sign-in second step: a code by email AND a code by SMS, both required ---- */
+  const isAdmin = (u: any) => u.role === 'admin' || u.role === 'superadmin';
+  const mask = {
+    email: (e: string) => e.replace(/^(.)(.*)(.@.*)$/, (_, a, m, b) => a + '•'.repeat(Math.max(2, m.length)) + b),
+    mobile: (m: string) => m.replace(/^(\+\d{2})\d+(\d{4})$/, '$1 •••••• $2'),
+  };
+  async function adminChallenge(req: any, u: any, remember: boolean) {
+    if (!u.email || !u.mobile) {
+      await audit(db, req, { action: 'ADMIN_LOGIN_BLOCKED', category: 'Access', resource: u.id, outcome: 'Blocked', actorLabel: u.email ?? u.mobile, meta: { reason: 'missing email or mobile' } });
+      throw new HttpError(403, 'admin_contact_required', 'Admin sign-in needs both a verified email and mobile number on the account. Ask a super admin to add them.');
+    }
+    const ec = String(crypto.randomInt(100000, 1000000)), sc = String(crypto.randomInt(100000, 1000000));
+    const ch = (await db.query(`INSERT INTO login_challenges (user_id, email_code_hash, sms_code_hash, remember, expires_at, ip) VALUES ($1,$2,$3,$4, now() + interval '10 minutes', $5) RETURNING id`, [u.id, sha256(ec), sha256(sc), remember, req.ip])).rows[0];
+    await sendChallengeCodes(u, ec, sc);
+    await audit(db, req, { action: 'ADMIN_LOGIN_CHALLENGE', category: 'Access', resource: u.id, actorLabel: u.email });
+    const dev = cfg.APP_ENV !== 'prod' && providers.email.name === 'mock' && providers.sms.name === 'mock';
+    return { mfaRequired: true, challengeId: ch.id, email: mask.email(u.email), mobile: mask.mobile(u.mobile), expiresIn: 600, ...(dev ? { devCodes: { email: ec, sms: sc } } : {}) };
+  }
+  async function sendChallengeCodes(u: any, ec: string, sc: string) {
+    await providers.email.send({ to: u.email, subject: `${ec} is your Mod Alpha admin sign-in code`, text: `Your admin sign-in code is ${ec}. It expires in 10 minutes. You also need the code sent to your mobile.\n\nIf you did not try to sign in, reset your password and tell your security team.` });
+    await providers.sms.send({ to: u.mobile, text: `${sc} is your Mod Alpha admin sign-in code. It expires in 10 minutes. Never share it.`, templateId: cfg.MSG91_OTP_TEMPLATE_ID, vars: { otp: sc } });
+  }
+
+  app.post('/auth/login/verify', strict, async (req, reply) => {
+    const b = parse(z.object({ challengeId: z.string().uuid(), emailCode: z.string().regex(/^\d{6}$/, 'Enter the 6-digit email code'), smsCode: z.string().regex(/^\d{6}$/, 'Enter the 6-digit SMS code') }), req.body);
+    const c = (await db.query('SELECT * FROM login_challenges WHERE id=$1', [b.challengeId])).rows[0];
+    if (!c || c.consumed_at || new Date(c.expires_at) < new Date()) throw badRequest('This sign-in code has expired. Log in again.');
+    if (c.attempts >= 5) throw tooMany('Too many attempts. Log in again to get new codes.');
+    const okE = c.email_code_hash === sha256(b.emailCode), okS = c.sms_code_hash === sha256(b.smsCode);
+    if (!okE || !okS) {
+      await db.query('UPDATE login_challenges SET attempts=attempts+1 WHERE id=$1', [c.id]);
+      await audit(db, req, { action: 'ADMIN_LOGIN_CODE_FAILED', category: 'Access', resource: c.user_id, outcome: 'Blocked', meta: { email: okE, sms: okS } });
+      throw new HttpError(400, 'bad_code', !okE && !okS ? 'Both codes are incorrect.' : !okE ? 'The email code is incorrect.' : 'The SMS code is incorrect.', { email: okE, sms: okS });
+    }
+    const u = (await db.query('SELECT * FROM users WHERE id=$1 AND deleted_at IS NULL', [c.user_id])).rows[0];
+    if (!u) throw unauthorized();
+    active(u);
+    await db.query('UPDATE login_challenges SET consumed_at=now() WHERE id=$1', [c.id]);
+    await audit(db, req, { action: 'ADMIN_LOGIN', category: 'Access', resource: u.id, actorLabel: u.email, meta: { factors: ['password', 'email_otp', 'sms_otp'] } });
+    return { user: userView(u), ...(await issueSession(db, cfg, reply, req, toAuth(u), c.remember)) };
+  });
+  app.post('/auth/login/resend', strict, async (req) => {
+    const b = parse(z.object({ challengeId: z.string().uuid() }), req.body);
+    const c = (await db.query('SELECT * FROM login_challenges WHERE id=$1', [b.challengeId])).rows[0];
+    if (!c || c.consumed_at || new Date(c.expires_at) < new Date()) throw badRequest('This sign-in has expired. Log in again.');
+    if (c.resends >= 3) throw tooMany('Too many resends. Log in again.');
+    const u = (await db.query('SELECT * FROM users WHERE id=$1', [c.user_id])).rows[0];
+    const ec = String(crypto.randomInt(100000, 1000000)), sc = String(crypto.randomInt(100000, 1000000));
+    await db.query(`UPDATE login_challenges SET email_code_hash=$2, sms_code_hash=$3, attempts=0, resends=resends+1, expires_at=now() + interval '10 minutes' WHERE id=$1`, [c.id, sha256(ec), sha256(sc)]);
+    await sendChallengeCodes(u, ec, sc);
+    const dev = cfg.APP_ENV !== 'prod' && providers.email.name === 'mock' && providers.sms.name === 'mock';
+    return { sent: true, expiresIn: 600, ...(dev ? { devCodes: { email: ec, sms: sc } } : {}) };
+  });
+
   app.post('/auth/login', strict, async (req, reply) => {
     const b = parse(z.object({ email: z.string().trim().email(), password: z.string().min(1), remember: z.boolean().default(true) }), req.body);
     const r = await db.query('SELECT * FROM users WHERE email=$1 AND deleted_at IS NULL', [b.email]);
@@ -39,6 +94,7 @@ export default async function auth(app: FastifyInstance) {
       throw unauthorized('Incorrect email or password');
     }
     active(u);
+    if (isAdmin(u)) return adminChallenge(req, u, b.remember);
     const s = await issueSession(db, cfg, reply, req, toAuth(u), b.remember);
     return { user: userView(u), ...s };
   });
@@ -73,6 +129,7 @@ export default async function auth(app: FastifyInstance) {
       await audit(db, req, { action: 'USER_SIGNUP', category: 'Account', resource: u.id, actorLabel: b.mobile });
     } else if (!u.mobile_verified_at) await db.query('UPDATE users SET mobile_verified_at=now() WHERE id=$1', [u.id]);
     active(u);
+    if (isAdmin(u)) return adminChallenge(req, u, b.remember);
     const s = await issueSession(db, cfg, reply, req, toAuth(u), b.remember);
     return reply.status(created ? 201 : 200).send({ user: userView(u), created, ...s });
   });
@@ -84,6 +141,7 @@ export default async function auth(app: FastifyInstance) {
     if (!u) u = (await db.query(`INSERT INTO users (email, full_name, google_sub, email_verified_at) VALUES ($1,$2,$3, CASE WHEN $4 THEN now() END) RETURNING *`, [g.email, g.name, g.sub, g.emailVerified])).rows[0];
     else if (!u.google_sub) u = (await db.query('UPDATE users SET google_sub=$2, email_verified_at=coalesce(email_verified_at, now()) WHERE id=$1 RETURNING *', [u.id, g.sub])).rows[0];
     active(u);
+    if (isAdmin(u)) return adminChallenge(req, u, true);
     return { user: userView(u), ...(await issueSession(db, cfg, reply, req, toAuth(u))) };
   });
   app.post('/auth/oauth/apple', async () => { throw new HttpError(501, 'not_implemented', 'Sign in with Apple is not available yet (AUTH-05).'); });

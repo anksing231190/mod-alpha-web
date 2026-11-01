@@ -417,3 +417,13 @@ Object.assign(window.MA_I18N_DICT, {
   'Sign out of all devices is available when you are signed in to a real account.': 'सभी डिवाइस से साइन आउट असली खाते में साइन इन करने पर उपलब्ध है।', 'Sign out': 'साइन आउट',
 });
 Object.assign(window.MA_I18N_DICT, { 'Today': 'आज', 'Clear': 'साफ़ करें', 'Choose date': 'तारीख चुनें', 'Select date': 'तारीख चुनें', 'No date selected': 'कोई तारीख नहीं चुनी', 'Choose month and year': 'महीना और साल चुनें' });
+Object.assign(window.MA_I18N_DICT, {
+  'Admin sign-in': 'एडमिन साइन-इन', 'Verify it’s you': 'पुष्टि करें कि यह आप ही हैं',
+  'We sent one 6-digit code to your email and another to your mobile. Enter both to continue.': 'हमने एक 6-अंकों का कोड आपके ईमेल पर और दूसरा आपके मोबाइल पर भेजा है। आगे बढ़ने के लिए दोनों डालें।',
+  'Email code': 'ईमेल कोड', 'SMS code': 'SMS कोड', 'Test codes (stage / demo only)': 'टेस्ट कोड (केवल स्टेज / डेमो)', 'email': 'ईमेल',
+  'Verify & sign in': 'सत्यापित करें और साइन इन करें', 'Verifying…': 'सत्यापित हो रहा है…', 'Resend codes': 'कोड फिर से भेजें', 'Use a different account': 'दूसरा खाता इस्तेमाल करें',
+  'Codes expire in': 'कोड की समय-सीमा', 'Codes expired — resend or log in again.': 'कोड की समय-सीमा खत्म — फिर से भेजें या दोबारा लॉग इन करें।',
+  'Enter both 6-digit codes.': 'दोनों 6-अंकों के कोड डालें।', 'Both codes are incorrect.': 'दोनों कोड गलत हैं।', 'The email code is incorrect.': 'ईमेल कोड गलत है।', 'The SMS code is incorrect.': 'SMS कोड गलत है।',
+  'New codes sent to your email and mobile.': 'आपके ईमेल और मोबाइल पर नए कोड भेजे गए।', 'This sign-in code has expired. Log in again.': 'इस साइन-इन कोड की समय-सीमा खत्म हो गई। फिर से लॉग इन करें।',
+  'Too many attempts. Log in again to get new codes.': 'बहुत ज़्यादा प्रयास। नए कोड के लिए फिर से लॉग इन करें।',
+});

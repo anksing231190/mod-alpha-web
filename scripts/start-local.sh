@@ -42,6 +42,7 @@ if [ ! -f .env.local ]; then
   ok "created .env.local (database user: ${USER})"
 else
   ok ".env.local exists"
+  if ! grep -q "^ADMIN_BOOTSTRAP_MOBILE=" .env.local; then echo "ADMIN_BOOTSTRAP_MOBILE=+919900000001" >> .env.local; ok "added ADMIN_BOOTSTRAP_MOBILE (admins confirm an SMS code at sign-in)"; fi
 fi
 set -a; . ./.env.local; set +a
 API_PORT="${PORT:-8080}"; WEB_PORT=8081

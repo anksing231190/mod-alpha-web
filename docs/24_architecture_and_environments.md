@@ -94,7 +94,7 @@ Base path: `/api/v1`. Auth uses httpOnly cookies (`ma_at` for the access token, 
 
 | Area | Endpoints |
 |---|---|
-| Auth | `POST /auth/signup` · `/auth/login` · `/auth/logout` · `/auth/logout-all` · `/auth/refresh` · `/auth/otp/send` · `/auth/otp/verify` · `/auth/password/forgot` · `/auth/password/reset` · `/auth/verify-email` · `/auth/oauth/google` · `/auth/oauth/apple` (501) · `GET /auth/me` |
+| Auth | `POST /auth/signup` · `/auth/login` · `/auth/login/verify` · `/auth/login/resend` · `/auth/logout` · `/auth/logout-all` · `/auth/refresh` · `/auth/otp/send` · `/auth/otp/verify` · `/auth/password/forgot` · `/auth/password/reset` · `/auth/verify-email` · `/auth/oauth/google` · `/auth/oauth/apple` (501) · `GET /auth/me` |
 | Me | `PATCH /me` · `POST /me/password` · `POST /me/verify-email` · `GET/PUT /me/preferences` (incl. `sipReminder`) · `PUT /me/consents` · `GET /me/notifications` · `POST /me/notifications/read` · `GET/POST/DELETE /me/watchlist[/:fundId]` · `POST /me/data-export` · `GET /me/data-export/:id` · `POST /me/deletion-request` · `GET /me/entitlements` |
 | Plans & billing | `GET /plans` · `POST /billing/checkout` · `POST /billing/verify` · `POST /billing/mock/complete` (stage) · `POST /webhooks/payments` · `GET /billing/subscription` · `POST /billing/subscriptions/:id/cancel` · `GET /billing/invoices[/:id]` |
 | KYC | `GET /kyc/status` · `POST /kyc/sessions` · `POST /webhooks/kyc` · `POST /kyc/mock/complete` (stage) |
@@ -131,7 +131,16 @@ Base path: `/api/v1`. Auth uses httpOnly cookies (`ma_at` for the access token, 
 
 ## 8. Security notes
 
-- Passwords: bcrypt (cost 11).
+- **Passwords:** bcrypt (cost 11).
+- **Admin sign-in uses three factors:** password, a code by **email** and a code by **SMS**.
+  1. `POST /auth/login` checks the password. For admins it returns `{ mfaRequired, challengeId, email, mobile }`, with the email and mobile masked, instead of a session.
+  2. One 6-digit code goes to the admin's email and another to their mobile.
+  3. `POST /auth/login/verify { challengeId, emailCode, smsCode }` starts the session only when **both** codes match.
+  - **Limits:** codes expire after 10 minutes, 5 wrong tries end the challenge, and up to 3 resends are allowed (`POST /auth/login/resend`).
+  - **Other sign-in routes:** mobile-OTP and Google sign-in for admins go through the same step.
+  - **Audit trail:** `ADMIN_LOGIN_CHALLENGE`, `ADMIN_LOGIN_CODE_FAILED` and `ADMIN_LOGIN`.
+  - **Contact details:** admins need both an email and a mobile on file. The first admin's mobile comes from `ADMIN_BOOTSTRAP_MOBILE`, required in prod.
+  - **Stage only:** while email and SMS are mocked, the codes are also shown on screen on stage. That never happens in prod.
 - **Sessions:** a 15-minute access JWT plus a rotating 30-day refresh token, stored hashed.
   - **Session check:** the access token carries its session id, and **every request re-checks that session**. An access token stops working the moment its session is revoked or the account is suspended, not just when it expires after 15 minutes.
   - **Theft detection:** refresh-token reuse revokes every session of that user.

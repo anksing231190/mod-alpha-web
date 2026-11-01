@@ -338,3 +338,42 @@ describe('logout really ends the session', () => {
     expect((await e.get('/auth/me')).statusCode).toBe(401);
   });
 });
+
+describe('admin sign-in: password + email OTP + SMS OTP', () => {
+  it('requires both codes, limits attempts, sends via both channels, and only then starts a session', async () => {
+    const c = client(app);
+    const r = (await c.post('/auth/login', { email: 'admin@modalpha.test', password: 'Admin-password-123' })).json();
+    expect(r.mfaRequired).toBe(true); expect(r.user).toBeUndefined();
+    expect(r.email).toMatch(/^a•+n@modalpha\.test$/); expect(r.mobile).toBe('+91 •••••• 0001');
+    expect(c.jar.ma_at).toBeUndefined();                                // no session yet
+    expect((await c.get('/auth/me')).statusCode).toBe(401);
+    // the codes went out by email AND by SMS (mock outbox)
+    const out = (await db.query(`SELECT channel, recipient FROM mock_outbox ORDER BY id DESC LIMIT 2`)).rows.map((x: any) => x.channel).sort();
+    expect(out).toEqual(['email', 'sms']);
+    // one right code is not enough
+    const one = await c.post('/auth/login/verify', { challengeId: r.challengeId, emailCode: r.devCodes.email, smsCode: '000000' });
+    expect(one.statusCode).toBe(400); expect(one.json().error.message).toMatch(/SMS code/);
+    const other = await c.post('/auth/login/verify', { challengeId: r.challengeId, emailCode: '000000', smsCode: r.devCodes.sms });
+    expect(other.json().error.message).toMatch(/email code/);
+    // resend issues fresh codes; old ones stop working
+    const rs = (await c.post('/auth/login/resend', { challengeId: r.challengeId })).json();
+    expect(rs.sent).toBe(true); expect(rs.devCodes.email).not.toBeUndefined();
+    const ok = await c.post('/auth/login/verify', { challengeId: r.challengeId, emailCode: rs.devCodes.email, smsCode: rs.devCodes.sms });
+    expect(ok.statusCode).toBe(200); expect(ok.json().user.role).toBe('superadmin');
+    expect((await c.get('/admin/metrics')).statusCode).toBe(200);
+    // a challenge cannot be reused
+    expect((await c.post('/auth/login/verify', { challengeId: r.challengeId, emailCode: rs.devCodes.email, smsCode: rs.devCodes.sms })).statusCode).toBe(400);
+    // 5 wrong tries lock the challenge
+    const c2 = client(app);
+    const r2 = (await c2.post('/auth/login', { email: 'admin@modalpha.test', password: 'Admin-password-123' })).json();
+    for (let i = 0; i < 5; i++) await c2.post('/auth/login/verify', { challengeId: r2.challengeId, emailCode: '111111', smsCode: '222222' });
+    expect((await c2.post('/auth/login/verify', { challengeId: r2.challengeId, emailCode: r2.devCodes.email, smsCode: r2.devCodes.sms })).statusCode).toBe(429);
+    // regular users are not affected
+    const u = client(app);
+    await u.post('/auth/signup', { name: 'Plain User', email: 'plain@example.com', password: 'secret-pass-1' });
+    const ul = (await client(app).post('/auth/login', { email: 'plain@example.com', password: 'secret-pass-1' })).json();
+    expect(ul.mfaRequired).toBeUndefined(); expect(ul.user.role).toBe('user');
+    const acts = (await db.query(`SELECT action FROM audit_log WHERE action LIKE 'ADMIN_LOGIN%'`)).rows.map((x: any) => x.action);
+    expect(acts).toEqual(expect.arrayContaining(['ADMIN_LOGIN_CHALLENGE', 'ADMIN_LOGIN_CODE_FAILED', 'ADMIN_LOGIN']));
+  });
+});

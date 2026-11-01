@@ -83,3 +83,12 @@ Every date field on the site uses one Mod Alpha calendar (`apps/web/js/datepicke
 - **Keyboard:** arrows, PgUp/PgDn, Home/End, Enter and Esc.
 - **Phones:** opens as a bottom sheet.
 - **Under the hood:** inputs keep their original values (`dd/mm/yyyy` or ISO), so existing code is unchanged.
+
+## Fund house logos
+- **Where they appear:** each fund shows its fund house (AMC) logo in the fund list, on the fund page and in the dashboard legend.
+- **Adding a logo:**
+  1. Put the official file in `apps/web/assets/funds/`: SVG, or a square PNG of at least 128 px with a transparent background.
+  2. Map the AMC name, exactly as in the Funds sheet's `amc` column, to that file in `apps/web/assets/funds/manifest.js`.
+- **Fallback:** an AMC without a file shows a coloured monogram tile (e.g. "SBI", "HDFC").
+- **Permission:** logos are trademarks of their AMCs, so use them only with permission or under each AMC's brand guidelines.
+- **Network note:** the build environment's network policy blocked downloading them, so add the files manually.

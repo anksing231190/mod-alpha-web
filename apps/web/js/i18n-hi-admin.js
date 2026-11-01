@@ -201,3 +201,10 @@ window.MA_I18N_WORDS = {
   Monday: 'सोमवार', Tuesday: 'मंगलवार', Wednesday: 'बुधवार', Thursday: 'गुरुवार', Friday: 'शुक्रवार', Saturday: 'शनिवार', Sunday: 'रविवार',
   am: 'पूर्वाह्न', pm: 'अपराह्न', ago: 'पहले', today: 'आज', yesterday: 'कल',
 };
+Object.assign(window.MA_I18N_DICT, {
+  'Subject': 'विषय', 'Updated': 'अपडेट', 'Template name': 'टेम्पलेट का नाम', 'Channels': 'चैनल', 'Subject / title': 'विषय / शीर्षक', 'Variables': 'वेरिएबल',
+  'Email body': 'ईमेल का मुख्य भाग', 'SMS / push text': 'SMS / पुश टेक्स्ट', 'Status': 'स्थिति', 'Save template': 'टेम्पलेट सहेजें', 'In-app': 'इन-ऐप',
+  'Preview uses sample values (Ankit, 12 November). Users who switched a channel off are skipped.': 'प्रीव्यू में सैंपल मान (Ankit, 12 नवंबर) हैं। जिन यूज़र्स ने कोई चैनल बंद किया है, उन्हें नहीं भेजा जाता।',
+  'You receive this because SIP reminders are on. Unsubscribe: Settings → Notifications.': 'आपको यह इसलिए मिला क्योंकि SIP रिमाइंडर चालू हैं। बंद करें: सेटिंग्स → सूचनाएँ।',
+  'Choose at least one channel.': 'कम से कम एक चैनल चुनें।', 'Template saved for this demo session.': 'टेम्पलेट इस डेमो सेशन के लिए सहेजा गया।',
+});

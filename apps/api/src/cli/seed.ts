@@ -43,7 +43,10 @@ export async function seedReference(db: Db) {
 export async function bootstrapAdmin(db: Db, cfg: Config) {
   if (!cfg.ADMIN_BOOTSTRAP_EMAIL || !cfg.ADMIN_BOOTSTRAP_PASSWORD) return null;
   const hash = await bcrypt.hash(cfg.ADMIN_BOOTSTRAP_PASSWORD, 11);
-  const r = await db.query(`INSERT INTO users (email, full_name, password_hash, role, email_verified_at, kyc_status) VALUES ($1,'Admin',$2,'superadmin', now(), 'Verified') ON CONFLICT (email) DO UPDATE SET role='superadmin' RETURNING id`, [cfg.ADMIN_BOOTSTRAP_EMAIL, hash]);
+  // admins sign in with password + email OTP + SMS OTP, so the bootstrap admin needs a mobile number
+  const r = await db.query(`INSERT INTO users (email, full_name, password_hash, role, email_verified_at, kyc_status, mobile, mobile_verified_at)
+      VALUES ($1,'Admin',$2,'superadmin', now(), 'Verified', $3, CASE WHEN $3::text IS NOT NULL THEN now() END)
+      ON CONFLICT (email) DO UPDATE SET role='superadmin', mobile=coalesce(EXCLUDED.mobile, users.mobile), mobile_verified_at=coalesce(users.mobile_verified_at, EXCLUDED.mobile_verified_at) RETURNING id`, [cfg.ADMIN_BOOTSTRAP_EMAIL, hash, cfg.ADMIN_BOOTSTRAP_MOBILE ?? null]);
   return r.rows[0].id;
 }
 
