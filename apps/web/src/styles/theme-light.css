@@ -174,7 +174,7 @@ html[data-theme="light"] .hd-best strong{background-image:linear-gradient(90deg,
 html[data-theme="light"] .hd-best small{color:#7f4b22!important}
 
 /* SIP date orb (admin) */
-html[data-theme="light"] .v22-orb>div{background:radial-gradient(circle at 50% 35%,#fffaf1,#f1e2c8 72%)!important;border:2px solid #c99a62!important;box-shadow:0 10px 30px rgba(127,75,34,.18),inset 0 0 0 6px rgba(255,255,255,.6)!important}
+html[data-theme="light"] .v22-orb>div{background:radial-gradient(circle at 50% 35%,#fffaf1,#f1e2c8 72%)!important;border:2px solid #c99a62!important}
 html[data-theme="light"] .v22-orb small{color:#7f4b22!important}
 html[data-theme="light"] .v22-orb strong{color:#2b2118!important}
 html[data-theme="light"] .v22-orb span{color:#54442f!important}
@@ -232,7 +232,12 @@ html[data-theme="light"] .v22-ins-ic{color:#7d3d5d!important}
 html[data-theme="light"] .v22-gate-box{border-color:#c9ad85!important}
 /* the dark theme's glow pulse fades whole elements on cream — use a soft shadow pulse instead */
 @keyframes sandPulse{0%,100%{box-shadow:0 10px 30px rgba(127,75,34,.16),inset 0 0 0 6px rgba(255,255,255,.6)}50%{box-shadow:0 14px 40px rgba(127,75,34,.3),inset 0 0 0 6px rgba(255,255,255,.6)}}
-html[data-theme="light"] .v22-orb>div{animation:sandPulse 3.5s ease-in-out infinite!important}
+/* SIP date orb: glow pulse + slowly turning dotted ring (no !important on box-shadow, so the animation can run) */
+html[data-theme="light"] .v22-orb>div{position:relative;box-shadow:0 10px 30px rgba(127,75,34,.16),inset 0 0 0 6px rgba(255,255,255,.6);animation:sandPulse 3.2s ease-in-out infinite}
+html[data-theme="light"] .v22-orb>div::before{content:"";position:absolute;inset:-12px;border-radius:50%;border:2px dotted rgba(168,100,28,.55);animation:sandSpin 22s linear infinite;pointer-events:none}
+html[data-theme="light"] .v22-orb>div::after{content:"";position:absolute;inset:-12px;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 82%,rgba(201,154,98,.55) 92%,transparent 100%);-webkit-mask:radial-gradient(circle,transparent calc(100% - 4px),#000 calc(100% - 3px));mask:radial-gradient(circle,transparent calc(100% - 4px),#000 calc(100% - 3px));animation:sandSpin 4s linear infinite;pointer-events:none}
+@keyframes sandSpin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){html[data-theme="light"] .v22-orb>div,html[data-theme="light"] .v22-orb>div::before,html[data-theme="light"] .v22-orb>div::after{animation:none}}
 html[data-theme="light"] .v22-chat-head{background:linear-gradient(180deg,#fbf1e1,#fffaf1)!important;border-bottom:1px solid var(--sand-line)!important}
 html[data-theme="light"] .v22-chat-head small{color:#54442f!important}
 html[data-theme="light"] .v22-av{text-shadow:0 1px 1px rgba(0,0,0,.35)}
@@ -438,3 +443,19 @@ html[data-theme="light"] .ma-prog-row .v22-bar,html[data-theme="light"] .ma-prog
 html[data-theme="light"] .ma-prog-row .v22-bar em.s-Ready,html[data-theme="light"] .ma-prog-key .s-Ready{background:#4f8a5b}
 html[data-theme="light"] .ma-prog-row .v22-bar em.s-Manual,html[data-theme="light"] .ma-prog-key .s-Manual{background:#4f86a8}
 html[data-theme="light"] .ma-prog-row .v22-bar em.s-Mock,html[data-theme="light"] .ma-prog-key .s-Mock{background:#c98a2c}
+
+/* ---------- v23.15 landing "joined" notification card ---------- */
+html[data-theme="light"] .public-activity-toast.ma-act{background:#fffaf1;border-color:#dcc7a5;box-shadow:0 18px 44px rgba(80,55,25,.18)}
+html[data-theme="light"] .ma-act .activity-toast-title{color:#3d3125}html[data-theme="light"] .ma-act .activity-toast-title b{color:#2b2218}
+html[data-theme="light"] .ma-act .activity-toast-line{color:#5c4b38}html[data-theme="light"] .ma-act .activity-toast-time{color:#8a7a66}
+html[data-theme="light"] .ma-act .activity-toast-check{color:#3f7d4e}
+html[data-theme="light"] .ma-act .activity-toast-avatar{background:linear-gradient(140deg,#b07a4a,#7a3f5a)}
+
+/* ---------- v23.15 play icon (See How It Works): visible triangle in light mode ---------- */
+html[data-theme="light"] .v22-ic path[fill="#060a18"]{fill:#fffaf1}
+html[data-theme="light"] .v22-hero-actions .v22-ghost-btn .v22-ic{color:#a8641c}
+/* v23.15 date picker time row */
+html[data-theme="light"] .ma-dp-time{border-top-color:#e4d6bf}html[data-theme="light"] .ma-dp-time>span{color:#5c4b38}
+html[data-theme="light"] .ma-dp-time select{background:#fffaf1;border-color:#dcc7a5;color:#2b2218}html[data-theme="light"] .ma-dp-time b{color:#7a6a58}
+html[data-theme="light"] .ma-dp-ampm{border-color:#dcc7a5}html[data-theme="light"] .ma-dp-ampm button{color:#5c4b38}
+html[data-theme="light"] .ma-dp-ampm button.on{background:linear-gradient(135deg,#a8641c,#7a3f5a);color:#fff}

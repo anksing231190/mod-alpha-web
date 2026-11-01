@@ -24,6 +24,8 @@ export const DEFAULT_PREFS = {
   reminderTiming: '2 days before',
   /** Monthly SIP reminder: Mod Alpha's published date, or the subscriber's own day of the month (paid plans). */
   sipReminder: { mode: 'modalpha' as 'modalpha' | 'custom', day: null as number | null },
+  /** Opt-in: show "Rahul K. joined" on the public landing page (off = shown as "A new member"). */
+  showInActivityFeed: false,
 };
 
 export default async function me(app: FastifyInstance) {
@@ -84,6 +86,7 @@ export default async function me(app: FastifyInstance) {
       channels: z.object({ email: z.boolean(), sms: z.boolean(), push: z.boolean(), whatsapp: z.boolean() }).partial().optional(),
       topics: z.object({ sipReminder: z.boolean(), datePublished: z.boolean(), billing: z.boolean(), weeklyDigest: z.boolean(), announcements: z.boolean() }).partial().optional(),
       reminderTiming: z.enum(['3 days before', '2 days before', '1 day before', 'On the day']).optional(),
+      showInActivityFeed: z.boolean().optional(),
       sipReminder: z.discriminatedUnion('mode', [
         z.object({ mode: z.literal('modalpha') }),
         z.object({ mode: z.literal('custom'), day: z.number().int().min(1).max(31) }),

@@ -49,7 +49,7 @@ function v22AuthAnim(cv){
  // Match the canvas to its box (sharp on high-DPI screens).
  const size=()=>{dpr=Math.min(2,devicePixelRatio||1);W=cv.clientWidth;H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);const n=Math.round(Math.min(110,W*H/14000));pts=Array.from({length:n},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.35,vy:(Math.random()-.5)*.35,r:Math.random()*1.8+.6,h:Math.random()<.5?'96,165,250':'167,139,250'}))};
  size();addEventListener('resize',size);
- let mx=-999,my=-999;cv.parentElement.parentElement.addEventListener('pointermove',e=>{const r=cv.getBoundingClientRect();mx=e.clientX-r.left;my=e.clientY-r.top});
+ let mx=-999,my=-999;cv.parentElement.parentElement.addEventListener('pointermove',e=>{const r=cv.getBoundingClientRect(),Z=maZoom();mx=(e.clientX-r.left)/Z;my=(e.clientY-r.top)/Z});
  // Draw one animation frame (stops when the canvas leaves the page).
  const draw=()=>{if(!cv.isConnected){removeEventListener('resize',size);return}t+=.006;ctx.clearRect(0,0,W,H);const lt=document.documentElement.dataset.theme==='light';
   // flowing waves

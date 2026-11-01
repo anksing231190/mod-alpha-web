@@ -499,3 +499,17 @@ describe('PAN-first KYC (mock provider test PANs)', () => {
     expect(a.length).toBe(1);
   });
 });
+
+describe('public activity feed', () => {
+  it('is anonymous unless the member opted in, and then shows only first name + last initial', async () => {
+    const c = client(app);
+    await c.post('/auth/signup', { name: 'Rahul Kumar Verma', email: 'feed@example.com', password: 'secret-pass-1' });
+    const anon = (await client(app).get('/public/activity')).json().events;
+    expect(anon.some((e: any) => e.name === null)).toBe(true);
+    expect(JSON.stringify(anon)).not.toContain('Verma');
+    expect((await c.put('/me/preferences', { showInActivityFeed: true })).statusCode).toBe(200);
+    const named = (await client(app).get('/public/activity')).json().events;
+    expect(named.map((e: any) => e.name)).toContain('Rahul V.');
+    expect(JSON.stringify(named)).not.toMatch(/feed@example|Verma/);
+  });
+});

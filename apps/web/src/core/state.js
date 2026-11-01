@@ -49,3 +49,8 @@ app = document.getElementById('app');
 toast = document.getElementById('toast');
 modalRoot = document.getElementById('modal-root');
 });
+
+/** Page zoom factor set in CSS (src/styles/app.css: html{zoom:.85} on screens ≥ 1100 px; 1 elsewhere).
+ *  getBoundingClientRect() / pointer positions are in screen pixels; element styles are in CSS pixels —
+ *  divide screen pixels by maZoom() before using them in a style. */
+function maZoom(){return parseFloat(getComputedStyle(document.documentElement).zoom)||1}

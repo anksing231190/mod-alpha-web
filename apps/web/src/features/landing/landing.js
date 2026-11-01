@@ -5,15 +5,18 @@
    "someone just joined" toast.
    ========================================================================== */
 
-/** Anonymous 'someone just joined / subscribed' toast from /public/activity (no personal data; nothing shown when the feed is empty). */
+/** 'Rahul K. joined the Mod Alpha community' notification card, rotating every 12 s. Live: GET /public/activity (a first name + last initial and city only for members who opted in, otherwise 'A new member'). Demo: illustrative sample events. */
 function initPublicActivityToast(){
  const toast=document.getElementById('public-activity-toast');if(!toast)return;
- const title=toast.querySelector('.activity-toast-title'),time=toast.querySelector('.activity-toast-time');
  const close=toast.querySelector('.activity-toast-close');
- let events=[],index=0,hideTimer=null,rotateTimer=null;
- // Hide the activity toast.
+ let events=[],index=0,hideTimer=null;
  const hide=()=>{toast.classList.remove('is-visible');clearTimeout(hideTimer);hideTimer=setTimeout(()=>{toast.hidden=true},260)};
- close.onclick=hide;
+ close.onclick=()=>{hide();clearInterval(toast._rotate)};
+ // "Rahul Kumar" → "RK"; no name → the α mark
+ // "Rahul Kumar" → "Rahul K." (never a full surname)
+ const short=n=>{const w=String(n||'').trim().split(/\s+/);return w.length>1?`${w[0]} ${w[w.length-1][0].toUpperCase()}.`:w[0]};
+ const initials=n=>String(n||'').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
+ const ago=t=>{const m=Math.max(0,Math.floor((Date.now()-Date.parse(t))/60000));return m<1?'just now':m<60?`${m} min ago`:m<1440?`${Math.floor(m/60)} hr ago`:'recently'};
  const safeEvents=payload=>{
   const list=Array.isArray(payload)?payload:(Array.isArray(payload?.events)?payload.events:[]);
   const now=Date.now();
@@ -22,21 +25,30 @@ function initPublicActivityToast(){
    const t=Date.parse(x.createdAt||'');return Number.isFinite(t)&&t<=now&&now-t<48*60*60*1000;
   }).sort((a,b)=>Date.parse(b.createdAt)-Date.parse(a.createdAt)).slice(0,8);
  };
- // Show the next activity event.
+ // one notification card: avatar · "<name> joined" / "the Mod Alpha community" / "<city> · 2 min ago" · ✓
  const show=()=>{
   if(!events.length||document.hidden)return;
   const ev=events[index%events.length];index++;
-  const age=Math.max(0,Math.floor((Date.now()-Date.parse(ev.createdAt))/60000));
-  title.textContent=ev.type==='subscription_activated'?'A new subscription was activated':'A new member joined Mod Alpha';
-  time.textContent=age<1?'Just now':age<60?`${age} min ago`:age<1440?`${Math.floor(age/60)} hr ago`:'Recently';
+  const name=ev.name?short(ev.name):'A new member',sub=ev.type==='subscription_activated';
+  toast.querySelector('.activity-toast-avatar').innerHTML=ev.name?esc(initials(ev.name.replace('.',''))):'<img src="assets/brand/mod-alpha-mark.png" alt="">';
+  toast.querySelector('.activity-toast-avatar').style.setProperty('--h',String((name.length*47)%360));
+  toast.querySelector('.activity-toast-title').innerHTML=`<b>${esc(name)}</b> ${sub?'subscribed':'joined'}`;
+  toast.querySelector('.activity-toast-line').textContent=sub?`to Mod Alpha ${ev.plan||'Pro'}`:'the Mod Alpha community';
+  toast.querySelector('.activity-toast-time').textContent=[ev.city,ago(ev.createdAt)].filter(Boolean).join(' · ');
   toast.hidden=false;requestAnimationFrame(()=>toast.classList.add('is-visible'));
-  clearTimeout(hideTimer);hideTimer=setTimeout(hide,5200);
+  clearTimeout(hideTimer);hideTimer=setTimeout(hide,5600);
  };
- fetch((window.MA_API&&MA_API.enabled?MA_API.base+'/api/v1/public':'/api/public')+'/activity?limit=8',{headers:{'Accept':'application/json'},credentials:'omit'})
-  .then(r=>{if(!r.ok)throw new Error('Activity feed unavailable');return r.json()})
-  .then(data=>{events=safeEvents(data);if(!events.length)return;show();rotateTimer=setInterval(show,18000)})
-  .catch(()=>{/* No live feed: intentionally show no fabricated activity. */});
- document.addEventListener('visibilitychange',()=>{if(document.hidden)hide()});
+ const start=list=>{events=safeEvents(list);if(!events.length)return;clearInterval(toast._rotate);setTimeout(show,2500);toast._rotate=setInterval(show,12000)};
+ if(window.MA_API&&MA_API.enabled){
+  // live: real, anonymous-by-default events (a first name + last initial only for members who opted in)
+  fetch(MA_API.base+'/api/v1/public/activity?limit=8',{headers:{'Accept':'application/json'},credentials:'omit'})
+   .then(r=>{if(!r.ok)throw new Error('Activity feed unavailable');return r.json()}).then(start).catch(()=>{/* no feed → nothing shown */});
+ }else{
+  // demo: illustrative sample events (the whole demo dataset is synthetic)
+  const t=m=>new Date(Date.now()-m*60000).toISOString();
+  start({events:[{type:'signup',name:'Rahul Kumar',city:'Bengaluru, India',createdAt:t(2)},{type:'subscription_activated',name:'Priya Sharma',city:'Pune, India',plan:'Premium',createdAt:t(9)},{type:'signup',name:'Arjun Mehta',city:'Mumbai, India',createdAt:t(17)},{type:'signup',name:'Sneha Iyer',city:'Chennai, India',createdAt:t(31)},{type:'subscription_activated',name:'Vikram Singh',city:'Delhi, India',plan:'Pro',createdAt:t(44)}]});
+ }
+ if(!toast._visHook){toast._visHook=1;document.addEventListener('visibilitychange',()=>{if(document.hidden)hide()})}
 }
 
 /** Network background art. */
@@ -119,7 +131,7 @@ function initFlowAnimation(){
 /** Landing page sections. */
 function renderLandingBase(){
  app.innerHTML=`${topbar(true)}<main class="public-page v22-landing">
-<div id="public-activity-toast" class="public-activity-toast" aria-live="polite" aria-atomic="true" hidden><span class="activity-toast-icon">✦</span><div class="activity-toast-copy"><b class="activity-toast-title"></b><small class="activity-toast-time"></small></div><button type="button" class="activity-toast-close" aria-label="Dismiss notification">×</button></div>
+<div id="public-activity-toast" class="public-activity-toast ma-act" aria-live="polite" aria-atomic="true" hidden><span class="activity-toast-avatar"></span><div class="activity-toast-copy"><span class="activity-toast-title"></span><span class="activity-toast-line"></span><small class="activity-toast-time"></small></div><span class="activity-toast-check" aria-hidden="true">✓</span><button type="button" class="activity-toast-close" aria-label="Dismiss notification">×</button></div>
 ${v22Hero()}
 <section class="public-features" id="features"><div class="section-center"><div class="eyebrow">THE MOD ALPHA EXPERIENCE</div><h2>Everything you need to understand your mutual funds.</h2><p>Explore funds, review historical performance and understand the monthly SIP date insight.</p></div><div class="feature-grid v22-feature-grid">${[['grid','Explore Mutual Funds','Search and compare mutual fund schemes, categories and historical performance.'],['trend','What If Calculator','Explore hypothetical investment outcomes using historical NAV data.'],['calendar','MOD Alpha SIP','Compare a fixed-date SIP with the platform date-selection approach.'],['spark','AI Insights','Understand fund data and historical patterns in clear language.']].map(x=>`<article class="feature-card"><span>${ic(x[0])}</span><h3>${x[1]}</h3><p>${x[2]}</p></article>`).join('')}</div></section>
 ${flowLarge()}
@@ -164,8 +176,8 @@ function v22InitReveal(){
 /** Stretch the flow lines so they reach the engine card at any width. */
 /* incoming flow lines always run up to the AI engine card, whatever the screen width */
 function v22FitFibers(){const conn=document.querySelector('.v22-conn.fibers'),svg=conn&&conn.querySelector('svg'),core=document.querySelector('.v22-stage.engine .v22-core');if(!svg||!core)return;
- if(getComputedStyle(conn).flexDirection==='column'||innerWidth<=900){svg.style.width='';svg.style.marginRight='';return}
- svg.style.width='';svg.style.marginRight='';const ext=Math.max(0,Math.round(core.getBoundingClientRect().left-conn.getBoundingClientRect().right+1));
+ if(getComputedStyle(conn).flexDirection==='column'||innerWidth/maZoom()<=900){svg.style.width='';svg.style.marginRight='';return}
+ svg.style.width='';svg.style.marginRight='';const ext=Math.max(0,Math.round((core.getBoundingClientRect().left-conn.getBoundingClientRect().right)/maZoom()+1));
  svg.style.setProperty('width',(conn.clientWidth+ext)+'px','important');svg.style.setProperty('margin-right',(-ext)+'px','important')}
 
 /** Which hero art to use. */

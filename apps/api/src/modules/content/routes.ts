@@ -24,8 +24,11 @@ export default async function content(app: FastifyInstance) {
   /** Aggregated, anonymous public activity for the landing-page toast (no PII). */
   app.get('/public/activity', async (req) => {
     const p = parse(z.object({ limit: z.coerce.number().int().min(1).max(20).default(8) }), req.query);
-    const r = await db.query(`(SELECT 'signup' AS type, created_at AS "createdAt" FROM users WHERE role='user' AND created_at > now() - interval '48 hours' ORDER BY created_at DESC LIMIT $1)
-      UNION ALL (SELECT 'subscription_activated', updated_at FROM subscriptions WHERE status='Active' AND provider<>'import' AND updated_at > now() - interval '48 hours' ORDER BY updated_at DESC LIMIT $1) ORDER BY "createdAt" DESC LIMIT $1`, [p.limit]);
+    // A name is shown only for members who opted in (preferences.showInActivityFeed); and then only the first
+    // name + last initial ("Rahul K."). Everyone else appears as "A new member". No emails, ids or exact times.
+    const showName = `CASE WHEN (pr.data->>'showInActivityFeed')::boolean IS TRUE THEN split_part(u.full_name, ' ', 1) || CASE WHEN position(' ' in u.full_name) > 0 THEN ' ' || upper(left(regexp_replace(u.full_name, '^.* ', ''), 1)) || '.' ELSE '' END END`;
+    const r = await db.query(`(SELECT 'signup' AS type, u.created_at AS "createdAt", ${showName} AS name, NULL AS plan FROM users u LEFT JOIN preferences pr ON pr.user_id=u.id WHERE u.role='user' AND u.created_at > now() - interval '48 hours' ORDER BY u.created_at DESC LIMIT $1)
+      UNION ALL (SELECT 'subscription_activated', s.updated_at, ${showName}, s.plan_id FROM subscriptions s JOIN users u ON u.id=s.user_id LEFT JOIN preferences pr ON pr.user_id=u.id WHERE s.status='Active' AND s.provider<>'import' AND s.updated_at > now() - interval '48 hours' ORDER BY s.updated_at DESC LIMIT $1) ORDER BY "createdAt" DESC LIMIT $1`, [p.limit]);
     return { events: r.rows };
   });
 

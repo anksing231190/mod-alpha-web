@@ -307,7 +307,7 @@
 /* ======================================================================
    Login
    ====================================================================== */
-.v22-auth{position:relative;min-height:calc(100vh - 72px);display:grid;place-items:center;padding:56px 16px 80px;overflow:hidden}
+.v22-auth{position:relative;min-height:calc(var(--vh100,100vh) - 72px);display:grid;place-items:center;padding:56px 16px 80px;overflow:hidden}
 .v22-auth-bg{position:absolute;inset:0;z-index:0}
 .v22-auth-bg svg{width:100%;height:100%}
 .v22-auth-card{position:relative;z-index:1;width:min(440px,100%);padding:30px 28px 24px;border-radius:18px;border:1px solid rgba(100,130,220,.28);background:linear-gradient(180deg,rgba(18,28,64,.88),rgba(12,20,48,.92));backdrop-filter:blur(14px);box-shadow:0 30px 80px rgba(0,0,0,.45),inset 0 1px 0 rgba(160,190,255,.07);text-align:center}
@@ -807,7 +807,7 @@
 .activity-toast-close{background:transparent;border:0;color:#9fb0d4;font-size:18px;line-height:1;cursor:pointer}
 
 /* assistant */
-.chat-drawer.v22-chat{right:24px;bottom:112px;width:min(440px,calc(100vw - 32px));height:min(660px,calc(100vh - 140px));max-height:none;border-radius:22px;border:1px solid rgba(110,140,230,.4);background:linear-gradient(180deg,#121b3e,#0b1230);box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 40px rgba(80,110,255,.18);font-family:var(--v-font);z-index:60}
+.chat-drawer.v22-chat{right:24px;bottom:112px;width:min(440px,calc(100vw - 32px));height:min(660px,calc(var(--vh100,100vh) - 140px));max-height:none;border-radius:22px;border:1px solid rgba(110,140,230,.4);background:linear-gradient(180deg,#121b3e,#0b1230);box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 40px rgba(80,110,255,.18);font-family:var(--v-font);z-index:60}
 .v22-chat-head{display:flex;align-items:center;gap:14px;padding:18px 20px;border-bottom:1px solid rgba(110,140,230,.25);background:linear-gradient(90deg,rgba(40,50,120,.5),rgba(20,26,70,.3))}
 .v22-chat-av{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#1e3a8a,#0b1022 70%);border:2px solid rgba(96,165,250,.55);overflow:hidden;flex:none}
 .v22-chat-av svg{width:40px;height:40px;margin-top:4px}
@@ -838,7 +838,7 @@
 .v22-fab.is-open .v22-fab-label{opacity:0}
 
 @media (max-width:1180px){.v22-feat-grid{grid-template-columns:1fr 1fr}.v22-plans{grid-template-columns:1fr;max-width:520px;margin-left:auto;margin-right:auto}.v22-faq-grid{grid-template-columns:1fr;gap:28px}.v22-faq-side{position:static}}
-@media (max-width:760px){.v22-feat-grid{grid-template-columns:1fr}.v22-trust{grid-template-columns:1fr}.v22-billing button{min-width:0}.v22-acc-a p{padding-left:20px}.v22-features,.v22-pricing,.v22-faq{padding-left:16px;padding-right:16px}.chat-drawer.v22-chat{right:12px;left:12px;width:auto;bottom:96px;height:calc(100vh - 120px)}}
+@media (max-width:760px){.v22-feat-grid{grid-template-columns:1fr}.v22-trust{grid-template-columns:1fr}.v22-billing button{min-width:0}.v22-acc-a p{padding-left:20px}.v22-features,.v22-pricing,.v22-faq{padding-left:16px;padding-right:16px}.chat-drawer.v22-chat{right:12px;left:12px;width:auto;bottom:96px;height:calc(var(--vh100,100vh) - 120px)}}
 @media (prefers-reduced-motion:reduce){.pv *{animation:none!important}.pv-type{width:15ch}.pv-rows div,.pv-area,.pv-dot,.pv-value,.pv-badge,.pv-msg,.pv-typing{opacity:1}.pv-line{stroke-dashoffset:0}.pv-bar span{height:var(--h)}.pv-typing{display:none}[data-v22-reveal] .v22-feat,[data-v22-reveal] .v22-plan{opacity:1;transform:none}}
 .v22-faq .v22-acc .v22-acc-q{font-size:16.5px!important;font-weight:600;font-family:var(--v-font)}
 .v22-faq .v22-acc-a p{font-size:15px}
@@ -1253,7 +1253,7 @@
 .v22-modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;flex-wrap:wrap}
 .v22-aprof .v22-prof-av{width:64px;height:64px;font-size:26px}
 /* login */
-.v22-auth{min-height:calc(100vh - 80px);padding:64px 16px 90px}
+.v22-auth{min-height:calc(var(--vh100,100vh) - 80px);padding:64px 16px 90px}
 .v22-auth-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .v22-auth-bg svg{opacity:.55}
 .v22-auth-card{width:min(540px,100%);padding:44px 44px 34px;border-radius:24px;box-shadow:0 40px 100px rgba(0,0,0,.55),0 0 60px rgba(80,110,255,.18),inset 0 1px 0 rgba(160,190,255,.08);animation:v22CardIn .6s cubic-bezier(.2,.7,.2,1) both}
@@ -1903,7 +1903,7 @@ html[lang="hi"] :where(.v22-eyebrow,.v22-crumb,.side-label,th,.hd-best small){te
 /* v23.10 — fixes */
 /* every modal fits the screen: header stays, body scrolls */
 .modal-backdrop{align-items:center;padding:20px 12px}
-.modal{max-height:calc(100vh - 40px);display:flex!important;flex-direction:column}
+.modal{max-height:calc(var(--vh100,100vh) - 40px);display:flex!important;flex-direction:column}
 .modal>.modal-body{overflow-y:auto;overscroll-behavior:contain;min-height:0}
 .modal.ma-modal-wide>.modal-body{padding-bottom:0}
 .ma-tpl-actions{position:sticky;bottom:0;padding:14px 0 18px!important;background:inherit;z-index:2}
@@ -2063,3 +2063,37 @@ html[lang="hi"] :where(.v22-eyebrow,.v22-crumb,.side-label,th,.hd-best small){te
 .ma-prog-row{grid-template-columns:minmax(200px,1.25fr) minmax(110px,1.3fr) minmax(150px,1fr)}
 .ma-prog-row>span b{white-space:normal;overflow:visible;line-height:1.25}
 .ma-prog-log li{display:block}.ma-prog-log li span{margin-right:8px}.ma-prog-log li p{margin-top:3px}
+
+/* ==========================================================================
+   v23.15 — landing "joined" notification card (initPublicActivityToast)
+   ========================================================================== */
+.public-activity-toast.ma-act{display:flex;align-items:center;gap:16px;width:min(440px,calc(100vw - 32px));min-height:0;padding:16px 44px 16px 18px;border-radius:16px;background:#121a2b;border:1px solid rgba(148,163,184,.38);box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.ma-act .activity-toast-avatar{width:52px;height:52px;flex:0 0 52px;border-radius:50%;display:grid;place-items:center;font:700 17px Inter,sans-serif;color:#fff;letter-spacing:.02em;background:linear-gradient(140deg,hsl(var(--h,20) 45% 52%),hsl(calc(var(--h,20) + 70) 40% 40%))}
+.ma-act .activity-toast-avatar img{width:30px;height:30px;object-fit:contain}
+.ma-act .activity-toast-copy{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.ma-act .activity-toast-title{font-size:15.5px;color:#e5e9f2;line-height:1.3}.ma-act .activity-toast-title b{font-weight:700;color:#fff}
+.ma-act .activity-toast-line{font-size:15px;color:#cbd5e1;line-height:1.3}
+.ma-act .activity-toast-time{font-size:13px;color:#8b95a7}
+.ma-act .activity-toast-check{color:#4ade80;font-size:18px;font-weight:700;flex:none}
+.ma-act .activity-toast-close{top:6px;right:8px;font-size:16px;opacity:.55}.ma-act .activity-toast-close:hover{opacity:1}
+
+/* ---------- v23.15 date picker: time row for date + time fields ---------- */
+.ma-dp-time{display:flex;align-items:center;gap:8px;margin:10px 2px 2px;padding:10px 0 0;border-top:1px solid rgba(110,140,230,.18)}
+.ma-dp-time>span{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:#a9b6d3;margin-right:auto}
+.ma-dp-time>span svg{width:16px;height:16px}
+.ma-dp-time select{appearance:none;-webkit-appearance:none;min-width:48px;padding:7px 10px;border-radius:9px;border:1px solid rgba(110,140,230,.3);background:#0e1730;color:#eef3ff;font:600 14px Inter,sans-serif;text-align:center;cursor:pointer}
+.ma-dp-time b{color:#8e9bb7}
+.ma-dp-ampm{display:inline-flex;border:1px solid rgba(110,140,230,.3);border-radius:9px;overflow:hidden;margin-left:4px}
+.ma-dp-ampm button{border:0;background:transparent;color:#a9b6d3;font:600 12.5px Inter,sans-serif;padding:7px 10px;cursor:pointer}
+.ma-dp-ampm button.on{background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff}
+.ma-dp [data-dp-done][disabled]{opacity:.5;cursor:not-allowed}
+
+/* ==========================================================================
+   v23.15 — default scale and sidebar width
+   The design was tuned at 85 % browser zoom, so on desktop / laptop screens the whole page is shown at that
+   scale by default (Chrome 100 % now looks like the old 85 %). Phones and tablets (< 1100 px) are unchanged.
+   --vh100 keeps full-height parts (sidebar, sections, dialogs) filling the screen under the zoom.
+   Positions measured in JavaScript are converted with maZoom() (src/core/state.js).
+   ========================================================================== */
+:root{--vh100:100vh;--ma-sidebar-width:272px}
+@media (min-width:1100px){html{zoom:.85}:root{--vh100:calc(100vh / .85)}}

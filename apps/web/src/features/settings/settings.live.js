@@ -25,7 +25,7 @@
       const ch = document.querySelectorAll('.v22-chan'); ['email', 'sms', 'push'].forEach((k, i) => { const t = ch[i]?.querySelector('input'); if (t) { t.checked = !!p.channels[k]; ch[i].classList.toggle('on', t.checked); } });
       const topics = ['sipReminder', 'datePublished', 'billing', 'weeklyDigest', 'announcements'];
       if (settingsTab === 'notifications') document.querySelectorAll('.v22-set-card:nth-of-type(2) .v22-trow input[type=checkbox]').forEach((t, i) => { if (topics[i]) t.checked = !!p.topics[topics[i]]; });
-      if (settingsTab === 'privacy') { const t = document.querySelectorAll('.v22-set-card .v22-trow input[type=checkbox]'); if (t[0]) t[0].checked = !!consents.analytics; if (t[1]) t[1].checked = !!consents.marketing; }
+      if (settingsTab === 'privacy') { const t = document.querySelectorAll('.v22-set-card .v22-trow input[type=checkbox]'); if (t[0]) t[0].checked = !!consents.analytics; if (t[1]) t[1].checked = !!consents.marketing; const fd = document.querySelector('#ma-feed-row input[type=checkbox]'); if (fd) fd.checked = !!p.showInActivityFeed; }
     } catch (e) {}
   }
   on('[data-action="save-profile-settings"]', async (b) => {
@@ -53,6 +53,7 @@
   window.addEventListener('change', async (e) => {
     if (!/#\/user\/settings/.test(location.hash) || settingsTab !== 'privacy') return;
     const rows = [...document.querySelectorAll('.v22-set-card .v22-trow input[type=checkbox]')], i = rows.indexOf(e.target);
+    if (e.target.closest('#ma-feed-row')) { try { await API.put('/me/preferences', { showInActivityFeed: e.target.checked }); notify(e.target.checked ? 'You will appear as “first name + initial” on the home page.' : 'You will appear as “A new member”.'); } catch (er) { e.target.checked = !e.target.checked; fail(er); } return; }
     if (i < 0 || i > 1) return;
     try { await API.put('/me/consents', i === 0 ? { analytics: e.target.checked } : { marketing: e.target.checked }); notify('Consent updated.'); } catch (er) { e.target.checked = !e.target.checked; fail(er); }
   }, true);

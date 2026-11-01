@@ -2,6 +2,8 @@
    Works with:
    • v22 date fields   — text input "dd/mm/yyyy" + calendar button [data-v22-cal="<inputId>"]
    • native <input type="date"> — turned into a styled trigger; the input keeps its ISO value (yyyy-mm-dd)
+   • native <input type="datetime-local"> — calendar + time row (hour, minutes, AM/PM) and a Set button;
+     the input keeps its value as yyyy-mm-ddThh:mm (local time)
      and receives input/change events, so existing code keeps working.
    Features: month/year quick switch, today ring, min/max, range shading for "-from"/"-to" pairs,
    keyboard (arrows, PgUp/PgDn, Home/End, Enter, Esc), bottom sheet on phones, dark/light themes,
@@ -23,7 +25,7 @@
   const same = (a, b) => a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
   // Small icon.
   const ic = (p) => `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
-  const ICON = { l: ic('<path d="M15 18l-6-6 6-6"/>'), r: ic('<path d="M9 18l6-6-6-6"/>'), d: ic('<path d="M6 9l6 6 6-6"/>'), cal: ic('<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>') };
+  const ICON = { l: ic('<path d="M15 18l-6-6 6-6"/>'), r: ic('<path d="M9 18l6-6-6-6"/>'), d: ic('<path d="M6 9l6 6 6-6"/>'), clock: ic('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'), cal: ic('<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>') };
   // Today at midnight.
   const today = () => { const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); };
 
@@ -32,6 +34,17 @@
   /* ---------- rendering ---------- */
   function within(d) { if (st.monthOnly) { const e = new Date(d.getFullYear(), d.getMonth() + 1, 0); return (!st.min || e >= st.min) && (!st.max || d <= st.max); } return (!st.min || d >= st.min) && (!st.max || d <= st.max); }
   // Draw the calendar (days, months or years view).
+  /* ---------- date + time (input type="datetime-local") ---------- */
+  // { h: 0–23, m: 0–59 } → '10:30 AM'
+  const hm12 = (t) => `${((t.h + 11) % 12) + 1}:${pad(t.m)} ${t.h < 12 ? 'AM' : 'PM'}`;
+  // Time row under the calendar: hour, minute (5-minute steps) and AM / PM.
+  function timeRow() {
+    const h12 = ((st.time.h + 11) % 12) + 1, pm = st.time.h >= 12;
+    return `<div class="ma-dp-time"><span>${ICON.clock || ''}${T('Time')}</span>
+      <select data-dp-h aria-label="${T('Hour')}">${Array.from({ length: 12 }, (_, i) => i + 1).map((h) => `<option value="${h}"${h === h12 ? ' selected' : ''}>${h}</option>`).join('')}</select><b>:</b>
+      <select data-dp-m aria-label="${T('Minutes')}">${Array.from({ length: 12 }, (_, i) => i * 5).concat(st.time.m % 5 ? [st.time.m] : []).sort((a, b) => a - b).map((m) => `<option value="${m}"${m === st.time.m ? ' selected' : ''}>${pad(m)}</option>`).join('')}</select>
+      <div class="ma-dp-ampm" role="group"><button type="button" data-dp-ap="AM" class="${pm ? '' : 'on'}">AM</button><button type="button" data-dp-ap="PM" class="${pm ? 'on' : ''}">PM</button></div></div>`;
+  }
   function render() {
     const v = st.view, y = v.getFullYear(), m = v.getMonth();
     let body = '';
@@ -59,8 +72,9 @@
         <button type="button" class="ma-dp-title" data-dp-mode aria-label="${T('Choose month and year')}"><span>${title}</span>${ICON.d}</button>
         <button type="button" class="ma-dp-nav" data-dp-step="1" aria-label="${T('Next month')}">${ICON.r}</button></div>
       ${body}
-      <div class="ma-dp-foot"><span class="ma-dp-sel">${st.sel ? (st.monthOnly ? `${MON[st.sel.getMonth()]} ${st.sel.getFullYear()}` : `${st.sel.getDate()} ${MON_S[st.sel.getMonth()]} ${st.sel.getFullYear()}`) : T('No date selected')}</span>
-        <div>${st.clearable ? `<button type="button" class="ma-dp-link" data-dp-clear>${T('Clear')}</button>` : ''}<button type="button" class="ma-dp-today" data-dp-today ${st.monthOnly || within(t) ? '' : 'disabled'}>${T(st.monthOnly ? 'This month' : 'Today')}</button></div></div>`;
+      ${st.withTime && st.mode === 'days' ? timeRow() : ''}
+      <div class="ma-dp-foot"><span class="ma-dp-sel">${st.withTime ? (st.sel ? `${st.sel.getDate()} ${MON_S[st.sel.getMonth()]} ${st.sel.getFullYear()}, ${hm12(st.time)}` : T('Pick a day')) : st.sel ? (st.monthOnly ? `${MON[st.sel.getMonth()]} ${st.sel.getFullYear()}` : `${st.sel.getDate()} ${MON_S[st.sel.getMonth()]} ${st.sel.getFullYear()}`) : T('No date selected')}</span>
+        <div>${st.clearable ? `<button type="button" class="ma-dp-link" data-dp-clear>${T('Clear')}</button>` : ''}${st.withTime ? `<button type="button" class="ma-dp-today" data-dp-done ${st.sel ? '' : 'disabled'}>${T('Set')}</button>` : `<button type="button" class="ma-dp-today" data-dp-today ${st.monthOnly || within(t) ? '' : 'disabled'}>${T(st.monthOnly ? 'This month' : 'Today')}</button>`}</div></div>`;
     if (st.mode === 'days' && st.kbd) pop.querySelector('.ma-dp-day.focus')?.focus({ preventScroll: true });
   }
   // Position the picker under its field (bottom sheet on phones).
@@ -68,10 +82,12 @@
     if (!pop || !st) return;
     if (matchMedia('(max-width: 560px)').matches) { pop.classList.add('sheet'); pop.style.left = pop.style.top = ''; return; }
     pop.classList.remove('sheet');
-    const r = st.anchor.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+    // measured in screen pixels; the page may be zoomed (maZoom), styles are in CSS pixels
+    const Z = typeof maZoom === 'function' ? maZoom() : 1;
+    const r = st.anchor.getBoundingClientRect(), w = pop.offsetWidth * Z, h = pop.offsetHeight * Z;
     let top = r.bottom + 8, left = Math.min(Math.max(12, r.left), innerWidth - w - 12);
     if (top + h > innerHeight - 12 && r.top - h - 8 > 12) top = r.top - h - 8;
-    pop.style.left = `${left}px`; pop.style.top = `${Math.max(12, top)}px`;
+    pop.style.left = `${left / Z}px`; pop.style.top = `${Math.max(12, top) / Z}px`;
   }
 
   /* ---------- open / close ---------- */
@@ -79,6 +95,7 @@
     close();
     st = { ...opts, mode: opts.monthOnly ? 'months' : 'days', kbd: !opts.noFocus };
     st.sel = st.get();
+    if (st.withTime) { const base = st.sel || new Date(Date.now() + 3600e3); st.time = { h: base.getHours(), m: st.sel ? base.getMinutes() : 0 }; if (st.sel) st.sel = new Date(st.sel.getFullYear(), st.sel.getMonth(), st.sel.getDate()); }
     st.focus = st.sel || (st.max && today() > st.max ? st.max : today());
     st.view = new Date(st.focus.getFullYear(), st.focus.getMonth(), 1);
     pop = document.createElement('div');
@@ -98,6 +115,7 @@
   // Pick a date: write it to the field and fire input/change events.
   function choose(d) {
     if (!within(d)) return;
+    if (st.withTime) { st.sel = d; st.focus = d; return render(); }   // date + time: pick the day, then press Set
     st.set(d); const a = st.anchor; close(); a && a.focus?.({ preventScroll: true });
   }
 
@@ -113,6 +131,14 @@
     if (t.dataset.dpYear) { st.view = new Date(+t.dataset.dpYear, st.view.getMonth(), 1); st.mode = 'months'; return render(); }
     if (t.hasAttribute('data-dp-today')) { const d = today(); return choose(st.monthOnly ? new Date(d.getFullYear(), d.getMonth(), 1) : d); }
     if (t.hasAttribute('data-dp-clear')) { st.set(null); close(true); }
+    if (t.dataset.dpAp) { const pm = t.dataset.dpAp === 'PM'; st.time.h = (st.time.h % 12) + (pm ? 12 : 0); return render(); }
+    if (t.hasAttribute('data-dp-done') && st.sel) { const d = new Date(st.sel.getFullYear(), st.sel.getMonth(), st.sel.getDate(), st.time.h, st.time.m); const a = st.anchor; st.set(d); close(); a && a.focus?.({ preventScroll: true }); }
+  });
+  // hour / minute selects in the time row
+  document.addEventListener('change', (e) => {
+    if (!pop || !pop.contains(e.target)) return;
+    if (e.target.matches('[data-dp-h]')) { const h = +e.target.value % 12; st.time.h = h + (st.time.h >= 12 ? 12 : 0); render(); }
+    if (e.target.matches('[data-dp-m]')) { st.time.m = +e.target.value; render(); }
   });
   document.addEventListener('keydown', (e) => {
     if (!pop) return;
@@ -158,18 +184,23 @@
   // Month-only helpers (YYYY-MM).
   const fromYm = (s) => { const m = /^(\d{4})-(\d{2})$/.exec(s || ''); return m ? new Date(+m[1], +m[2] - 1, 1) : null; };
   const ym = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+  // Date + time helpers (YYYY-MM-DDTHH:MM, local time) and the day part of a date.
+  const fromDt = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(s || ''); return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) : null; };
+  const dtStr = (d) => `${iso(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const dayOf = (d) => (d ? new Date(d.getFullYear(), d.getMonth(), d.getDate()) : null);
   // '12 Nov 2026' for the trigger button.
   function fmt(s) { const d = fromIso(s); return d ? `${pad(d.getDate())} ${MON_S[d.getMonth()]} ${d.getFullYear()}` : T('Select date'); }
   // Turn a native date / month input into the styled trigger + picker.
   function enhance(input) {
     if (input.dataset.dpReady || input.classList.contains('v22-hidden-date')) return;
     input.dataset.dpReady = '1';
-    const month = input.type === 'month', parse = month ? fromYm : fromIso, ser = month ? ym : iso;
+    const month = input.type === 'month', dt = input.type === 'datetime-local';
+    const parse = month ? fromYm : dt ? fromDt : fromIso, ser = month ? ym : dt ? dtStr : iso;
     const trig = document.createElement('button');
     trig.type = 'button'; trig.className = 'ma-dp-trigger';
     trig.setAttribute('aria-haspopup', 'dialog');
     // Update the trigger text from the input value.
-    const paint = () => { const v = proto.get.call(input), d = parse(v); trig.innerHTML = `${ICON.cal}<span>${month ? (d ? `${MON[d.getMonth()]} ${d.getFullYear()}` : T('Select month')) : fmt(v)}</span>`; };
+    const paint = () => { const v = proto.get.call(input), d = parse(v); trig.innerHTML = `${ICON.cal}<span>${month ? (d ? `${MON[d.getMonth()]} ${d.getFullYear()}` : T('Select month')) : dt ? (d ? `${pad(d.getDate())} ${MON_S[d.getMonth()]} ${d.getFullYear()}, ${hm12({ h: d.getHours(), m: d.getMinutes() })}` : T('Select date & time')) : fmt(v)}</span>`; };
     // keep the trigger in sync when code sets input.value (e.g. range presets)
     Object.defineProperty(input, 'value', { configurable: true, get() { return proto.get.call(this); }, set(v) { proto.set.call(this, v); paint(); } });
     input.type = 'hidden';
@@ -178,16 +209,16 @@
     // The other field of a from / to pair (range highlight).
     const pairEl = () => pairRole && document.getElementById(input.id.replace(/-(from|to)$/, pairRole === 'from' ? '-to' : '-from'));
     trig.addEventListener('click', () => open({
-      anchor: trig, monthOnly: month, clearable: !month && !input.required && !input.min && !input.max ? true : false,
-      min: parse(input.getAttribute('min')), max: parse(input.getAttribute('max')),
+      anchor: trig, monthOnly: month, withTime: dt, clearable: dt ? !input.required : !month && !input.required && !input.min && !input.max,
+      min: dayOf(parse(input.getAttribute('min'))), max: dayOf(parse(input.getAttribute('max'))),
       rangeRole: pairRole, rangeOther: pairRole ? () => fromIso(pairEl()?.value) : null,
       get: () => parse(input.value),
       set: (d) => { input.value = d ? ser(d) : ''; input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true })); },
     }));
   }
   // Enhance every date input under an element.
-  const scan = (root) => root.querySelectorAll && root.querySelectorAll('input[type="date"]:not(.v22-hidden-date),input[type="month"]').forEach(enhance);
-  new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach((n) => n.nodeType === 1 && (n.matches?.('input[type="date"],input[type="month"]') ? enhance(n) : scan(n))))).observe(document.documentElement, { childList: true, subtree: true });
+  const scan = (root) => root.querySelectorAll && root.querySelectorAll('input[type="date"]:not(.v22-hidden-date),input[type="month"],input[type="datetime-local"]').forEach(enhance);
+  new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach((n) => n.nodeType === 1 && (n.matches?.('input[type="date"],input[type="month"],input[type="datetime-local"]') ? enhance(n) : scan(n))))).observe(document.documentElement, { childList: true, subtree: true });
   if (document.body) scan(document.body); else document.addEventListener('DOMContentLoaded', () => scan(document.body));
   window.MA_DATEPICKER = { open, close };
 })();

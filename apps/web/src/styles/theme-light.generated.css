@@ -7339,3 +7339,57 @@ html[data-theme="light"] .ma-prog-row .v22-bar em.s-Mock,
 html[data-theme="light"] .ma-prog-key .s-Mock {
     background: #a77319
 }
+html[data-theme="light"] .public-activity-toast.ma-act {
+    border-radius: 16px;
+    background: #fdf8f0;
+    border: 1px solid rgba(126,92,52,0.383);
+    box-shadow: 0 18px 50px rgba(94,64,32,0.189)
+}
+html[data-theme="light"] .ma-act .activity-toast-avatar {
+    border-radius: 50%;
+    color: #292119;
+    background: linear-gradient(140deg,hsl(var(--h,20) 45% 52%),hsl(calc(var(--h,20) + 70) 40% 40%))
+}
+html[data-theme="light"] .ma-act .activity-toast-title {
+    color: #382d22
+}
+html[data-theme="light"] .ma-act .activity-toast-title b {
+    color: #292119
+}
+html[data-theme="light"] .ma-act .activity-toast-line {
+    color: #493a2d
+}
+html[data-theme="light"] .ma-act .activity-toast-time {
+    color: #785f49
+}
+html[data-theme="light"] .ma-act .activity-toast-check {
+    color: #4c6a37
+}
+html[data-theme="light"] .ma-dp-time {
+    border-top: 1px solid rgba(126,92,52,0.213)
+}
+html[data-theme="light"] .ma-dp-time>span {
+    color: #5b4838
+}
+html[data-theme="light"] .ma-dp-time select {
+    border-radius: 9px;
+    border: 1px solid rgba(126,92,52,0.315);
+    background: #fcf8f0;
+    color: #30261d
+}
+html[data-theme="light"] .ma-dp-time b {
+    color: #705945
+}
+html[data-theme="light"] .ma-dp-ampm {
+    border: 1px solid rgba(126,92,52,0.315);
+    border-radius: 9px
+}
+html[data-theme="light"] .ma-dp-ampm button {
+    border: 0;
+    background: transparent;
+    color: #5b4838
+}
+html[data-theme="light"] .ma-dp-ampm button.on {
+    background: linear-gradient(135deg,#985f2a,#824065);
+    color: #fff
+}
