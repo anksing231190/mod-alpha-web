@@ -1897,3 +1897,30 @@ html[lang="hi"] :where(.v22-eyebrow,.v22-crumb,.side-label,th,.hd-best small){te
 .ma-mfa-link,.ma-mfa-back{background:none;border:0;padding:0;color:#7cb3ff;font-weight:600;font-size:13.5px!important;cursor:pointer}
 .ma-mfa-link:disabled{color:#56627f;cursor:default}
 .ma-mfa-back{justify-self:center;margin-top:4px;color:#a7b3cf}
+
+/* v23.10 — fixes */
+/* every modal fits the screen: header stays, body scrolls */
+.modal-backdrop{align-items:center;padding:20px 12px}
+.modal{max-height:calc(100vh - 40px);display:flex!important;flex-direction:column}
+.modal>.modal-body{overflow-y:auto;overscroll-behavior:contain;min-height:0}
+.modal.ma-modal-wide>.modal-body{padding-bottom:0}
+.ma-tpl-actions{position:sticky;bottom:0;padding:14px 0 18px!important;background:inherit;z-index:2}
+.modal.ma-modal-wide .ma-tpl-actions{background:linear-gradient(180deg,rgba(11,19,48,0),#0b1330 30%)}
+#ma-tpl-pv-body{min-height:0!important;flex:none!important}
+.ma-pv-mail{flex:none!important;width:100%}
+.ma-pv-phone{min-height:260px}
+/* landing hero: no line chart behind the copy */
+.v22-hero-art.hd .hd-bg,.v22-hero-art>svg.hd-bg{display:none!important}
+/* admin "recent" tables: two-line cells, never scroll sideways */
+.v22-mini-table.v22-compact{width:100%;table-layout:fixed}
+.v22-mini-table.v22-compact th:nth-child(1),.v22-mini-table.v22-compact td:nth-child(1){width:46%}
+.v22-mini-table.v22-compact th:nth-child(3),.v22-mini-table.v22-compact td:nth-child(3){width:96px;text-align:right}
+.v22-mini-table.v22-compact td{vertical-align:middle;overflow:hidden}
+.v22-mini-table.v22-compact td b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v22-mini-table.v22-compact td small{display:block;margin-top:2px;font-size:12.5px;color:#8ea0c4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v22-tbl-card{overflow:hidden}
+.v22-tbl-card .v22-mini-table{min-width:0!important}
+/* presets: labels never clip — buttons size to their text and wrap if the box is very narrow */
+.v22-mini-box .v22-opts{display:flex!important;flex-wrap:wrap!important;gap:6px}
+.v22-mini-box .v22-opts button{flex:1 1 auto!important;min-width:max-content!important;padding:0 8px!important;font-size:13px!important;overflow:visible}
+.v22-opts button{overflow:visible;text-overflow:clip}

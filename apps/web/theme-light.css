@@ -7097,3 +7097,12 @@ html[data-theme="light"] .ma-mfa-link:disabled {
 html[data-theme="light"] .ma-mfa-back {
     color: #5d4a39
 }
+html[data-theme="light"] .ma-tpl-actions {
+    background: inherit
+}
+html[data-theme="light"] .modal.ma-modal-wide .ma-tpl-actions {
+    background: linear-gradient(180deg,rgba(11,19,48,0),#fdf8f0 30%)
+}
+html[data-theme="light"] .v22-mini-table.v22-compact td small {
+    color: #6b5542
+}
