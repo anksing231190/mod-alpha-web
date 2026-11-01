@@ -21,40 +21,18 @@ Mod Alpha holds SEBI registration, so client KYC is **mandatory** before any pai
 - [ ] KYC provider contract with **PAN verification, KRA fetch + KRA upload, CKYC, DigiLocker Aadhaar, selfie/IPV, e-sign, signed webhooks**, plus sandbox keys. Candidates: Digio (adapter exists), Signzy, HyperVerge, IDfy, Setu.
 - [ ] Privacy policy and terms updated: what is collected (PAN, verification result), why, the processor, retention, DPDP consent.
 
-### Backend (`apps/api`)
-- [ ] Migration `004_kyc_pan.sql`. Add to `kyc_sessions`:
-  - `pan_masked` (`ABCDE••••F`)
-  - `pan_hash` (HMAC, for duplicate detection)
-  - `kra_ref` / KYC number
-  - `method` (`kra` | `digilocker` | `manual`)
-  - `name_match`, `dob_match`
-  - `consent_at`
-  - `aadhaar_last4` (only if compliance asks)
+### Built in v23.15 (mock provider)
+- [x] Migration `005_kyc_pan.sql`: method, masked PAN, PAN hash, KRA ref, name/DOB match, consent time — no raw PAN / Aadhaar / images.
+- [x] `POST /kyc/pan`: PAN check → KRA lookup → verified, or DigiLocker full KYC; 5 attempts/day; duplicate-PAN → admin review; audit events; log redaction.
+- [x] Mock test PANs (`ABCDE1234F` KRA hit, `ABCDE5678G` DigiLocker, `…0000X` fail); 4 API tests.
+- [x] KYC dialog at first checkout (demo + live), KYC status strip on the Subscription page, Hindi, light theme.
 
-  Never store the raw PAN, the full Aadhaar number or document images.
-- [ ] `POST /kyc/pan {pan, name, dob, consent}` runs the PAN check, then a KRA lookup:
-  - KRA hit: Verified;
-  - no KRA record: start the full KYC (DigiLocker + selfie + signature), then the provider uploads to the KRA;
-  - mismatch or invalid PAN: clear error.
-
-  Limit to 5 attempts per day.
-- [ ] Provider interface: add `verifyPan`, `kraLookup`, `startFullKyc`, `kraUpload`. Implement them in the **mock** with test PANs (`ABCDE1234F` = KRA hit, `ABCDE5678G` = needs full KYC, `ABCDE0000X` = fail) and as a Digio stub enabled by env keys.
-- [ ] Webhook `/webhooks/kyc` stores only the fields above and discards the rest of the payload.
-- [ ] Duplicate-PAN guard: a PAN already verified on another account goes to admin review, not auto-approve.
-- [ ] Block paid content (not just checkout) if KYC is later Rejected or Expired.
-- [ ] Audit events: `KYC_PAN_SUBMITTED`, `KYC_KRA_MATCH`, `KYC_FULL_STARTED`, `KYC_KRA_UPLOADED`.
+### Still to do
+- [ ] Digio PAN-verification and KRA-lookup endpoints (from the Digio onboarding pack) in `providers/kyc.ts`.
+- [ ] Block paid content (not only checkout) if KYC is later Rejected / Expired.
 - [ ] Retention job aligned with the compliance answer.
-- [ ] Log redaction for `pan`, `aadhaar`, `dob`.
-- [ ] Tests: KRA hit, full-KYC path, failure, rate limit, duplicate PAN, paid access blocked until Verified.
-
-### Frontend (`apps/web`)
-- [ ] First-time checkout: on `kyc_required`, open a 3-step KYC sheet instead of an error:
-  1. PAN (auto-uppercase, `AAAAA9999A` check), name as on PAN, DOB (date picker), consent checkbox.
-  2. "KYC found ✓" (go to payment), or "Verify via DigiLocker" (redirect to the provider).
-  3. Return page: "Verifying…", polls `/kyc/status`, then continues to payment.
-- [ ] Profile/Settings badge: "KYC verified via DigiLocker · 12 Nov 2026 · PAN ABCDE••••F". Rejected users get a Retry button.
-- [ ] Admin user detail: method, masked PAN, match flags, duplicate-PAN warning, "Pending review" filter (manual approve/reject already exists).
-- [ ] Demo mode with mock PANs; Hindi strings; light-theme styling.
+- [ ] Admin user detail: show method, masked PAN, match flags, duplicate-PAN flag (data already returned by `GET /admin/users/:id`).
+- [ ] `aadhaar_last4` only if compliance asks.
 
 ### Compliance pages (once registration details arrive)
 - [ ] Footer and invoices: SEBI registration type, number and validity.

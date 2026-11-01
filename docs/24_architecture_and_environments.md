@@ -144,14 +144,20 @@ Base path: `/api/v1`. Auth uses httpOnly cookies (`ma_at` for the access token, 
   - **Audit trail:** `ADMIN_LOGIN_CHALLENGE`, `ADMIN_LOGIN_CODE_FAILED` and `ADMIN_LOGIN`.
   - **Contact details:** admins need both an email and a mobile on file. The first admin's mobile comes from `ADMIN_BOOTSTRAP_MOBILE`, required in prod.
   - **Stage only:** while email and SMS are mocked, the codes are also shown on screen on stage. That never happens in prod.
-- **Sessions:** a 15-minute access JWT plus a rotating 30-day refresh token, stored hashed.
+- **Sessions:** a 15-minute access JWT plus a rotating refresh token (stored hashed).
   - **Session check:** the access token carries its session id, and **every request re-checks that session**. An access token stops working the moment its session is revoked or the account is suspended, not just when it expires after 15 minutes.
-  - **Theft detection:** refresh-token reuse revokes every session of that user.
+  - **Inactivity:** no activity for `SESSION_IDLE_MINUTES` (default 15) ends the session. The browser shows "Are you still there?" 60 seconds before, with *Stay signed in*. Activity = user-triggered requests plus a heartbeat (`POST /auth/activity`) while the person uses the page; activity in one tab keeps all tabs signed in. The server enforces it even if the tab is closed.
+  - **Absolute limit:** `SESSION_MAX_HOURS_USER` (12) / `SESSION_MAX_HOURS_ADMIN` (8) after sign-in, whatever the activity; refreshing never extends it. A notice appears 5 minutes before.
+  - **Audit:** `SESSION_TIMEOUT_IDLE`, `SESSION_TIMEOUT_ABSOLUTE`. "Remember my email" only pre-fills the email.
+  - **Theft detection:** reusing a rotated or logged-out refresh token revokes every session of that user (timeouts, password changes and suspensions do not trigger this).
+  - **Password change** ends the user's other sessions; this browser stays signed in.
 - **Logout:** `POST /auth/logout` revokes the current session server-side, clears both cookies and is audited (`LOGOUT`).
   - The **Log out** button is in the sidebar for users and admins. The profile popup still has **Sign out** too.
   - Other open tabs follow to the login page.
   - API responses are sent with `Cache-Control: no-store`.
 - **Sign out of all devices:** Settings → Profile calls `POST /auth/logout-all`, which revokes every session and is audited (`LOGOUT_ALL_DEVICES`).
+- **KYC (PAN-first):** `POST /kyc/pan { pan, name, dob, consent }` → PAN check → KRA lookup → verified at once, or full KYC (DigiLocker) at the provider. Only the masked PAN (`ABCDE••••F`), an HMAC of the PAN (duplicate detection), method, KRA reference and match flags are stored — never the full PAN, Aadhaar or images. 5 attempts a day; a PAN already verified on another account goes to admin review. Logs redact `pan` and `dob`.
+- **Public activity feed:** anonymous ("A new member") unless the member opted in (Settings → Data & Privacy → *Show me on the home page*); then first name + last initial only.
 - Cookies: httpOnly, `SameSite=Lax`, `Secure` on https. CORS is restricted to the website origin.
 - Rate limits: global 300/min; auth endpoints 10/min; OTP 5/hour per number with 5 attempts per code.
 - Webhooks: HMAC signature verified on the raw body; idempotent by event id.
