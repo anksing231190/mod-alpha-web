@@ -10,7 +10,15 @@
   const baseSettings = settingsPage;
   settingsPage = function () {
     let h = baseSettings();
-    if (S.user) h = h.replace('<span class="v22-pill neutral">Free plan</span>', `<span class="v22-pill neutral">${esc(S.ent?.plan || 'Free')} plan</span>`).replace('<span class="v22-pill info">Guest demo profile</span>', `<span class="v22-pill ${S.user.kycStatus === 'Verified' ? 'ok' : 'warn'}">KYC: ${esc(S.user.kycStatus)}</span>${S.user.email && !S.user.emailVerified ? '<button class="v22-pill warn" data-ma-verify-email>Verify email</button>' : ''}`);
+    if (S.user) h = h.replace('<span class="v22-pill neutral">Free plan</span>', `<span class="v22-pill neutral">${esc(S.ent?.plan || 'Free')} plan</span>`).replace('<span class="v22-pill info">Guest demo profile</span>', `<span id="ma-prof-kyc" class="v22-pill ${S.user.kycStatus === 'Verified' ? 'ok' : 'warn'}">KYC: ${esc(S.user.kycStatus)}</span>${S.user.email && !S.user.emailVerified ? '<button class="v22-pill warn" data-ma-verify-email>Verify email</button>' : ''}`);
+    if (S.user) {
+      // the email box shows only a real email address (mobile sign-ups may have none yet)
+      h = h.replace(/(<input id="profile-email" type="email" value=")[^"]*(")/, `$1${esc(S.user.email || '')}$2 placeholder="No email added"`);
+      // profile completeness from the account itself
+      const steps = [[!!S.user.name && S.user.name !== 'Investor', 'Add your full name.'], [!!S.user.email, 'Add an email address.'], [!!S.user.emailVerified || !S.user.email, 'Verify your email address.'], [!!S.user.mobile, 'Add a mobile number to receive SMS reminders.'], [S.user.kycStatus === 'Verified', 'Complete your KYC (needed for paid plans).']];
+      const pct = Math.round(steps.filter((x) => x[0]).length / steps.length * 100), next = steps.find((x) => !x[0]);
+      h = h.replace(/<div class="v22-meter">[\s\S]*?<\/small><\/div>/, `<div class="v22-meter"><div><b>Profile completeness</b><span>${pct}%</span></div><i><em style="width:${pct}%"></em></i><small>${next ? next[1] : 'Your profile is complete.'}</small></div>`);
+    }
     h = h.replace(/Changes are stored for this demo session only\.|Preferences apply to this browser session\.|Delivery is not connected in this prototype\./g, 'Saved to your account.');
     return h;
   };

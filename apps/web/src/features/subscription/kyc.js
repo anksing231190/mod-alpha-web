@@ -27,11 +27,15 @@
   let state = { status: 'Not started' };   // { status, method, panMasked, kraRef }
   /** Demo: saved KYC result in this browser. */
   function demoGet() { try { return JSON.parse(localStorage.getItem(DEMO_KEY)) || { status: 'Not started' }; } catch (e) { return { status: 'Not started' }; } }
-  function demoSet(v) { try { localStorage.setItem(DEMO_KEY, JSON.stringify(v)); } catch (e) {} state = v; }
+  function demoSet(v) { v = { ...v, updatedAt: new Date().toISOString() }; try { localStorage.setItem(DEMO_KEY, JSON.stringify(v)); } catch (e) {} state = v; }
   /** Current KYC state (live: from the API; demo: this browser). */
   async function status() {
     if (!live) return (state = demoGet());
-    try { const r = await API.get('/kyc/status', null, { onUnauthorized: false }); state = { status: r.kyc_status, method: r.method, panMasked: r.pan_masked, kraRef: r.kra_ref, reason: r.reason }; } catch (e) {}
+    try {
+      const r = await API.get('/kyc/status', null, { onUnauthorized: false });
+      state = { status: r.kyc_status, method: r.method, panMasked: r.pan_masked, kraRef: r.kra_ref, reason: r.reason, updatedAt: r.updated_at };
+      if (window.MA_STATE && MA_STATE.user) MA_STATE.user.kycStatus = state.status;   // keep the signed-in user in sync
+    } catch (e) {}
     return state;
   }
 
@@ -110,10 +114,11 @@
   }
   /** Step 3: verified. */
   function stepDone(r) {
-    state = { status: 'Verified', method: r.method, panMasked: r.panMasked };
+    state = { status: 'Verified', method: r.method, panMasked: r.panMasked, updatedAt: new Date().toISOString() };
+    if (window.MA_STATE && MA_STATE.user) MA_STATE.user.kycStatus = 'Verified';
     frame(4, `<div class="ma-kyc-result ok">${icon('check', 44)}<b>${T('KYC verified')}</b><p>${r.method === 'kra' ? T('Your existing KYC record was found in the KYC registry.') : T('Your Aadhaar was verified through DigiLocker and your KYC record has been registered.')}</p><small>PAN ${esc(r.panMasked || '')}</small></div>
       <div class="ma-kyc-actions"><button type="button" class="v22-grad-btn" data-kyc-continue>${onDone ? T('Continue to payment') : T('Done')}</button></div>`);
-    document.querySelector('[data-kyc-continue]').onclick = () => { modalRoot.innerHTML = ''; const f = onDone; onDone = null; refreshStrip(); if (f) f(); };
+    document.querySelector('[data-kyc-continue]').onclick = () => { modalRoot.innerHTML = ''; const f = onDone; onDone = null; refreshStrip(); refreshProfile(); if (f) f(); };
   }
 
   /* ---------- status strip on the subscription page ---------- */
@@ -134,5 +139,42 @@
   subscriptionPage = function () { setTimeout(refreshStrip, 0); return `<div id="ma-kyc-strip" class="v22"></div>` + baseSubscriptionPage(); };
   window.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('[data-kyc-open]')) { e.preventDefault(); open({}); } });
 
-  window.MA_KYC = { open, status, refreshStrip, get state() { return state; } };
+  /* ---------- "Identity (KYC)" card on Settings → Profile ---------- */
+  const fmtDate = (t) => { const d = t ? new Date(t) : null; return d && !isNaN(d) ? d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'; };
+  const STATUS_TONE = { Verified: 'ok', Pending: 'warn', 'In review': 'warn', Rejected: 'bad', 'Not started': 'neutral' };
+  function cardHtml(s) {
+    const st = s.status || 'Not started';
+    const rows = st === 'Verified' || s.panMasked ? [
+      ['Status', `<span class="v22-pill ${STATUS_TONE[st] || 'neutral'}">${esc(T(st))}</span>`],
+      ['Verified through', esc(T(METHOD[s.method] || '—'))],
+      ['PAN', s.panMasked ? `<span class="mono">${esc(s.panMasked)}</span>` : '—'],
+      ['KYC registry reference', s.kraRef ? `<span class="mono">${esc(s.kraRef)}</span>` : '—'],
+      [st === 'Verified' ? 'Verified on' : 'Last update', esc(fmtDate(s.updatedAt))],
+    ] : [];
+    const action = st === 'Verified' || st === 'In review' ? '' : `<button type="button" class="v22-grad-btn" data-kyc-open>${T(st === 'Pending' ? 'Continue KYC' : 'Start KYC')}</button>`;
+    return `<h3 class="v22-set-h">${icon('shield', 24)} ${T('Identity (KYC)')}</h3>
+      ${rows.length ? `<div class="v22-kv ma-kyc-kv">${rows.map((r) => `<div><span>${T(r[0])}</span><b>${r[1]}</b></div>`).join('')}</div>` : `<p class="v22-hint top">${T('A one-time check with your PAN, required by SEBI before your first paid plan.')}</p>`}
+      ${s.reason && st !== 'Verified' ? `<p class="v22-hint">${esc(s.reason)}</p>` : ''}
+      <p class="v22-hint">${T('Only the masked PAN and the result are stored — never your full PAN, Aadhaar number or documents.')}</p>${action ? `<div class="ma-kyc-actions" style="justify-content:flex-start">${action}</div>` : ''}`;
+  }
+  /** Refresh the profile's KYC tag and card from the latest KYC state. */
+  async function refreshProfile() {
+    const card = document.getElementById('ma-kyc-card'), tag = document.getElementById('ma-prof-kyc');
+    if (!card && !tag) return;
+    const s = await status();
+    if (card) card.innerHTML = cardHtml(s);
+    if (tag) { tag.className = `v22-pill ${STATUS_TONE[s.status] || 'neutral'}`; tag.textContent = `KYC: ${T(s.status || 'Not started')}${s.panMasked && s.status === 'Verified' ? ` · ${s.panMasked}` : ''}`; }
+  }
+  // add the card after "Personal details" on the profile tab
+  const baseSettingsPage = settingsPage;
+  settingsPage = function () {
+    let h = baseSettingsPage();
+    if (typeof settingsTab !== 'undefined' && settingsTab === 'profile') {
+      h = h.replace(/(<section class="v22-card v22-set-card"><h3 class="v22-set-h">[\s\S]*?Personal details[\s\S]*?<\/section>)/, `$1<section class="v22-card v22-set-card" id="ma-kyc-card"></section>`);
+      setTimeout(refreshProfile, 0);
+    }
+    return h;
+  };
+
+  window.MA_KYC = { open, status, refreshStrip, refreshProfile, get state() { return state; } };
 })();
