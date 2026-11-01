@@ -91,3 +91,44 @@ See `docs/23_mocks_and_replacements.md`. Each one switches by env vars and keys,
 | NAV feed | Synthesised nightly | AMFI NAVAll.txt, later a licensed vendor |
 | Google sign-in | `mock:<email>` token | Google Identity Services |
 | Helpdesk | DB + outbox | Freshdesk / Zendesk / Zoho Desk |
+
+---
+
+## 4. Infrastructure — P0 before launch
+
+Already in the repo:
+- Docker images (api, web)
+- `infra/docker-compose.yml` for local/stage
+- CI (`ci.yml`) and deploy (`deploy.yml`: push to `main` → stage; tag `v*` → prod, with approval)
+- SQL migrations with an advisory lock
+- Health and readiness endpoints
+- Cache-busted assets
+- Rate limiting, CORS, helmet
+- No-store on the API
+
+### Waiting on the business
+- [ ] Cloud and region **in India** (data residency for SEBI/DPDP; CERT-In logs). Recommended: AWS Mumbai (`ap-south-1`). Alternatives: GCP `asia-south1`, Azure Central India.
+- [ ] Domain `modalpha.in` + DNS access; subdomains `stage.`, `api.`, `api.stage.`.
+- [ ] GitHub repository + **stage** / **prod** Environments (reviewers on prod).
+- [ ] Email sending domain: SPF, DKIM, DMARC records.
+- [ ] Compliance: SEBI cybersecurity framework (CSCRF) category, VAPT before go-live, CERT-In 6-hour incident reporting contact.
+
+### To build
+- [ ] Infrastructure as code (Terraform) for the chosen cloud. On AWS:
+  - VPC
+  - RDS PostgreSQL 16 (Multi-AZ, encrypted, PITR 7–35 days)
+  - ECS Fargate: `api` ×2 + `jobs` ×1
+  - ALB + WAF
+  - S3 + CloudFront for the website
+  - Secrets Manager
+  - CloudWatch logs (retained ≥180 days, per CERT-In)
+  - ACM TLS certificates
+- [ ] Jobs worker: add a Postgres advisory lock per job so a second `jobs` replica can never double-send reminders. **Until then, run exactly one `jobs` instance.**
+- [ ] Rate limiting is in-memory per API instance. Fine for 2 replicas; move to Redis (ElastiCache) when scaling out.
+- [ ] Website security headers: add HSTS and a Content-Security-Policy (nginx or CDN).
+- [ ] Uploaded workbooks: move from Postgres `bytea` to S3 (Mumbai, encrypted, pre-signed URLs).
+- [ ] Monitoring: Sentry (API + web), uptime checks on `/health`, alerts (5xx rate, latency, DB CPU/storage, job failures, webhook failures).
+- [ ] Backups: automated PITR, a monthly restore drill on stage, written RPO/RTO.
+- [ ] Separate stage and prod accounts/projects; least-privilege IAM; deploy role for GitHub via OIDC (no long-lived keys).
+- [ ] Load test (k6) of SIP-date publish day + reminder fan-out.
+- [ ] Runbooks: deploy/rollback, incident response, key rotation, restore.
