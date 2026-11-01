@@ -126,8 +126,10 @@
       e.preventDefault(); e.stopImmediatePropagation();
       const plan = b.dataset.plan;
       if (plan === 'Free') { ls.set(LS_PLAN, null); ls.set(LS_REM, null); applyDemoState(); route(); notify(T('You are on the Free plan.')); return; }
+      // first paid plan: KYC first (features/subscription/kyc.js), then the demo activation below
+      if (window.MA_KYC && MA_KYC.state.status !== 'Verified' && (MA_KYC.status(), MA_KYC.state.status) !== 'Verified') { MA_KYC.open({ onVerified: () => b.click() }); return; }
       dialog(`Activate ${plan} (demo)?`,
-        `<p class="ma-rem-q">${T('Payments are not connected in demo mode.')}</p><ul class="ma-rem-list"><li>${T(`Activate ${plan} in this browser to try subscriber features such as custom SIP reminders.`)}</li><li>${T('In the live app this step is KYC + secure checkout.')}</li></ul>`,
+        `<p class="ma-rem-q">${T('Payments are not connected in demo mode.')}</p><ul class="ma-rem-list"><li>${T(`Activate ${plan} in this browser to try subscriber features such as custom SIP reminders.`)}</li><li>${T('In the live app this step is secure checkout.')}</li></ul>`,
         `Activate ${plan} (demo)`, 'Cancel',
         async () => { ls.set(LS_PLAN, plan); applyDemoState(); route(); notify(T(`${plan} plan activated (demo).`)); });
     }, true);

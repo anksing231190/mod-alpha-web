@@ -25,9 +25,9 @@
       document.querySelectorAll('[data-ma-pay]').forEach((b) => (b.onclick = async () => { const d2 = busy(b); try { await API.post('/billing/mock/complete', { orderId: co.order.orderId, outcome: b.dataset.maPay }); modalRoot.innerHTML = ''; if (b.dataset.maPay === 'success') await paid(); else notify('Payment failed (test). Nothing was charged.'); } catch (e) { d2(); fail(e); } }));
     } catch (e) {
       done();
+      // first paid plan: PAN-first KYC (features/subscription/kyc.js), then continue to payment
       if (e.code === 'kyc_required') {
-        showModal('Complete KYC first', `<div class="v22"><p class="v22-sub">KYC is required once before your first paid subscription. It takes about 3 minutes with PAN and DigiLocker.</p><div class="v22-modal-actions"><button class="v22-outline-btn" data-modal-close>Later</button><button class="v22-grad-btn" data-ma-kyc-start>Start KYC ${ic('arrowR')}</button></div></div>`);
-        document.querySelector('[data-ma-kyc-start]').onclick = async () => { try { const k = await API.post('/kyc/sessions'); modalRoot.innerHTML = ''; if (k.redirectUrl) location.href = k.redirectUrl; } catch (er) { fail(er); } };
+        if (window.MA_KYC) MA_KYC.open({ onVerified: () => startCheckout(planName, btn) });
       } else fail(e);
     }
   }

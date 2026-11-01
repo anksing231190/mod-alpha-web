@@ -7221,3 +7221,59 @@ html[data-theme="light"] .ma-sw-count b {
 html[data-theme="light"] .ma-sw-count small {
     color: #705945
 }
+html[data-theme="light"] .ma-kyc-steps li {
+    color: #705945;
+    border-radius: 10px;
+    background: rgba(251,244,231,0.9);
+    border: 1px solid rgba(126,92,52,0.213)
+}
+html[data-theme="light"] .ma-kyc-steps li span {
+    border-radius: 50%;
+    background: #fcf6ea;
+    color: #5b4838
+}
+html[data-theme="light"] .ma-kyc-steps li.on {
+    color: #30261d;
+    border-color: #d59c67
+}
+html[data-theme="light"] .ma-kyc-steps li.on span {
+    background: linear-gradient(135deg,#985f2a,#824065);
+    color: #fff
+}
+html[data-theme="light"] .ma-kyc-steps li.done span {
+    background: #466532;
+    color: #fff
+}
+html[data-theme="light"] .ma-kyc-lead {
+    color: #5b4838
+}
+html[data-theme="light"] .ma-kyc-consent {
+    color: #5b4838
+}
+html[data-theme="light"] .ma-kyc-test {
+    color: #705945
+}
+html[data-theme="light"] .ma-kyc-test b {
+    color: #3f3227
+}
+html[data-theme="light"] .ma-kyc-result p {
+    color: #5b4838
+}
+html[data-theme="light"] .ma-kyc-result small {
+    color: #705945
+}
+html[data-theme="light"] .ma-kyc-strip {
+    border-radius: 14px;
+    background: rgba(251,244,231,0.9);
+    border: 1px solid rgba(126,92,52,0.247);
+    color: #413428
+}
+html[data-theme="light"] .ma-kyc-strip.ok {
+    border-color: rgba(107,153,76,0.45)
+}
+html[data-theme="light"] .ma-kyc-strip.warn {
+    border-color: rgba(222,153,34,0.45)
+}
+html[data-theme="light"] .ma-kyc .ma-kyc-consent input {
+    accent-color: #845326
+}

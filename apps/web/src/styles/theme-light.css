@@ -414,3 +414,16 @@ html[data-theme="light"] .ma-sw-ic{background:linear-gradient(160deg,#fffdf8,#f3
 html[data-theme="light"] .ma-sw p{color:#5c4b38}
 html[data-theme="light"] .ma-sw-count b{color:#a8641c}
 html[data-theme="light"] .ma-sw-count small{color:#7a6a58}
+
+/* ---------- v23.15 KYC dialog and status strip ---------- */
+html[data-theme="light"] .ma-kyc-steps li{background:#fbf4e7;border-color:#e4d6bf;color:#7a6a58}
+html[data-theme="light"] .ma-kyc-steps li span{background:#efe4cf;color:#5c4b38}
+html[data-theme="light"] .ma-kyc-steps li.on{color:#2b2218;border-color:#a8641c}
+html[data-theme="light"] .ma-kyc-steps li.on span{background:linear-gradient(135deg,#a8641c,#7a3f5a);color:#fff}
+html[data-theme="light"] .ma-kyc-steps li.done span{background:#3f7d4e}
+html[data-theme="light"] .ma-kyc-lead,html[data-theme="light"] .ma-kyc-consent,html[data-theme="light"] .ma-kyc-result p{color:#5c4b38}
+html[data-theme="light"] .ma-kyc-test,html[data-theme="light"] .ma-kyc-result small{color:#7a6a58}
+html[data-theme="light"] .ma-kyc-test b{color:#8a4b14}
+html[data-theme="light"] .ma-kyc-strip{background:#fffaf1;border-color:#e4d6bf;color:#3d3125}
+html[data-theme="light"] .ma-kyc-strip.ok{border-color:#9cc3a3}html[data-theme="light"] .ma-kyc-strip.warn{border-color:#e2b979}
+html[data-theme="light"] .ma-kyc .ma-kyc-consent input{accent-color:#a8641c}
