@@ -185,7 +185,7 @@ GST e-invoicing (IRN / QR code through the GST portal) is only mandatory above �
   - API responses are sent with `Cache-Control: no-store`.
 - **Sign out of all devices:** Settings → Profile calls `POST /auth/logout-all`, which revokes every session and is audited (`LOGOUT_ALL_DEVICES`).
 - **KYC (PAN-first):** `POST /kyc/pan { pan, name, dob, consent }` → PAN check → KRA lookup → verified at once, or full KYC (DigiLocker) at the provider. Only the masked PAN (`ABCDE••••F`), an HMAC of the PAN (duplicate detection), method, KRA reference and match flags are stored — never the full PAN, Aadhaar or images. 5 attempts a day; a PAN already verified on another account goes to admin review. Logs redact `pan` and `dob`.
-- **Public activity feed:** anonymous ("A new member") unless the member opted in (Settings → Data & Privacy → *Show me on the home page*); then first name + last initial only.
+- **Public activity feed:** anonymous ("A new member") unless the member opted in (the opt-in toggle was removed from Settings in v23.18, so everyone is shown as "A new member"; `PUT /me/preferences` `showInActivityFeed` still works); then first name + last initial only.
 - Cookies: httpOnly, `SameSite=Lax`, `Secure` on https. CORS is restricted to the website origin.
 - Rate limits: global 300/min; auth endpoints 10/min; OTP 5/hour per number with 5 attempts per code.
 - Webhooks: HMAC signature verified on the raw body; idempotent by event id.

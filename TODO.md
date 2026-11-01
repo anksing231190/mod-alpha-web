@@ -57,6 +57,11 @@ Mod Alpha holds SEBI registration, so client KYC is **mandatory** before any pai
 
 ---
 
+## 1c. Privacy controls (removed from Settings in v23.18)
+- [ ] Decide with compliance how users exercise DPDP rights (consent withdrawal, data copy, deletion) now that the Settings section is gone — e.g. a Help & support request or a link in the privacy policy. The APIs (`PUT /me/consents`, `POST /me/data-export`, `POST /me/deletion-request`) are still in place.
+
+---
+
 ## 2. Fund house logos
 - [ ] Add official AMC logo files to `apps/web/assets/funds/` and list them in `assets/funds/manifest.js`. Monograms are shown until then. The build environment cannot reach AMC sites, so these must be supplied.
 

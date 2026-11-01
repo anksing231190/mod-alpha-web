@@ -113,8 +113,8 @@ The list comes from auditing every screen, button and data flow. Since v23 the b
 | ID | Integration | Priority | Status | Where in the UI | API / contract | Provider options | Notes |
 |---|---|---|---|---|---|---|---|
 | ACC-01 | Profile & preferences save | P0 | Ready | Settings → Save Changes / Save Preferences | `GET/PATCH /me · GET/PUT /me/preferences` | Own API | Built. |
-| ACC-02 | Data export request (DPDP) | P1 | Ready | Settings → Profile → Privacy & your data → Request data export | `POST /me/data-export → emailed download link` | Own job + object storage | Built: request + job fulfilment. |
-| ACC-03 | Account deletion request | P1 | Ready | Settings → Profile → Privacy & your data → Request account deletion | `POST /me/deletion-request (re-auth required)` | Own workflow + retention rules | Built: 30-day grace, then anonymised by job. |
+| ACC-02 | Data export request (DPDP) | P1 | Ready | Not shown in the app (removed from Settings in v23.18); handled through Help & support | `POST /me/data-export → emailed download link` | Own job + object storage | Built: request + job fulfilment. |
+| ACC-03 | Account deletion request | P1 | Ready | Not shown in the app (removed from Settings in v23.18); handled through Help & support | `POST /me/deletion-request (re-auth required)` | Own workflow + retention rules | Built: 30-day grace, then anonymised by job. |
 | ACC-04 | Support tickets | P1 | Mock (integrated later) | Help & FAQ → Submit request | `POST /support/tickets` | Freshdesk, Zendesk, Zoho Desk, HubSpot | Built; Freshdesk adapter ready, mocked. |
 | ACC-05 | Help-centre content (FAQs) | P2 | Ready | Help & FAQ, public FAQ section | `GET /content/faqs` | Headless CMS (Sanity, Strapi, Contentful) | FAQs served from DB; CMS later. |
 

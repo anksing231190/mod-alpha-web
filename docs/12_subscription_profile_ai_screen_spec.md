@@ -13,7 +13,7 @@ These three screens are implemented against the user-supplied references in `ref
 
 ## Settings / Profile
 - Dedicated user Settings page, reachable from the left navigation and the profile menu.
-- Tabs: Profile, Preferences, Notifications, Data & Privacy.
+- Tabs: Profile (personal details, KYC, billing details), Notifications. (Preferences and Data & Privacy were removed in v23.18.)
 - Profile includes name/email, Change Password action, mobile and country fields, default investment amount (₹10,000) and default SIP amount (₹5,000).
 - These amounts only prefill the calculators; they do not create SIP orders or track investments.
 - Preferences include default return period and theme placeholder.

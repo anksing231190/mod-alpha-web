@@ -91,8 +91,8 @@ window.V22_INTEGRATIONS=[
 
  // ---- User account & support
  {id:'ACC-01',cat:'account',name:'Profile & preferences save',status:'Ready',p:'P0',ui:'Settings → Save Changes / Save Preferences',api:'GET/PATCH /me · GET/PUT /me/preferences',opts:'Own API',note:'Built.'},
- {id:'ACC-02',cat:'account',name:'Data export request (DPDP)',status:'Ready',p:'P1',ui:'Settings → Profile → Privacy & your data → Request data export',api:'POST /me/data-export → emailed download link',opts:'Own job + object storage',note:'Built: request + job fulfilment.'},
- {id:'ACC-03',cat:'account',name:'Account deletion request',status:'Ready',p:'P1',ui:'Settings → Profile → Privacy & your data → Request account deletion',api:'POST /me/deletion-request (re-auth required)',opts:'Own workflow + retention rules',note:'Built: 30-day grace, then anonymised by job.'},
+ {id:'ACC-02',cat:'account',name:'Data export request (DPDP)',status:'Ready',p:'P1',ui:'Not shown in the app (removed from Settings in v23.18); handled through Help & support',api:'POST /me/data-export → emailed download link',opts:'Own job + object storage',note:'Built: request + job fulfilment.'},
+ {id:'ACC-03',cat:'account',name:'Account deletion request',status:'Ready',p:'P1',ui:'Not shown in the app (removed from Settings in v23.18); handled through Help & support',api:'POST /me/deletion-request (re-auth required)',opts:'Own workflow + retention rules',note:'Built: 30-day grace, then anonymised by job.'},
  {id:'ACC-04',cat:'account',name:'Support tickets',status:'Mock',p:'P1',ui:'Help & FAQ → Submit request',api:'POST /support/tickets',opts:'Freshdesk, Zendesk, Zoho Desk, HubSpot',note:'Built; Freshdesk adapter ready, mocked.'},
  {id:'ACC-05',cat:'account',name:'Help-centre content (FAQs)',status:'Ready',p:'P2',ui:'Help & FAQ, public FAQ section',api:'GET /content/faqs',opts:'Headless CMS (Sanity, Strapi, Contentful)',note:'FAQs served from DB; CMS later.'},
 
@@ -126,6 +126,7 @@ window.V22_INTEGRATIONS=[
 window.V22_PROGRESS_LOG=[
  ['01 Nov 2026','v23.18','Best SIP date is a paid feature: the API sends the day only to Pro / Premium (and admins); others see a blurred card with See plans'],
  ['01 Nov 2026','v23.18','GST tax invoices as PDF: seller GSTIN, place of supply, CGST/SGST or IGST, SAC, numbered per financial year; billing details in Profile'],
+ ['01 Nov 2026','v23.18','Privacy section removed from Settings (consents, home-page opt-in, data export, account deletion); APIs kept'],
  ['01 Nov 2026','v23.18','Settings simplified to Profile + Notifications; test and demo labels removed across the app'],
  ['01 Nov 2026','v23.15','PAN-first KYC with KRA lookup and DigiLocker step (mock provider, test PANs); duplicate-PAN review'],
  ['01 Nov 2026','v23.15','Session timeouts: 15 min inactivity sign-out with warning, 12 h / 8 h limit; password change ends other devices'],
