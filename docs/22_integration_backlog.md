@@ -1,6 +1,6 @@
 # 22 — Live integration & API backlog
 
-**Generated from** `v22-integrations.js` (run `node scripts/data-tools/export_integrations.js`). The same list appears in **Admin → System Settings → Integration readiness**, where you can filter it, search it and export it as CSV.
+**Generated from** `apps/web/src/features/admin/settings/integrations-catalogue.js` (run `node scripts/data-tools/export_integrations.js`). The same list appears in **Admin → System Settings → Integration readiness**, where you can filter it, search it and export it as CSV.
 
 The list comes from auditing every screen, button and data flow. Since v23 the backend API implements most of it; items marked *Mock* run on stand-in providers on stage and switch to the real vendor through environment variables.
 

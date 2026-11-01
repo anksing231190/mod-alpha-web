@@ -26,9 +26,9 @@ The choice is remembered in the browser (`localStorage['mod-alpha-lang']`) and a
 ## How it works (for developers)
 | File | Role |
 |---|---|
-| `apps/web/js/i18n-hi.js` | Dictionary for the public site, sign-in and user app. It also holds name patterns (e.g. "Welcome back, *name*") and headline blocks. |
-| `apps/web/js/i18n-hi-admin.js` | Dictionary for the admin console, plus month and weekday words. |
-| `apps/web/js/i18n.js` | The engine. It translates text nodes and attributes as they are rendered (MutationObserver). It adds the A/अ switch and wires the Settings language select. `MA_T('…')` translates a string from code. |
+| `apps/web/src/features/i18n/i18n-hi.js` | Dictionary for the public site, sign-in and user app. It also holds name patterns (e.g. "Welcome back, *name*") and headline blocks. |
+| `apps/web/src/features/i18n/i18n-hi-admin.js` | Dictionary for the admin console, plus month and weekday words. |
+| `apps/web/src/features/i18n/i18n.js` | The engine. It translates text nodes and attributes as they are rendered (MutationObserver). It adds the A/अ switch and wires the Settings language select. `MA_T('…')` translates a string from code. |
 
 Matching order:
 1. **Exact string.**

@@ -1,15 +1,97 @@
 # Mod Alpha — website (`apps/web`)
 
-**Since v23 the website is connected to the backend API.**
-- `config/env.js` is generated per environment by `scripts/build-web.mjs`.
-- With `API_BASE_URL` set (local, stage, prod), every screen uses the API through `js/v23-api.js`.
-- Without it, the site runs as the original static demo below.
+Plain HTML + CSS + JavaScript (no framework, no bundler). `index.html` loads every file with a
+`<script>` tag; the build (`scripts/build-web.mjs`) only copies the folder, writes `config/env.js`
+and adds cache-busting `?v=` to the file names.
 
-See the root `README.md` and `docs/24_architecture_and_environments.md`. The version history below describes the UI work (v1–v22).
+- **Demo mode** — no `API_BASE_URL` in `config/env.js`: everything runs in the browser on the
+  bundled test workbook (`data/mod-alpha-test-data.xlsx`).
+- **Live mode** — `API_BASE_URL` set (local, stage, prod): the `*.live.js` files take over and use the API.
+
+## Folder structure (one folder per feature)
+
+```
+apps/web/
+├── index.html                 the only page; lists every script in load order (commented)
+├── config/env.*.json          per-environment settings → config/env.js at build time
+├── assets/                    brand images, fund house logos (assets/funds/manifest.js), xlsx library
+├── data/                      bundled test workbook + blank template (demo mode)
+└── src/
+    ├── core/                  used by every screen
+    │   ├── startup.js         MA_STARTUP(order, label, fn) — start-up steps registry
+    │   ├── state.js           page elements, shared UI state, toast / modal / navigation helpers
+    │   ├── format.js          dates, Indian number formats, small UI pieces (pills, selects, …)
+    │   ├── icons.js           SVG icons and the α brand mark
+    │   ├── router.js          #/address → screen
+    │   ├── layout.js          top bar, sidebar menus, signed-in page shell, page headers, pager
+    │   ├── events.js          page-wide click / change handlers that serve several screens
+    │   ├── boot.js            runs the start-up steps, then draws the first screen
+    │   ├── api-client.js      fetch wrapper for the API (cookies, silent token refresh)
+    │   ├── live.js            live mode: shared helpers for the *.live.js files (window.MA_LIVE)
+    │   ├── notifications-bell.live.js
+    │   └── boot.live.js       live mode: load session + data, then draw the first screen
+    ├── shared/                building blocks used by several features
+    │   ├── charts.js · fund-logos.js · datepicker.js
+    │   └── dataset.js (+ dataset.live.js)   the data the screens show (workbook / API)
+    ├── data/demo-data.js      demo content (funds, plans, insights, FAQs)
+    ├── features/
+    │   ├── landing/           #/landing
+    │   ├── public-pages/      #/pricing, #/faq, public footer
+    │   ├── pricing/           pricing cards
+    │   ├── auth/              #/login, #/signup, admin 2-code sign-in, session timeout
+    │   ├── dashboard/         #/user/overview, SIP calendar, Set Reminder
+    │   ├── funds/             #/user/funds (+ detail)
+    │   ├── what-if/           #/user/whatif (+ live calculators)
+    │   ├── sip/               #/user/sip (Mod Alpha SIP vs fixed date)
+    │   ├── assistant/         AI chat panel
+    │   ├── subscription/      #/user/subscription, checkout, KYC
+    │   ├── settings/          #/user/settings
+    │   ├── help/              #/user/help
+    │   ├── theme/             light / dark theme
+    │   ├── i18n/              Hindi
+    │   └── admin/             dashboard · users · subscriptions · sip-date · data ·
+    │                          notifications · ai-models · audit · settings
+    └── styles/                base.css → app.css → theme-light.generated.css → theme-light.css
+```
+
+Inside a feature folder:
+- `<feature>.js` — the screen(s): functions that return HTML and their helpers (demo + shared).
+- `<feature>.live.js` — what changes in live mode (API calls). Runs only when the API is configured.
+- other files — self-contained parts of that feature (e.g. `auth/session-timeout.js`).
+
+## How the code fits together
+
+1. Every core / shared / feature file only **defines** functions and constants (global, as before).
+2. Code that must **run** when the page opens (event listeners, values read from the page) is a
+   start-up step: `MA_STARTUP(order, 'label', () => { … })`. `core/boot.js` runs all steps in
+   ascending order, then calls `route()` to draw the screen for the address. The numbers keep the
+   original order, so steps can live next to the feature they belong to.
+   In the browser console, `MA_STARTUP.list()` shows them.
+3. A few screens are built in two layers and say so in their names, e.g. `renderUserPage()`
+   (draws the screen) and `renderUser()` (adds behaviour around it); `shellLayout()` →
+   `shellWithIcons()` → `shell()`.
+4. Live mode: `core/live.js` creates `window.MA_LIVE` (API client, signed-in state `S`, helpers).
+   Each `*.live.js` file reads what it needs from it and adds its own exports. They run in the
+   order listed in `index.html` and must stay in that order.
+
+## Run locally
+
+```bash
+node scripts/serve-web.mjs apps/web 8092
+```
+
+Open `http://localhost:8092` for the demo, or use `scripts/start-local.sh` for the full app with the API.
+
+## Routes
+
+Public: `#/landing` (default) · `#/pricing` · `#/faq` · `#/login` · `#/signup`
+Demo entry: `#/guest/user` · `#/guest/admin`
+User: `#/user/overview` · `funds` · `whatif` · `sip` · `subscription` · `settings` · `help`
+Admin: `#/admin/dashboard` · `users` · `subscriptions` · `sipdate` · `data` · `notifications` · `methodology` · `audit` · `settings`
 
 ---
 
-# Mod Alpha — high-fidelity frontend prototype (test)
+# Version history (UI work v1–v22)
 
 This prototype is being built against the approved visual mockups in `docs/reference-mockups/`. It includes the public website, login/signup, guest User and Admin previews, all specified user screens and all specified admin screens. All data and actions are local demo simulations.
 

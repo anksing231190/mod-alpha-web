@@ -7,11 +7,100 @@
 <title>Mod Alpha — Mutual Fund Intelligence</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
-<link rel="stylesheet" href="v22.css">
-<link rel="stylesheet" href="theme-light.css">
-<link rel="stylesheet" href="theme-light-design.css">
+<link rel="stylesheet" href="src/styles/base.css">
+<link rel="stylesheet" href="src/styles/app.css">
+<link rel="stylesheet" href="src/styles/theme-light.generated.css">
+<link rel="stylesheet" href="src/styles/theme-light.css">
 <script>try{if(localStorage.getItem('mod-alpha-lang')==='hi'){document.documentElement.lang='hi';document.documentElement.dataset.lang='hi'}}catch(e){}</script>
 <script>try{if(localStorage.getItem('mod-alpha-theme')==='light'){document.documentElement.dataset.theme='light';document.querySelector('meta[name=theme-color]').content='#f4ecdd'}}catch(e){}</script>
 </head>
-<body><div class="ambient ambient-a"></div><div class="ambient ambient-b"></div><div id="app"></div><div id="toast" class="toast" role="status" aria-live="polite"></div><div id="modal-root"></div><script src="config/env.js"></script><script src="js/api-client.js"></script><script src="assets/funds/manifest.js"></script><script src="data.js"></script><script src="app.js"></script><script src="v22.js"></script><script src="assets/vendor/xlsx.full.min.js"></script><script src="v22-data.js"></script><script src="v22-integrations.js"></script><script src="v22-ui.js"></script><script src="js/templates-ui.js"></script><script src="js/admin-mfa.js"></script><script src="js/v23-api.js"></script><script src="js/theme-palette.js"></script><script src="js/theme.js"></script><script src="js/i18n-hi.js"></script><script src="js/i18n-hi-admin.js"></script><script src="js/i18n.js"></script><script src="js/sip-reminder.js"></script><script src="js/datepicker.js"></script><script src="js/session-timeout.js"></script></body></html>
+<body><div class="ambient ambient-a"></div><div class="ambient ambient-b"></div><div id="app"></div><div id="toast" class="toast" role="status" aria-live="polite"></div><div id="modal-root"></div>
+  <!-- ============================================================
+       Scripts — load order (see apps/web/README.md)
+       1. config + API client + data files (no code runs yet)
+       2. start-up registry, then every core / shared / feature file:
+          these only DEFINE functions and constants
+       3. core/boot.js: runs the start-up steps in order and draws the first screen
+       4. enhancement modules (admin 2-code sign-in, templates editor)
+       5. live mode (*.live.js): only active when config/env.js has API_BASE_URL;
+          they must stay in this order
+       6. theme, Hindi, SIP reminder, date picker, session timeout
+       ============================================================ -->
+  <!-- 1 -->
+  <script src="config/env.js"></script>
+  <script src="src/core/api-client.js"></script>
+  <script src="assets/funds/manifest.js"></script>
+  <script src="src/data/demo-data.js"></script>
+  <script src="src/features/admin/settings/integrations-catalogue.js"></script>
+  <script src="assets/vendor/xlsx.full.min.js"></script>
+  <!-- 2 -->
+  <script src="src/core/startup.js"></script>
+  <script src="src/core/events.js"></script>
+  <script src="src/core/format.js"></script>
+  <script src="src/core/icons.js"></script>
+  <script src="src/core/layout.js"></script>
+  <script src="src/core/router.js"></script>
+  <script src="src/core/state.js"></script>
+  <script src="src/shared/charts.js"></script>
+  <script src="src/shared/dataset.js"></script>
+  <script src="src/shared/fund-logos.js"></script>
+  <script src="src/features/admin/ai-models/admin-ai-models.js"></script>
+  <script src="src/features/admin/audit/admin-audit.js"></script>
+  <script src="src/features/admin/dashboard/admin-dashboard.js"></script>
+  <script src="src/features/admin/data/admin-data.js"></script>
+  <script src="src/features/admin/notifications/admin-notifications.js"></script>
+  <script src="src/features/admin/settings/admin-settings.js"></script>
+  <script src="src/features/admin/sip-date/admin-sip-date.js"></script>
+  <script src="src/features/admin/subscriptions/admin-subscriptions.js"></script>
+  <script src="src/features/admin/users/admin-users.js"></script>
+  <script src="src/features/assistant/assistant.js"></script>
+  <script src="src/features/auth/auth.js"></script>
+  <script src="src/features/dashboard/dashboard.js"></script>
+  <script src="src/features/funds/funds.js"></script>
+  <script src="src/features/help/help.js"></script>
+  <script src="src/features/landing/landing.js"></script>
+  <script src="src/features/pricing/pricing.js"></script>
+  <script src="src/features/public-pages/public-pages.js"></script>
+  <script src="src/features/settings/settings.js"></script>
+  <script src="src/features/sip/sip-compare.js"></script>
+  <script src="src/features/subscription/subscription.js"></script>
+  <script src="src/features/theme/theme-core.js"></script>
+  <script src="src/features/what-if/what-if.js"></script>
+  <!-- 3 -->
+  <script src="src/core/boot.js"></script>
+  <!-- 4 -->
+  <script src="src/features/admin/notifications/templates-ui.js"></script>
+  <script src="src/features/auth/admin-mfa.js"></script>
+  <!-- 5 -->
+  <script src="src/core/live.js"></script>
+  <script src="src/shared/dataset.live.js"></script>
+  <script src="src/features/auth/auth.live.js"></script>
+  <script src="src/features/subscription/kyc.live.js"></script>
+  <script src="src/features/subscription/subscription.live.js"></script>
+  <script src="src/features/settings/settings.live.js"></script>
+  <script src="src/core/notifications-bell.live.js"></script>
+  <script src="src/features/funds/funds.live.js"></script>
+  <script src="src/features/help/help.live.js"></script>
+  <script src="src/features/assistant/assistant.live.js"></script>
+  <script src="src/features/what-if/calculators.live.js"></script>
+  <script src="src/features/admin/admin.live.js"></script>
+  <script src="src/features/admin/dashboard/admin-dashboard.live.js"></script>
+  <script src="src/features/admin/users/admin-users.live.js"></script>
+  <script src="src/features/admin/subscriptions/admin-subscriptions.live.js"></script>
+  <script src="src/features/admin/sip-date/admin-sip-date.live.js"></script>
+  <script src="src/features/admin/data/admin-data.live.js"></script>
+  <script src="src/features/admin/notifications/admin-notifications.live.js"></script>
+  <script src="src/features/admin/ai-models/admin-ai-models.live.js"></script>
+  <script src="src/features/admin/audit/admin-audit.live.js"></script>
+  <script src="src/features/admin/settings/admin-settings.live.js"></script>
+  <script src="src/core/boot.live.js"></script>
+  <!-- 6 -->
+  <script src="src/features/theme/theme-palette.js"></script>
+  <script src="src/features/theme/theme.js"></script>
+  <script src="src/features/i18n/i18n-hi.js"></script>
+  <script src="src/features/i18n/i18n-hi-admin.js"></script>
+  <script src="src/features/i18n/i18n.js"></script>
+  <script src="src/features/dashboard/sip-reminder.js"></script>
+  <script src="src/shared/datepicker.js"></script>
+  <script src="src/features/auth/session-timeout.js"></script>
+</body></html>

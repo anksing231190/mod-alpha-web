@@ -44,13 +44,13 @@ The colourful icon tiles keep their original colours in both themes.
 ## How it is built
 | File | Role |
 |---|---|
-| `apps/web/js/theme-palette.js` | One colour-mapping function: dark colour → Sand colour, by what the colour is used for (surface, text, border, shadow, chart). |
-| `scripts/build-light-theme.mjs` | Reads `styles.css` and `v22.css` and re-emits every colour declaration under `html[data-theme="light"]`. Writes **`apps/web/theme-light.css`**, which is generated, so don't edit it by hand. |
-| `apps/web/theme-light-design.css` | Hand-designed refinements: sidebar, buttons, inputs, tables, tooltips, toggle, upgrade chip, login. |
-| `apps/web/js/theme.js` | The toggle and the Appearance cards. Re-colours charts drawn at runtime (SVG `fill`/`stroke`/`stop-color`, legend dots) and restores them when you switch back. |
+| `apps/web/src/features/theme/theme-palette.js` | One colour-mapping function: dark colour → Sand colour, by what the colour is used for (surface, text, border, shadow, chart). |
+| `scripts/build-light-theme.mjs` | Reads `src/styles/base.css` and `src/styles/app.css` and re-emits every colour declaration under `html[data-theme="light"]`. Writes **`apps/web/src/styles/theme-light.generated.css`**, which is generated, so don't edit it by hand. |
+| `apps/web/src/styles/theme-light.css` | Hand-designed refinements: sidebar, buttons, inputs, tables, tooltips, toggle, upgrade chip, login. |
+| `apps/web/src/features/theme/theme.js` | The toggle and the Appearance cards. Re-colours charts drawn at runtime (SVG `fill`/`stroke`/`stop-color`, legend dots) and restores them when you switch back. |
 | `apps/web/v22-ui.js` | The animated login background uses Sand colours in light mode. |
 
-**After changing `styles.css` or `v22.css`**, regenerate the light theme. `npm run build` also does this automatically.
+**After changing `base.css` or `app.css`**, regenerate the light theme. `npm run build` also does this automatically.
 ```bash
 npm run theme:build
 ```
@@ -75,7 +75,7 @@ node scripts/qa/contrast-audit.js
 ```
 
 ## Date picker
-Every date field on the site uses one Mod Alpha calendar (`apps/web/js/datepicker.js`), styled for both themes and translated into Hindi. It covers the what-if and SIP-compare dates and the admin date-range dialog; nothing uses the browser's own date popup.
+Every date field on the site uses one Mod Alpha calendar (`apps/web/src/shared/datepicker.js`), styled for both themes and translated into Hindi. It covers the what-if and SIP-compare dates and the admin date-range dialog; nothing uses the browser's own date popup.
 
 - **Navigation:** month and year quick switch.
 - **Dates:** today is marked with a ring. Dates outside the allowed range are disabled; investment dates cannot be in the future.

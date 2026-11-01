@@ -79,7 +79,7 @@ These are also listed under "Not built yet — planned" in System Settings.
    - **AI:** quota per plan, refusal of personalised advice, latency.
    - **NAV:** fund `amfi_code` mapping coverage, holiday handling, metrics recomputed.
 6. Repeat with **live** credentials in **prod** (remove the provider from `ALLOW_MOCK_PROVIDERS` if it was listed).
-7. Update the status in `apps/web/v22-integrations.js` from `Mock` to `Ready` and regenerate `docs/22_integration_backlog.md`:
+7. Update the status in `apps/web/src/features/admin/settings/integrations-catalogue.js` from `Mock` to `Ready` and regenerate `docs/22_integration_backlog.md`:
 
    ```bash
    node scripts/data-tools/export_integrations.js
@@ -91,10 +91,10 @@ These are also listed under "Not built yet — planned" in System Settings.
 
 | Concern | File |
 |---|---|
-| All adapters (mock + real), registry, catalogue shown in System Settings | `apps/api/src/providers/index.ts` |
+| All adapters (mock + real) — one file per provider; registry and catalogue shown in System Settings | `apps/api/src/providers/` (`index.ts` = registry) |
 | Rule-based assistant | `apps/api/src/providers/mock-ai.ts` |
 | Prod guard (refuses mocks) and required credentials per provider | `apps/api/src/config.ts` |
-| Stage-only payment confirmation | `POST /api/v1/billing/mock/complete` in `apps/api/src/modules/billing.ts` |
-| Stage-only KYC decision | `POST /api/v1/kyc/mock/complete` in `apps/api/src/modules/kyc.ts`; page `#/kyc/mock` in `apps/web/js/v23-api.js` |
+| Stage-only payment confirmation | `POST /api/v1/billing/mock/complete` in `apps/api/src/modules/billing/routes.ts` |
+| Stage-only KYC decision | `POST /api/v1/kyc/mock/complete` in `apps/api/src/modules/kyc/routes.ts`; page `#/kyc/mock` in `apps/web/src/features/subscription/kyc.live.js` |
 | Mock outbox | table `mock_outbox`; `GET /api/v1/admin/mock-outbox`; Admin → Notifications |
 | Public keys the browser needs | `apps/web/config/env.<env>.json` or CI vars `WEB_RAZORPAY_KEY_ID`, `WEB_GOOGLE_CLIENT_ID` |

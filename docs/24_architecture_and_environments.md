@@ -12,19 +12,22 @@ mod-alpha/
 │   │   │   ├── app.ts            # Fastify app (security headers, CORS, cookies, rate limit, errors)
 │   │   │   ├── server.ts         # HTTP entrypoint
 │   │   │   ├── db.ts             # pg pool + transactions
-│   │   │   ├── lib/              # auth (JWT cookies, RBAC), audit log, validation, dates, errors
-│   │   │   ├── providers/        # external adapters: mock + real (docs/23)
-│   │   │   ├── modules/          # one file per domain (routes + logic)
-│   │   │   │   ├── auth.ts  me.ts  billing.ts  kyc.ts  funds.ts  analytics.ts
-│   │   │   │   ├── sip.ts  data.ts  workbook.ts  admin.ts  notifications.ts  content.ts
-│   │   │   ├── jobs/             # NAV import, campaign dispatch, subscription lifecycle, DPDP requests
+│   │   │   ├── shared/           # errors, validation, audit log, dates
+│   │   │   ├── providers/        # external adapters, one file per vendor: mock + real (docs/23)
+│   │   │   ├── modules/          # one folder per feature: routes.ts (+ helpers)
+│   │   │   │   ├── auth/         routes · session (cookies, timeouts) · admin-mfa · helpers
+│   │   │   │   ├── account/  billing/  kyc/  funds/ (+ analytics)  sip/  data/ (+ workbook)
+│   │   │   │   └── admin/  notifications/  content/
+│   │   │   ├── jobs/             # NAV import, campaign dispatch, subscription lifecycle, DPDP requests, custom reminders
 │   │   │   └── cli/              # migrate, seed, jobs worker
 │   │   ├── test/                 # integration tests against a real PostgreSQL
 │   │   └── Dockerfile
-│   └── web/                      # Website (static HTML/CSS/JS)
-│       ├── index.html  app.js  v22*.js  v22.css   # UI (screens, components)
-│       ├── js/api-client.js      # fetch wrapper: cookies, auto-refresh, errors
-│       ├── js/v23-api.js         # integration layer: wires every screen to the API
+│   └── web/                      # Website (static HTML/CSS/JS) — structure: apps/web/README.md
+│       ├── index.html            # the only page; script load order explained inside
+│       ├── src/core/             # state, router, layout, icons, start-up registry, boot, API client
+│       ├── src/shared/           # charts, date picker, fund logos, dataset
+│       ├── src/features/<feature>/  # <feature>.js (screens) + <feature>.live.js (API mode)
+│       ├── src/styles/           # base.css, app.css, theme-light(.generated).css
 │       ├── config/env.js         # generated per environment at build time
 │       ├── config/env.{local,stage,prod}.json
 │       ├── data/                 # test workbook + blank template

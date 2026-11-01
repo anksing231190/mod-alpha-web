@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-/* Writes docs/22_integration_backlog.md from v22-integrations.js (single source of truth). */
+/* Writes docs/22_integration_backlog.md from apps/web/src/features/admin/settings/integrations-catalogue.js (single source of truth). */
 const fs=require('fs'),path=require('path');global.window={};
-require(path.join(__dirname,'..','..','apps','web','v22-integrations.js'));
+require(path.join(__dirname,'..','..','apps','web','src','features','admin','settings','integrations-catalogue.js'));
 const C=window.V22_INTEGRATION_CATEGORIES,I=window.V22_INTEGRATIONS;
 const cnt=f=>I.filter(f).length,esc=s=>String(s||'').replace(/\|/g,'\\|');
 let md=`# 22 — Live integration & API backlog
 
-**Generated from** \`v22-integrations.js\` (run \`node scripts/data-tools/export_integrations.js\`). The same list appears in **Admin → System Settings → Integration readiness**, where you can filter it, search it and export it as CSV.
+**Generated from** \`apps/web/src/features/admin/settings/integrations-catalogue.js\` (run \`node scripts/data-tools/export_integrations.js\`). The same list appears in **Admin → System Settings → Integration readiness**, where you can filter it, search it and export it as CSV.
 
 The list comes from auditing every screen, button and data flow. Since v23 the backend API implements most of it; items marked *Mock* run on stand-in providers on stage and switch to the real vendor through environment variables.
 
