@@ -23,7 +23,7 @@ function v22DashChartSample(period){
 let v22CalMonth={y:2026,m:9};
 
 /** Illustrative KPI tiles (no dataset). */
-function v22UserKpisSample(){return [['trophy','gold','Top Performing Fund','(5Y Returns)','32.4%','Quant Small Cap Fund','Equity'],['calendar','violet','Best AI Investment Date','This Month','12th','+2.8% vs fixed SIP',''],['bars','blue','Average Category Return','(Small Cap)','24.1%','5Y CAGR',''],['db','teal','Funds Tracked','In Our Database','8,500+','Mutual Funds','']]}
+function v22UserKpisSample(){const L=(v22SipFor(2026,9)||{}).locked;return [['trophy','gold','Top Performing Fund','(5Y Returns)','32.4%','Quant Small Cap Fund','Equity'],['calendar','violet','Best AI Investment Date','This Month',L?'<i class="ma-locked-val">18th</i>':'12th',L?'Subscribe to unlock':'+2.8% vs fixed SIP',''],['bars','blue','Average Category Return','(Small Cap)','24.1%','5Y CAGR',''],['db','teal','Funds Tracked','In Our Database','8,500+','Mutual Funds','']]}
 
 /** Day the user picked in the calendar. */
 let v22PickDay=null;
@@ -33,6 +33,7 @@ function v22ReminderState(){return (window.MA_REMINDER&&MA_REMINDER.get())||{mod
 
 /** Reminder card next to the calendar (Set Reminder). */
 function v22ReminderCard(SP,MN){
+ if(SP.locked)return v22LockedCard(SP,MN);
  const y=v22CalMonth.y,pick=v22PickDay&&v22PickDay!==SP.day?v22PickDay:null,alt=pick&&SP.alts.find(a=>a[0]===pick),st=v22ReminderState();
  const day=pick||SP.day,wd=new Date(y,v22CalMonth.m,day).toLocaleDateString('en-GB',{weekday:'long'});
  const now=`<p class="v22-rem-now">${ic('bell')}<span>Reminder: <b>${st.mode==='custom'&&st.day?`day ${st.day} of every month`:'Mod Alpha date'}</b></span></p>`;
@@ -41,6 +42,16 @@ function v22ReminderCard(SP,MN){
  return `<div class="v22-best ${pick?'is-custom':''}"><div class="v22-best-info"><div class="v22-best-top">${tag}</div>
   <div class="v22-best-day"><b>${day}</b><div><span>${MN} ${y}</span><small>${wd}</small></div></div>${gain}</div>
   <div class="v22-best-act"><button type="button" class="v22-grad-btn" data-action="set-reminder"${pick?` data-day="${pick}"`:''}>Set Reminder</button>${now}${pick?`<button type="button" class="v22-link-btn" data-v22-pick-reset>Use Mod Alpha date (${SP.day} ${MN})</button>`:''}</div></div>`;
+}
+
+/** Best Date card for people without a paid plan: the day is blurred (a placeholder — the real day is never
+    sent to them) with a button to the plans. */
+function v22LockedCard(SP,MN){
+ return `<div class="v22-best ma-sip-locked"><div class="v22-best-info"><div class="v22-best-top"><em>Best Date</em></div>
+  <div class="v22-best-day" aria-hidden="true"><b class="ma-blur">18</b><div><span>${MN} ${v22CalMonth.y}</span><small class="ma-blur">Wednesday</small></div></div>
+  <strong class="v22-best-gain">+${SP.uplift}%<small>vs. fixed date SIP</small></strong></div>
+  <div class="ma-lock-over">${cic('lock',34)}<b>Unlock this month’s best date</b><small>Available with Pro and Premium, with a reminder before the date.</small></div>
+  <div class="v22-best-act"><a class="v22-grad-btn" href="#/user/subscription">${ic('crown')} See plans</a></div></div>`;
 }
 
 /** Calendar legend and alternative good days. */
@@ -70,7 +81,7 @@ function userOverview(){
  <section class="v22-dash-top">
   <article class="v22-card v22-perf-card"><div class="v22-card-head"><div><h2>Top Performing Mutual Funds</h2><p>Compare historical returns and find the best performing funds</p></div>${v22Pills(['1Y','3Y','5Y','10Y'],v22DashPeriod,'data-v22-dash')}</div><div id="v22-dash-chart">${v22DashChart(v22DashPeriod)}</div></article>
   <article class="v22-card v22-cal-card"><div class="v22-card-head"><h2>AI Recommended SIP Dates <span class="v22-i" title="Common reminder date published for all mutual funds">${ic('info')}</span></h2><div class="v22-month"><button type="button" data-v22-month="-1" aria-label="Previous month">${ic('chevL')}</button><b>${monthName}</b><button type="button" data-v22-month="1" aria-label="Next month">${ic('chevR')}</button></div></div>
-  <div class="v22-cal-wrap"><div class="v22-cal-main">${v22Calendar()}${SP?v22CalFooter(SP,MN):''}</div><div class="v22-cal-side">${SP?v22ReminderCard(SP,MN):`<div class="v22-best"><p>No SIP date has been published for this month yet.</p></div>`}</div></div></article>
+  <div class="v22-cal-wrap"><div class="v22-cal-main${SP&&SP.locked?' ma-cal-locked':''}">${v22Calendar()}${SP&&!SP.locked?v22CalFooter(SP,MN):''}</div><div class="v22-cal-side">${SP?v22ReminderCard(SP,MN):`<div class="v22-best"><p>No SIP date has been published for this month yet.</p></div>`}</div></div></article>
  </section>
  <section class="v22-dash-bottom">
   <article class="v22-card v22-mini-whatif"><h2 class="v22-h2">What if you had invested on this date?</h2><p class="v22-sub">See how much your investment would be worth if you had invested at a different time.</p>
@@ -79,14 +90,14 @@ function userOverview(){
    <div class="v22-est" id="v22-est">${v22EstHTML(lp)}</div>
    <button type="button" class="v22-grad-btn wide" data-action="v22-quick-calc">Run Calculation ${ic('arrowR')}</button></article>
   <article class="v22-card v22-mini-sip"><h2 class="v22-h2">MOD Alpha vs Traditional SIP</h2><p class="v22-sub">See how AI-selected dates can potentially improve your SIP returns.</p><div class="v22-legend left"><span><i style="--c:#2ed3f5"></i>MOD Alpha (AI Dates)</span><span><i style="--c:#b65cf6"></i>Traditional SIP (Fixed Date)</span></div>
-   ${v22Chart({w:420,h:240,pad:{l:40,r:96,t:18,b:34},yMin:0,yMax:12e5,yTicks:[0,3e5,6e5,9e5,12e5],yFmt:v=>v?'₹'+v/1e5+'L':'0',xLabels:['2021','2022','2023','2024','2025','2026'],axisY:true,label:'Illustrative SIP comparison',series:[{values:sp.modPath,color:'#2ed3f5',width:4.5,dots:true,r:8,glow:'#22d3ee',dotColor:'#54e1ff'},{values:sp.tradPath,color:'#b65cf6',width:4.5,dots:true,r:8,glow:'#a855f7',dotColor:'#c26bff'}],overlays:[{at:[0,-1],cls:'v22-badge cyan lg',html:inr(sp.mod)},{at:[1,-1],cls:'v22-badge purple lg',html:inr(sp.trad)}]})}
+   ${v22Chart({w:420,h:240,pad:{l:40,r:96,t:18,b:34},yMin:0,yMax:12e5,yTicks:[0,3e5,6e5,9e5,12e5],yFmt:v=>v?'₹'+v/1e5+'L':'0',xLabels:['2021','2022','2023','2024','2025','2026'],axisY:true,label:'SIP comparison',series:[{values:sp.modPath,color:'#2ed3f5',width:4.5,dots:true,r:8,glow:'#22d3ee',dotColor:'#54e1ff'},{values:sp.tradPath,color:'#b65cf6',width:4.5,dots:true,r:8,glow:'#a855f7',dotColor:'#c26bff'}],overlays:[{at:[0,-1],cls:'v22-badge cyan lg',html:inr(sp.mod)},{at:[1,-1],cls:'v22-badge purple lg',html:inr(sp.trad)}]})}
    <div class="v22-stat3"><div><b class="pos">+${sp.pct.toFixed(1)}%</b><small class="pos">Higher returns<br>with MOD Alpha</small></div><div><b>${inr(sp.extra)}</b><small class="pos">Extra value<br>created</small></div><div><b>${sp.yrs.toFixed(1)} years</b><small>Same time period</small></div></div>
    <button type="button" class="v22-grad-btn wide" data-go="sip">Try Different Dates ${ic('arrowR')}</button></article>
   <article class="v22-card v22-insights"><div class="v22-card-head"><h2>Latest AI Insights</h2><a href="#/user/chat">View All</a></div><div class="v22-ins-list">
    ${[['trend','blue','Small Cap Funds Showing Strong Momentum','3 hours ago','Small cap funds have outperformed mid and large cap funds by 6.2% over the last 12 months. AI suggests continuing SIPs in top quartile funds.'],['calendar','violet','Best SIP Date for October','5 hours ago','Based on historical analysis, 12th October has the highest probability of better returns (2.8% higher vs fixed date).'],['bulb','gold','New Fund Opportunity','1 day ago','A new mid cap fund has shown strong risk-adjusted returns. AI recommends considering it for long-term SIP.'],['bell','amber','Market Volatility Insights','2 days ago','Current market volatility may present a good opportunity for phased investments in quality large cap funds.']].map(x=>`<div class="v22-ins"><span class="v22-tile ${x[1]}">${ic(x[0])}</span><div><div class="v22-ins-top"><b>${x[2]}</b><small>${x[3]}</small></div><p>${x[4]}</p></div></div>`).join('')}</div>
   </article>
  </section>
- <p class="v22-note">Sample insights and figures are illustrative test data, not investment advice or live market data.</p></div>`;
+ <p class="v22-note">Figures are based on historical data and are not investment advice.</p></div>`;
 }
 
 /** Quick estimate result. */
@@ -110,9 +121,30 @@ function v22DashChart(period){
   +`<div class="v22-dash-legend">${ser.map((s,i)=>`<a class="v22-dl-item" href="#/user/fund/${encodeURIComponent(s.f.id)}">${v22FundLogo(s.f)}<div class="v22-dl-txt"><b>${esc(s.f.short)}</b><em><i style="--c:${cols[i]}"></i>${s.vals.at(-1)>=0?'+':''}${s.vals.at(-1).toFixed(1)}% <small>· ${period}</small></em></div></a>`).join('')}</div>`;
 }
 
-/** Recommended SIP date for a month. */
-function v22SipFor(y,m){const r=V22D.model?.sip.find(x=>x.month===`${y}-${String(m+1).padStart(2,'0')}`);if(!V22D.model)return y===2026&&m===9?{day:12,uplift:2.8,alts:[[5,1.6],[20,1.4],[28,1.2]]}:null;if(!r)return null;return{day:r.recommended_day,uplift:r.uplift_pct??0,alts:[[r.alt_day_1,r.alt_uplift_1],[r.alt_day_2,r.alt_uplift_2],[r.alt_day_3,r.alt_uplift_3]].filter(a=>a[0])}}
+/** Recommended SIP date for a month. `locked: true` when the person is not a subscriber: the live API leaves
+    the day out for the current and future months; demo mode hides it unless a demo plan is active. */
+function v22SipFor(y,m){
+ const key=`${y}-${String(m+1).padStart(2,'0')}`;
+ const r=V22D.model?V22D.model.sip.find(x=>x.month===key):null;
+ let out=null;
+ if(!V22D.model)out=y===2026&&m===9?{day:12,uplift:2.8,alts:[[5,1.6],[20,1.4],[28,1.2]]}:null;
+ else if(r)out={day:r.recommended_day,uplift:r.uplift_pct??0,alts:[[r.alt_day_1,r.alt_uplift_1],[r.alt_day_2,r.alt_uplift_2],[r.alt_day_3,r.alt_uplift_3]].filter(a=>a[0])};
+ if(!out)return null;
+ const live=!!(window.MA_API&&MA_API.enabled);
+ if(live){if(r&&r.locked)return {day:null,uplift:out.uplift,alts:[],locked:true};return out}
+ // demo: lock the current (dataset) month and later ones unless a demo plan is active
+ const asOf=V22D.model?String(V22D.model.asOf).slice(0,7):'2026-10';
+ const paid=window.MA_REMINDER&&MA_REMINDER.subscribed();
+ if(!paid&&key>=asOf)return {day:null,uplift:out.uplift,alts:[],locked:true};
+ return out;
+}
+
+/** "This month" for the SIP date: the real current month (India time) in the full app, the dataset's month in demo. */
+function v22ThisMonth(){
+ if(window.MA_API&&MA_API.enabled){const d=new Date(Date.now()+330*60000);return {y:d.getUTCFullYear(),m:d.getUTCMonth()}}
+ const a=V22D.model?v22D(V22D.model.asOf):new Date(Date.UTC(2026,9,1));return {y:a.getUTCFullYear(),m:a.getUTCMonth()};
+}
 
 /** KPI tiles from the dataset (falls back to the sample). */
-function v22UserKpis(){const M=V22D.model;if(!M)return v22UserKpisSample();const t=M.funds.filter(f=>f.returns[5]!=null).sort((a,b)=>b.returns[5]-a.returns[5])[0];const a=v22D(M.asOf),sp=v22SipFor(a.getUTCFullYear(),a.getUTCMonth());const cat=t?.category,peers=M.funds.filter(f=>f.category===cat&&f.returns[5]!=null),avg=peers.reduce((s,f)=>s+f.returns[5],0)/(peers.length||1);
- return [['trophy','gold','Top Performing Fund','(5Y Returns)',t?t.returns[5].toFixed(1)+'%':'—',t?t.name:'—',t?t.type:''],['calendar','violet','Best AI Investment Date','This Month',sp?sp.day+(sp.day%10===1&&sp.day!==11?'st':sp.day%10===2&&sp.day!==12?'nd':sp.day%10===3&&sp.day!==13?'rd':'th'):'—',sp?`+${sp.uplift}% vs fixed SIP`:'Not published',''],['bars','blue','Average Category Return',`(${cat||'—'})`,avg.toFixed(1)+'%','5Y CAGR',''],['db','teal','Funds Tracked','In Our Database',M.funds.length.toLocaleString('en-IN'),'Mutual Funds','']]}
+function v22UserKpis(){const M=V22D.model;if(!M)return v22UserKpisSample();const t=M.funds.filter(f=>f.returns[5]!=null).sort((a,b)=>b.returns[5]-a.returns[5])[0];const tm=v22ThisMonth(),sp=v22SipFor(tm.y,tm.m);const cat=t?.category,peers=M.funds.filter(f=>f.category===cat&&f.returns[5]!=null),avg=peers.reduce((s,f)=>s+f.returns[5],0)/(peers.length||1);
+ return [['trophy','gold','Top Performing Fund','(5Y Returns)',t?t.returns[5].toFixed(1)+'%':'—',t?t.name:'—',t?t.type:''],['calendar','violet','Best AI Investment Date','This Month',sp&&sp.locked?'<i class="ma-locked-val">18th</i>':sp?sp.day+(sp.day%10===1&&sp.day!==11?'st':sp.day%10===2&&sp.day!==12?'nd':sp.day%10===3&&sp.day!==13?'rd':'th'):'—',sp&&sp.locked?'Subscribe to unlock':sp?`+${sp.uplift}% vs fixed SIP`:'Not published',''],['bars','blue','Average Category Return',`(${cat||'—'})`,avg.toFixed(1)+'%','5Y CAGR',''],['db','teal','Funds Tracked','In Our Database',M.funds.length.toLocaleString('en-IN'),'Mutual Funds','']]}

@@ -14,11 +14,21 @@
     D.categories = [...new Set(D.funds.map((f) => f.category))];
     S.plans = plans.plans;
     D.plans = plans.plans.map((p) => ({ name: p.name, price: p.prices.Monthly, prices: p.prices, period: 'Monthly', tagline: p.tagline, features: p.features, active: p.active, id: p.id }));
-    S.sip = sip.items;
+    S.sip = sip.items; S.sipLocked = !!sip.locked;
     const asOf = D.funds.map((f) => f.navDate).filter(Boolean).sort().at(-1) || new Date().toISOString().slice(0, 10);
     V22D.model = { asOf, funds: D.funds, navBy: S.navCache, navRows: 0, users: [], uView: [], subs: [], pays: [], sip: S.sip, holidays: [], categories: D.categories };
     V22D.ready = true; V22D.loaded = true; V22D.source = 'api'; V22D.meta = { fileName: 'Live database', by: API.env };
-    const a = v22D(asOf); v22CalMonth = { y: a.getUTCFullYear(), m: a.getUTCMonth() };
+    // the SIP calendar opens on the current month (India time) when a date is published for it, else the latest data month
+    const t = v22ThisMonth(); v22CalMonth = S.sip.some((x) => x.month === `${t.y}-${String(t.m + 1).padStart(2, '0')}`) ? t : (() => { const a = v22D(asOf); return { y: a.getUTCFullYear(), m: a.getUTCMonth() }; })();
+  }
+  // Reload the SIP dates for the signed-in person. The API only includes the recommended day of the current and
+  // future months for subscribers (and admins), so this runs again after sign-in and after a payment.
+  async function refreshSip() {
+    try {
+      const sip = await API.get('/sip-dates', null, { onUnauthorized: false });
+      S.sip = sip.items; S.sipLocked = !!sip.locked;
+      if (V22D.model) V22D.model.sip = S.sip;
+    } catch (e) {}
   }
   // Stop the bundled-workbook loader from overwriting API data.
   window.v22LoadDataset = async () => {};
@@ -33,5 +43,5 @@
   }
 
   // used by other live files
-  Object.assign(MA_LIVE, { ensureNav, loadPublicData });
+  Object.assign(MA_LIVE, { ensureNav, loadPublicData, refreshSip });
 })();

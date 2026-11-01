@@ -15,7 +15,8 @@ import { badRequest, conflict, forbidden, HttpError, notFound, unauthorized } fr
 import { requireAdmin, requireUser } from '../auth/session.js';
 import { audit } from '../../shared/audit.js';
 import { tx, type Db, type Q } from '../../db.js';
-import { addMonths, today } from '../../shared/dates.js';
+import { addDays, addMonths, today } from '../../shared/dates.js';
+import { invoicePdf, invoiceView, issueInvoice } from './invoice.js';
 import type { Deps } from '../../app.js';
 
 const CYCLE_MONTHS = { Monthly: 1, Quarterly: 3, Yearly: 12 } as const;
@@ -52,9 +53,8 @@ export async function capturePayment(deps: Deps, req: FastifyRequest | null, o: 
     // an upgrade/downgrade replaces the previous paid plan at once (no proration in v1 — see BILL-05)
     await c.query(`UPDATE subscriptions SET status='Cancelled', cancelled_at=now(), updated_at=now() WHERE user_id=$1 AND id<>$2 AND status IN ('Active','Past due')`, [s.user_id, s.id]);
     await c.query(`UPDATE subscriptions SET status='Active', start_date=CASE WHEN status='Created' THEN $2::date ELSE start_date END, last_payment_date=$2, renewal_date=$3, payment_ref=$4, updated_at=now() WHERE id=$1`, [s.id, t, renew, o.paymentId]);
-    const n = (await c.query(`SELECT count(*)::int n FROM invoices`)).rows[0].n + 1;
-    const gst = +(p.amount_inr - p.amount_inr / 1.18).toFixed(2);
-    await c.query('INSERT INTO invoices (number, user_id, payment_id, amount_inr, gst_inr) VALUES ($1,$2,$3,$4,$5)', [`MA/${t.slice(0, 4)}/${String(n).padStart(6, '0')}`, s.user_id, p.id, p.amount_inr, gst]);
+    // GST tax invoice (numbered per financial year, with a snapshot of seller and buyer details)
+    await issueInvoice(c, deps.cfg, { userId: s.user_id, paymentId: p.id, amount: +p.amount_inr, date: t, plan: s.plan_id, cycle: s.billing_cycle, periodEnd: addDays(renew, -1) });
     await c.query(`INSERT INTO notifications (user_id, kind, title, body, link) VALUES ($1,'billing',$2,$3,'#/user/subscription')`, [s.user_id, `${s.plan_id} plan activated`, `Payment of ₹${p.amount_inr} received. Next renewal on ${renew}.`]);
     await audit(c, req, { action: 'SUBSCRIPTION_ACTIVATED', category: 'Subscription', resource: s.id, meta: { plan: s.plan_id, amount: p.amount_inr }, actorLabel: 'payments' });
     return { already: false, subscriptionId: s.id, userId: s.user_id, plan: s.plan_id, amount: p.amount_inr, renew };
@@ -163,13 +163,19 @@ export default async function billing(app: FastifyInstance) {
     const u = requireUser(req);
     return { items: (await db.query(`SELECT i.id, i.number, i.amount_inr, i.gst_inr, i.issued_at, s.plan_id, s.billing_cycle FROM invoices i LEFT JOIN payments p ON p.id=i.payment_id LEFT JOIN subscriptions s ON s.id=p.subscription_id WHERE i.user_id=$1 ORDER BY i.issued_at DESC`, [u.id])).rows };
   });
-  // One invoice (own invoices only) with GST breakdown, for the printable view.
-  app.get('/billing/invoices/:id', async (req) => {
+  // One invoice (own invoices only; admins any) with the GST breakdown.
+  async function loadInvoice(req: FastifyRequest) {
     const u = requireUser(req);
-    const r = await db.query(`SELECT i.*, u.full_name, u.email, s.plan_id, s.billing_cycle, p.provider_payment_id FROM invoices i JOIN users u ON u.id=i.user_id LEFT JOIN payments p ON p.id=i.payment_id LEFT JOIN subscriptions s ON s.id=p.subscription_id WHERE i.id=$1 AND (i.user_id=$2 OR $3)`, [(req.params as any).id, u.id, u.role !== 'user']);
+    const r = await db.query(`SELECT i.*, u.full_name, u.email, u.mobile, s.plan_id, s.billing_cycle, p.provider_payment_id, p.paid_on FROM invoices i JOIN users u ON u.id=i.user_id LEFT JOIN payments p ON p.id=i.payment_id LEFT JOIN subscriptions s ON s.id=p.subscription_id WHERE i.id=$1 AND (i.user_id=$2 OR $3)`, [(req.params as any).id, u.id, u.role !== 'user']);
     if (!r.rows[0]) throw notFound();
-    const i = r.rows[0];
-    return { invoice: { ...i, seller: 'Mod Alpha Ventures LLP', taxable: +(i.amount_inr - i.gst_inr).toFixed(2), note: 'Amounts are GST-inclusive (18%). GST e-invoicing integration is pending (BILL-07).' } };
+    return invoiceView(cfg, r.rows[0]);
+  }
+  app.get('/billing/invoices/:id', async (req) => ({ invoice: await loadInvoice(req) }));
+  // The GST tax invoice as a PDF file (A4).
+  app.get('/billing/invoices/:id/pdf', async (req, reply) => {
+    const v = await loadInvoice(req);
+    reply.header('content-type', 'application/pdf').header('content-disposition', `attachment; filename="Mod-Alpha-invoice-${v.number.replace(/\//g, '-')}.pdf"`);
+    return reply.send(invoicePdf(v));
   });
 
   // ---- admin

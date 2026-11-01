@@ -12,6 +12,7 @@
   (async () => {
     app.innerHTML = '<div style="display:grid;place-items:center;height:var(--vh100,100vh)"><span class="v22-spin"></span></div>';
     try { await Promise.all([loadPublicData(), loadSession()]); } catch (e) { console.error(e); notify('Could not reach the Mod Alpha API. Some data may be unavailable.'); }
+    if (S.user) await MA_LIVE.refreshSip();   // session cookie known now → subscriber view of the SIP dates
     S.ready = true; route();
   })();
 })();

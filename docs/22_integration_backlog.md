@@ -13,9 +13,9 @@ The list comes from auditing every screen, button and data flow. Since v23 the b
 | P1 — needed for launch quality | 27 |
 | P2 — post-launch | 10 |
 | Pending (not built yet) | 17 |
-| Mock — API built, provider mocked (integrated later) | 18 |
+| Mock — API built, provider mocked (integrated later) | 17 |
 | Manual (interim manual process) | 3 |
-| Ready | 39 |
+| Ready | 40 |
 
 **Status key:** *Ready* — implemented in the API and website · *Mock* — API and UI implemented, the external provider is mocked and will be integrated later (see docs/23) · *Manual* — an interim manual process is in place · *Pending* — not built yet.
 **Priority key:** *P0* launch-blocking · *P1* needed for a quality launch · *P2* post-launch.
@@ -54,7 +54,7 @@ The list comes from auditing every screen, button and data flow. Since v23 the b
 | BILL-04 | Pricing configuration (plans, prices, entitlements) | P0 | Ready | Subscriptions → Manage plans / Edit plan; public Pricing section | `GET /plans · PUT /admin/plans/:id (versioned)` | Own DB + gateway plan IDs | Built: versioned plan editor, audited. |
 | BILL-05 | Plan upgrade, downgrade & proration | P1 | Ready | Top bar → Upgrade Plan; Subscription page | `POST /billing/subscriptions/:id/change` | Gateway subscription APIs | Built: switching plans replaces the current plan immediately (no proration yet). |
 | BILL-06 | Cancellation & refunds | P1 | Mock (integrated later) | Subscription page; Subscriptions KPIs (refunds) | `POST /billing/subscriptions/:id/cancel · POST /admin/refunds` | Gateway refund APIs | Built: cancel at period end + admin refunds (mock provider). |
-| BILL-07 | Invoices & GST receipts | P1 | Mock (integrated later) | Subscription → Billing details / history | `GET /billing/invoices · GET /billing/invoices/:id.pdf` | Gateway invoices, Zoho Books, ClearTax GST | In-app GST-inclusive invoices built; GST e-invoicing pending. |
+| BILL-07 | GST tax invoices (PDF) | P1 | Ready | Subscription → Billing history (View / PDF); Settings → Profile → Billing details | `GET /billing/invoices · GET /billing/invoices/:id/pdf · PATCH /me (billing state, address, GSTIN)` | Zoho Books / ClearTax only if e-invoicing becomes mandatory (turnover above ₹5 crore) | Numbered per financial year (MA/26-27/00001), CGST+SGST or IGST by place of supply, SAC, amount in words. Needs the company GSTIN and registered address (INVOICE_* settings) before go-live. |
 | BILL-08 | Payment reconciliation & revenue reporting | P1 | Ready | Admin dashboard revenue, Subscriptions MRR | `GET /admin/billing/summary?from&to` | Gateway settlement reports | Built from payments table. |
 | BILL-10 | SEBI centralised fee collection (CeFCoM) | P0 | Pending | Checkout | `Fee collection via the SEBI-recognised mechanism` | BSE CeFCoM (if required) | Waiting for the compliance officer: whether RA/IA fees must go through CeFCoM instead of / as well as Razorpay. |
 | BILL-09 | Free-plan usage limits (e.g. 1 AI query/day) | P1 | Ready | Plan features, AI assistant | `Entitlement check middleware · GET /me/entitlements` | — | Built: AI queries/day per plan. |
@@ -104,7 +104,7 @@ The list comes from auditing every screen, button and data flow. Since v23 the b
 | NOTI-02 | SMS delivery (DLT) | P1 | Mock (integrated later) | SMS reminders, OTP; Notifications → SMS preview | `Provider API + delivery receipts` | MSG91, Gupshup, Kaleyra | Built; mock outbox until MSG91 (DLT). |
 | NOTI-03 | Push / in-app notifications | P1 | Mock (integrated later) | Top bar bell dropdown, “Mark all as read”, Push preview | `GET /me/notifications · POST /me/notifications/read · web push subscribe` | Firebase Cloud Messaging, OneSignal | In-app inbox built; device push mocked until FCM. |
 | NOTI-04 | WhatsApp messages | P2 | Mock (integrated later) | Footer WhatsApp link, future reminders | `WhatsApp Business Cloud API templates` | Meta Cloud API, Gupshup, Twilio | Adapter built; mocked. |
-| NOTI-05 | SIP reminder scheduler | P0 | Ready | “Set Reminder”, Upcoming Notifications, reminder timing setting | `Scheduled job reading published SIP date + user preferences` | Cloud Scheduler / EventBridge + queue | Built: jobs worker dispatches scheduled campaigns. |
+| NOTI-05 | SIP reminder scheduler | P0 | Ready | “Set Reminder” (Pro / Premium), Upcoming Notifications | `Scheduled job reading published SIP date + user preferences` | Cloud Scheduler / EventBridge + queue | Built: jobs worker dispatches scheduled campaigns. |
 | NOTI-06 | Templates & campaigns | P1 | Ready | Notifications → Edit template, New campaign, Preview Notification | `CRUD /admin/notification-templates · POST /admin/campaigns` | Own + provider templates | Built. |
 | NOTI-07 | Consent & unsubscribe management | P0 | Ready | Settings → Notifications toggles, Privacy consents | `GET/PUT /me/preferences · one-click unsubscribe links` | Own DB (DPDP Act consent records) | Built: preferences + consent ledger; campaigns skip opted-out channels. |
 
@@ -113,8 +113,8 @@ The list comes from auditing every screen, button and data flow. Since v23 the b
 | ID | Integration | Priority | Status | Where in the UI | API / contract | Provider options | Notes |
 |---|---|---|---|---|---|---|---|
 | ACC-01 | Profile & preferences save | P0 | Ready | Settings → Save Changes / Save Preferences | `GET/PATCH /me · GET/PUT /me/preferences` | Own API | Built. |
-| ACC-02 | Data export request (DPDP) | P1 | Ready | Settings → Data & Privacy → Request data export | `POST /me/data-export → emailed download link` | Own job + object storage | Built: request + job fulfilment. |
-| ACC-03 | Account deletion request | P1 | Ready | Settings → Data & Privacy → Request account deletion | `POST /me/deletion-request (re-auth required)` | Own workflow + retention rules | Built: 30-day grace, then anonymised by job. |
+| ACC-02 | Data export request (DPDP) | P1 | Ready | Settings → Profile → Privacy & your data → Request data export | `POST /me/data-export → emailed download link` | Own job + object storage | Built: request + job fulfilment. |
+| ACC-03 | Account deletion request | P1 | Ready | Settings → Profile → Privacy & your data → Request account deletion | `POST /me/deletion-request (re-auth required)` | Own workflow + retention rules | Built: 30-day grace, then anonymised by job. |
 | ACC-04 | Support tickets | P1 | Mock (integrated later) | Help & FAQ → Submit request | `POST /support/tickets` | Freshdesk, Zendesk, Zoho Desk, HubSpot | Built; Freshdesk adapter ready, mocked. |
 | ACC-05 | Help-centre content (FAQs) | P2 | Ready | Help & FAQ, public FAQ section | `GET /content/faqs` | Headless CMS (Sanity, Strapi, Contentful) | FAQs served from DB; CMS later. |
 
@@ -166,7 +166,6 @@ The list comes from auditing every screen, button and data flow. Since v23 the b
 - **Monthly / Quarterly / Yearly billing** → BILL-02 Recurring subscriptions / mandates
 - **Subscriptions page statuses (Active, Past due, Cancelled)** → BILL-03 Payment & subscription webhooks
 - **Subscription page; Subscriptions KPIs (refunds)** → BILL-06 Cancellation & refunds
-- **Subscription → Billing details / history** → BILL-07 Invoices & GST receipts
 - **Checkout** → BILL-10 SEBI centralised fee collection (CeFCoM)
 - **Fund detail, Explore, dashboards; Data Management upload** → DATA-01 Daily NAV feed
 - **Fund detail → Benchmark comparison** → DATA-04 Benchmark / index (TRI) data

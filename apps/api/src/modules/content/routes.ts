@@ -43,8 +43,10 @@ export default async function content(app: FastifyInstance) {
     if (limit >= 0 && used >= limit) throw tooMany(`Your ${ent.plan} plan includes ${limit} AI ${limit === 1 ? 'query' : 'queries'} per day. Upgrade for more.`);
     // ground the model in current data
     const top = (await db.query(`SELECT f.scheme_name, f.category, m.r1, m.r3, m.r5, m.vol3, m.sharpe3 FROM fund_metrics m JOIN funds f USING (fund_id) WHERE f.is_active ORDER BY m.r5 DESC NULLS LAST LIMIT 15`)).rows;
-    const sip = (await db.query(`SELECT month, recommended_day, uplift_pct FROM sip_dates WHERE status='Published' ORDER BY month DESC LIMIT 1`)).rows[0];
-    const context = `Fund data (returns are CAGR %):\n${top.map((f) => `- ${f.scheme_name} [${f.category}] 1Y ${f.r1} 3Y ${f.r3} 5Y ${f.r5} vol ${f.vol3} sharpe ${f.sharpe3}`).join('\n')}\nCurrent SIP date: ${sip ? `${sip.month} day ${sip.recommended_day} (+${sip.uplift_pct}% historical uplift)` : 'not published'}`;
+    // the recommended day is a paid feature: the assistant only knows it for subscribers
+    const paid = ent.plan !== 'Free' && ent.subscription?.status === 'Active';
+    const sip = paid ? (await db.query(`SELECT month, recommended_day, uplift_pct FROM sip_dates WHERE status='Published' ORDER BY month DESC LIMIT 1`)).rows[0] : null;
+    const context = `Fund data (returns are CAGR %):\n${top.map((f) => `- ${f.scheme_name} [${f.category}] 1Y ${f.r1} 3Y ${f.r3} 5Y ${f.r5} vol ${f.vol3} sharpe ${f.sharpe3}`).join('\n')}\nCurrent SIP date: ${sip ? `${sip.month} day ${sip.recommended_day} (+${sip.uplift_pct}% historical uplift)` : paid ? 'not published' : 'shown to Pro and Premium subscribers only — do not guess it; say it is on the dashboard after subscribing'}`;
     const out = await providers.ai.complete({ system: `${SYSTEM}\n\n${context}`, messages: b.messages });
     await db.query(`INSERT INTO assistant_usage (user_id, day, queries, tokens_in, tokens_out) VALUES ($1, CURRENT_DATE, 1, $2, $3) ON CONFLICT (user_id, day) DO UPDATE SET queries=assistant_usage.queries+1, tokens_in=assistant_usage.tokens_in+$2, tokens_out=assistant_usage.tokens_out+$3`, [u.id, out.tokensIn, out.tokensOut]);
     return { reply: out.text, provider: providers.ai.name, usage: { today: used + 1, limit }, disclaimer: 'Not investment advice. Past performance does not guarantee future returns.' };

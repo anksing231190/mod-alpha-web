@@ -11,7 +11,7 @@ function v22SchemaTable(s){const sch=V22_SCHEMA[s];return `<div class="table-scr
 function adminData(){
  const M=V22D.model,meta=V22D.meta||{},hist=V22D.history||[];
  const counts=M?{Funds:M.funds.length,NAV_History:M.navRows,Users:M.users.length,Subscriptions:M.subs.length,SIP_Dates:M.sip.length,Market_Holidays:M.holidays.length}:{};
- return `<div class="v22 v22-adm">${v22Head('Data Management','Upload, validate and publish the test-data workbook that drives every chart, KPI and table.',`<a class="v22-outline-btn" href="${V22_TEMPLATE_URL}" download>${ic('download')} Blank template</a><a class="v22-outline-btn" href="${V22_BUNDLED_URL}" download>${ic('download')} Sample test data</a>${M?`<button type="button" class="v22-outline-btn" data-v22-export-ds>${ic('file')} Export active dataset</button>`:''}`,'ADMIN · DATA')}${adminNotice()}
+ return `<div class="v22 v22-adm">${v22Head('Data Management','Upload, validate and publish the test-data workbook that drives every chart, KPI and table.',`<a class="v22-outline-btn" href="${V22_TEMPLATE_URL}" download>${ic('download')} Blank template</a><a class="v22-outline-btn" href="${V22_BUNDLED_URL}" download>${ic('download')} Sample workbook</a>${M?`<button type="button" class="v22-outline-btn" data-v22-export-ds>${ic('file')} Export active dataset</button>`:''}`,'ADMIN · DATA')}${adminNotice()}
  ${M?v22Kpis([['db','Active dataset',V22D.source==='uploaded'?'Uploaded':'Bundled',esc(meta.fileName||''),''],['chart','NAV records',M.navRows.toLocaleString('en-IN'),`${M.funds.length} funds · till ${v22Fmt(M.funds.map(f=>f.navDate).sort().at(-1))}`,'pos'],['users','Users',M.users.length.toLocaleString('en-IN'),`${M.subs.length.toLocaleString('en-IN')} subscriptions`,''],['calendar','Dataset as-of',v22Fmt(M.asOf),`${M.sip.length} SIP months`,'']]):`<div class="v22-notice">${cic('warn',22)}<div><b>No dataset loaded.</b><span>${esc(V22D.error||'Loading…')}</span></div></div>`}
  <section class="v22-card"><div class="v22-card-head"><div><h2>Upload test-data workbook</h2><p>Sheets in the file replace the matching sheets of the active dataset; sheets you leave out are kept. The first upload must contain all required sheets.</p></div></div>
  <div class="v22-pipeline" id="v22-pipe">${[['upload','Upload'],['doc','Parse'],['shield','Validate'],['help','Review'],['check','Publish']].map((x,i)=>`<div data-step="${i}">${cic(x[0],28)}<b>${x[1]}</b></div>`).join('<i></i>')}</div>
@@ -55,7 +55,7 @@ function v22ReportHTML(rep,file){
 /** Publish the validated workbook. */
 async function v22Publish(){
  const rep=v22LastReport;if(!rep||rep.fatal||rep.errors)return;
- const sheets=v22Strip(rep.merged),meta={fileName:v22LastFile,loadedAt:new Date().toISOString(),by:'Admin (demo)',replaced:rep.replaced,counts:Object.fromEntries(Object.entries(sheets).map(([k,v])=>[k,v.length]))};
+ const sheets=v22Strip(rep.merged),meta={fileName:v22LastFile,loadedAt:new Date().toISOString(),by:'Admin',replaced:rep.replaced,counts:Object.fromEntries(Object.entries(sheets).map(([k,v])=>[k,v.length]))};
  v22Apply(sheets,meta);V22D.source='uploaded';
  const hist=(await v22Get('history'))||[];hist.push({...meta,status:'Published'});V22D.history=hist.slice(-10);
  await v22Put('dataset',{sheets,meta});await v22Put('history',V22D.history);

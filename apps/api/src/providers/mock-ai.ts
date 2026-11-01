@@ -1,9 +1,11 @@
 import type { Db } from '../db.js';
 
 /** Rule-based assistant used until the LLM provider is enabled. Answers are grounded in the database. */
-export async function mockAnswer(db: Db, question: string): Promise<string> {
+// `canSeeDate` is false for people without a paid plan: the recommended day is a subscriber feature.
+export async function mockAnswer(db: Db, question: string, canSeeDate = true): Promise<string> {
   const s = question.toLowerCase();
   if (/date|best|when/.test(s)) {
+    if (!canSeeDate) return 'This month’s recommended SIP date is available with the Pro and Premium plans. After subscribing you will see it on your dashboard and get a reminder before the date.';
     const r = await db.query(`SELECT * FROM sip_dates WHERE status='Published' ORDER BY month DESC LIMIT 1`);
     const d = r.rows[0];
     if (!d) return 'No SIP date has been published yet for this month.';

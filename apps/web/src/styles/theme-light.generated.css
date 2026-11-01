@@ -7393,3 +7393,41 @@ html[data-theme="light"] .ma-dp-ampm button.on {
     background: linear-gradient(135deg,#985f2a,#824065);
     color: #fff
 }
+html[data-theme="light"] .ma-blur {
+    filter: blur(9px)
+}
+html[data-theme="light"] .ma-locked-val {
+    filter: blur(7px)
+}
+html[data-theme="light"] .ma-lock-over {
+    border-radius: 12px;
+    border: 1px dashed rgba(214,156,102,0.35);
+    background: rgba(203,188,167,0.06)
+}
+html[data-theme="light"] .ma-lock-over small {
+    color: #6b5542
+}
+html[data-theme="light"][data-theme="light"] .ma-lock-over {
+    border-color: rgba(126,92,52,0.358);
+    background: rgba(250,242,226,0.054)
+}
+html[data-theme="light"][data-theme="light"] .ma-lock-over small {
+    color: #574433
+}
+html[data-theme="light"] .v22-set-h .v22-set-sub {
+    color: #6b5542
+}
+html[data-theme="light"] .v22-fl .v22-opt {
+    color: #6b5542
+}
+html[data-theme="light"] .ma-data-acts .v22-act {
+    border: 1px solid var(--v-border,rgba(126,92,52,0.145));
+    border-radius: 14px
+}
+html[data-theme="light"][data-theme="light"] .v22-set-h .v22-set-sub,
+html[data-theme="light"][data-theme="light"] .v22-fl .v22-opt {
+    color: #574433
+}
+html[data-theme="light"][data-theme="light"] .ma-data-acts .v22-act {
+    border-color: rgba(126,92,52,0.23)
+}

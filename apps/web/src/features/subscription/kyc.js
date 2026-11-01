@@ -63,7 +63,6 @@
         <label class="v22-fl">${T('Date of birth')}<input name="dob" type="date" max="${max}" value="${esc(prefill.dob || '')}" required></label>
         <label class="ma-kyc-consent"><input type="checkbox" name="consent"${prefill.consent ? ' checked' : ''}> <span>${T('I agree that Mod Alpha and its KYC partner may verify my PAN with the Income Tax Department and fetch / register my KYC record with a KYC Registration Agency (KRA). Mod Alpha stores only the result, never my full PAN or Aadhaar.')}</span></label>
         <div class="v22-err" id="ma-kyc-err" role="alert"></div>
-        ${!live ? `<p class="ma-kyc-test">${T('Test PANs')}: <b>ABCDE1234F</b> ${T('(instant)')} · <b>ABCDE5678G</b> ${T('(DigiLocker)')} · <b>ABCDE0000X</b> ${T('(fails)')}</p>` : ''}
         <div class="ma-kyc-actions"><button type="button" class="v22-ghost-btn" data-modal-close>${T('Later')}</button><button type="submit" class="v22-grad-btn">${T('Verify PAN')}</button></div>
       </form>`);
     const f = document.getElementById('ma-kyc-f'), err = document.getElementById('ma-kyc-err');
@@ -134,9 +133,7 @@
     const el = document.getElementById('ma-kyc-strip'); if (!el) return;
     el.innerHTML = stripHtml(await status());
   }
-  // show the strip at the top of the subscription page
-  const baseSubscriptionPage = subscriptionPage;
-  subscriptionPage = function () { setTimeout(refreshStrip, 0); return `<div id="ma-kyc-strip" class="v22"></div>` + baseSubscriptionPage(); };
+  // (No strip on the subscription page: KYC is shown in Settings → Profile and opens on the first paid plan.)
   window.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('[data-kyc-open]')) { e.preventDefault(); open({}); } });
 
   /* ---------- "Identity (KYC)" card on Settings → Profile ---------- */
@@ -170,7 +167,7 @@
   settingsPage = function () {
     let h = baseSettingsPage();
     if (typeof settingsTab !== 'undefined' && settingsTab === 'profile') {
-      h = h.replace(/(<section class="v22-card v22-set-card"><h3 class="v22-set-h">[\s\S]*?Personal details[\s\S]*?<\/section>)/, `$1<section class="v22-card v22-set-card" id="ma-kyc-card"></section>`);
+      h = h.replace(/(<section class="v22-card v22-set-card" id="ma-personal">[\s\S]*?<\/section>)/, `$1<section class="v22-card v22-set-card" id="ma-kyc-card"></section>`);
       setTimeout(refreshProfile, 0);
     }
     return h;

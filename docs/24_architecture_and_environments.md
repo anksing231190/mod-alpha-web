@@ -99,10 +99,10 @@ Base path: `/api/v1`. Auth uses httpOnly cookies (`ma_at` for the access token, 
 |---|---|
 | Auth | `POST /auth/signup` · `/auth/login` · `/auth/login/verify` · `/auth/login/resend` · `/auth/logout` · `/auth/logout-all` · `/auth/refresh` · `/auth/otp/send` · `/auth/otp/verify` · `/auth/password/forgot` · `/auth/password/reset` · `/auth/verify-email` · `/auth/oauth/google` · `/auth/oauth/apple` (501) · `GET /auth/me` |
 | Me | `PATCH /me` · `POST /me/password` · `POST /me/verify-email` · `GET/PUT /me/preferences` (incl. `sipReminder`) · `PUT /me/consents` · `GET /me/notifications` · `POST /me/notifications/read` · `GET/POST/DELETE /me/watchlist[/:fundId]` · `POST /me/data-export` · `GET /me/data-export/:id` · `POST /me/deletion-request` · `GET /me/entitlements` |
-| Plans & billing | `GET /plans` · `POST /billing/checkout` · `POST /billing/verify` · `POST /billing/mock/complete` (stage) · `POST /webhooks/payments` · `GET /billing/subscription` · `POST /billing/subscriptions/:id/cancel` · `GET /billing/invoices[/:id]` |
+| Plans & billing | `GET /plans` · `POST /billing/checkout` · `POST /billing/verify` · `POST /billing/mock/complete` (stage) · `POST /webhooks/payments` · `GET /billing/subscription` · `POST /billing/subscriptions/:id/cancel` · `GET /billing/invoices[/:id]` · `GET /billing/invoices/:id/pdf` (GST tax invoice) |
 | KYC | `GET /kyc/status` · `POST /kyc/sessions` · `POST /webhooks/kyc` · `POST /kyc/mock/complete` (stage) |
 | Funds & calculators | `GET /funds` (search, category, sort, paging) · `GET /funds/categories` · `GET /funds/:id` · `GET /funds/:id/nav` · `POST /calc/lumpsum` · `POST /calc/sip-compare` |
-| SIP dates | `GET /sip-dates/current` · `GET /sip-dates` |
+| SIP dates | `GET /sip-dates/current` · `GET /sip-dates` (the day of the current and future months only for paid subscribers and admins — see §7a) |
 | Content | `GET /faqs` · `GET /insights` · `GET /public/activity` · `POST /assistant/messages` · `POST /support/tickets` |
 | Admin — reporting | `GET /admin/metrics?from&to&granularity` · `GET /admin/recent` · `GET /admin/data/summary` |
 | Admin — users & billing | `GET /admin/users` (+`format=csv`) · `GET/PATCH /admin/users/:id` · `POST /admin/kyc/:userId/decision` · `GET /admin/subscriptions` · `PUT /admin/plans/:id` · `POST /admin/payments/:id/refund` |
@@ -131,6 +131,34 @@ Base path: `/api/v1`. Auth uses httpOnly cookies (`ma_at` for the access token, 
 5. **Audit:** every change is written to the audit log as `SIP_REMINDER_PREFERENCE_CHANGED`.
 
 **Demo mode** (no API) keeps the plan and the choice in the browser. The Subscription page can activate a demo Pro or Premium plan, so the subscriber flow can be tried without payments.
+
+## 7a. The best SIP date is a paid feature (v23.18)
+
+- `GET /sip-dates` and `GET /sip-dates/current` return the recommended day and the alternative days of the **current and future months** only to admins and to users with an **active paid plan**. Everyone else gets those fields as `null` plus `locked: true`; the uplift % stays visible. Past months stay visible to everyone.
+- The reason and the publishing admin are returned to admins only.
+- The dashboard shows a blurred placeholder card with **See plans** (the blurred number is not the real day; the real day never reaches the browser). The KPI tile shows the same lock.
+- The AI assistant (mock and LLM) is only given the day for subscribers.
+- The in-app broadcast after publishing no longer contains the day. Campaigns sent to audiences other than `active_subscribers` replace `{{date}}` with "on your dashboard".
+- The website reloads the SIP dates after sign-in and after a payment, so the date appears straight after subscribing.
+- Demo mode: locked until a demo plan is activated on the Subscription page.
+
+## 7b. GST tax invoices (v23.18)
+
+Every captured payment creates a GST tax invoice (`apps/api/src/modules/billing/invoice.ts`), downloadable as an A4 PDF from **Subscription → Billing history** (`GET /billing/invoices/:id/pdf`).
+
+| On the invoice | Where it comes from |
+|---|---|
+| Seller name, registered address, GSTIN, PAN, LLPIN, SEBI registration, support email | `INVOICE_SELLER_*`, `INVOICE_SEBI_REG`, `INVOICE_SUPPORT_EMAIL` (GSTIN and address are required in prod) |
+| Invoice number | `MA/26-27/00001`: prefix, financial year (April–March), running number per year (gap-free, advisory lock) |
+| Customer name, email, mobile, address, state, GSTIN | the account + **Settings → Profile → Billing details** (`PATCH /me` `billingStateCode`, `billingAddress`, `billingGstin`) |
+| Place of supply | the customer's state; else the state of their GSTIN; else the seller's state (B2C rule) |
+| Tax | prices include 18% GST. Same state as the seller → CGST 9% + SGST 9%; other state → IGST 18% |
+| SAC | `INVOICE_SAC` (default 997156 — **confirm with the company's CA**) |
+| Description, service period, payment reference, amount in words, reverse charge "No", authorised signatory, SEBI disclaimer | generated |
+
+Everything printed is stored on the invoice row when it is issued (`seller`, `buyer`, tax split — migration `006_gst_invoices.sql`), so an invoice never changes afterwards. Invoices issued before v23.18 are shown with the current seller details.
+
+GST e-invoicing (IRN / QR code through the GST portal) is only mandatory above ₹5 crore annual turnover; when needed, the invoice data can be sent to a GSP such as ClearTax or Zoho Books.
 
 ## 8. Security notes
 

@@ -68,6 +68,17 @@ const Env = z.object({
   FRESHDESK_API_KEY: z.string().optional(),
   S3_BUCKET: z.string().optional(),
   LOG_LEVEL: z.string().default('info'),
+  // ---- GST tax invoice: the seller's registered details (printed on every invoice PDF)
+  INVOICE_SELLER_NAME: z.string().default('Mod Alpha Ventures LLP'),
+  INVOICE_SELLER_ADDRESS: z.string().default(''),          // registered address, one line; use " | " for line breaks
+  INVOICE_SELLER_STATE_CODE: z.string().regex(/^\d{2}$/, 'Two-digit GST state code, e.g. 29').default('29'),
+  INVOICE_SELLER_GSTIN: z.string().regex(/^$|^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/, 'Not a valid GSTIN').default(''),
+  INVOICE_SELLER_PAN: z.string().default(''),
+  INVOICE_SELLER_LLPIN: z.string().default(''),           // LLPIN / CIN
+  INVOICE_SEBI_REG: z.string().default(''),               // e.g. "Research Analyst INH000000000"
+  INVOICE_SAC: z.string().default('997156'),               // SAC for the service — confirm with the company's CA
+  INVOICE_SUPPORT_EMAIL: z.string().default('support@modalpha.in'),
+  INVOICE_PREFIX: z.string().regex(/^[A-Z0-9]{1,4}$/).default('MA'),
 });
 export type Config = z.infer<typeof Env> & { allowMocks: Set<string> };
 
@@ -101,6 +112,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   }
   if (c.APP_ENV === 'prod') {
     if (c.JWT_SECRET.includes('change-me')) problems.push('JWT_SECRET must be changed for prod');
+    for (const k of ['INVOICE_SELLER_GSTIN', 'INVOICE_SELLER_ADDRESS'] as const) if (!c[k]) problems.push(`${k} is required in prod (printed on GST invoices)`);
     for (const p of PROD_CRITICAL) {
       const key = REQUIRED[p][0];
       if ((c as any)[key] === 'mock' && !allowMocks.has(p)) problems.push(`${key}=mock is not allowed in prod (add "${p}" to ALLOW_MOCK_PROVIDERS only as a temporary exception)`);

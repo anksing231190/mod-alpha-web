@@ -91,7 +91,7 @@
     if (!b) return;
     e.preventDefault(); e.stopImmediatePropagation();
     const t = demoList().find((x) => x.key === b.dataset.maTplDemo);
-    if (t) edit(t, async (d) => { demoSave({ key: t.key, ...d }); notify(T('Template saved for this demo session.')); if (typeof route === 'function') route(); });
+    if (t) edit(t, async (d) => { demoSave({ key: t.key, ...d }); notify(T('Template saved.')); if (typeof route === 'function') route(); });
   }, true);
 
   window.MA_TPL = { tile, grid, edit, demoList };

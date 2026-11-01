@@ -10,7 +10,7 @@
   const baseSettings = settingsPage;
   settingsPage = function () {
     let h = baseSettings();
-    if (S.user) h = h.replace('<span class="v22-pill neutral">Free plan</span>', `<span class="v22-pill neutral">${esc(S.ent?.plan || 'Free')} plan</span>`).replace('<span class="v22-pill info">Guest demo profile</span>', `<span id="ma-prof-kyc" class="v22-pill ${S.user.kycStatus === 'Verified' ? 'ok' : 'warn'}">KYC: ${esc(S.user.kycStatus)}</span>${S.user.email && !S.user.emailVerified ? '<button class="v22-pill warn" data-ma-verify-email>Verify email</button>' : ''}`);
+    if (S.user) h = h.replace('<span class="v22-pill neutral">Free plan</span>', `<span class="v22-pill neutral">${esc(S.ent?.plan || 'Free')} plan</span><span id="ma-prof-kyc" class="v22-pill ${S.user.kycStatus === 'Verified' ? 'ok' : 'warn'}">KYC: ${esc(S.user.kycStatus)}</span>${S.user.email && !S.user.emailVerified ? '<button class="v22-pill warn" data-ma-verify-email>Verify email</button>' : ''}`);
     if (S.user) {
       // the email box shows only a real email address (mobile sign-ups may have none yet)
       h = h.replace(/(<input id="profile-email" type="email" value=")[^"]*(")/, `$1${esc(S.user.email || '')}$2 placeholder="No email added"`);
@@ -19,51 +19,44 @@
       const pct = Math.round(steps.filter((x) => x[0]).length / steps.length * 100), next = steps.find((x) => !x[0]);
       h = h.replace(/<div class="v22-meter">[\s\S]*?<\/small><\/div>/, `<div class="v22-meter"><div><b>Profile completeness</b><span>${pct}%</span></div><i><em style="width:${pct}%"></em></i><small>${next ? next[1] : 'Your profile is complete.'}</small></div>`);
     }
-    h = h.replace(/Changes are stored for this demo session only\.|Preferences apply to this browser session\.|Delivery is not connected in this prototype\./g, 'Saved to your account.');
     return h;
   };
-  // Fill the settings forms with the saved profile, preferences and consents.
+  // Fill the settings forms with the saved profile, billing details, preferences and consents.
   async function hydrateSettings() {
     if (!/#\/user\/settings/.test(location.hash) || !S.user) return;
     const mob = document.getElementById('profile-mobile'); if (mob && S.user.mobile) mob.value = S.user.mobile;
+    const bl = S.user.billing || {}, st = document.getElementById('bill-state'), gs = document.getElementById('bill-gstin'), ad = document.getElementById('bill-address');
+    if (st) st.value = bl.stateCode || ''; if (gs) gs.value = bl.gstin || ''; if (ad) ad.value = bl.address || '';
     try {
       const { preferences: p, consents } = await API.get('/me/preferences');
-      const inv = document.getElementById('default-investment'), sip = document.getElementById('default-sip');
-      if (inv) inv.value = p.defaultInvestment; if (sip) sip.value = p.defaultSip;
       const ch = document.querySelectorAll('.v22-chan'); ['email', 'sms', 'push'].forEach((k, i) => { const t = ch[i]?.querySelector('input'); if (t) { t.checked = !!p.channels[k]; ch[i].classList.toggle('on', t.checked); } });
-      const topics = ['sipReminder', 'datePublished', 'billing', 'weeklyDigest', 'announcements'];
-      if (settingsTab === 'notifications') document.querySelectorAll('.v22-set-card:nth-of-type(2) .v22-trow input[type=checkbox]').forEach((t, i) => { if (topics[i]) t.checked = !!p.topics[topics[i]]; });
-      if (settingsTab === 'privacy') { const t = document.querySelectorAll('.v22-set-card .v22-trow input[type=checkbox]'); if (t[0]) t[0].checked = !!consents.analytics; if (t[1]) t[1].checked = !!consents.marketing; const fd = document.querySelector('#ma-feed-row input[type=checkbox]'); if (fd) fd.checked = !!p.showInActivityFeed; }
+      document.querySelectorAll('[data-topic]').forEach((r) => { const t = r.querySelector('input[type=checkbox]'); if (t) t.checked = !!p.topics[r.dataset.topic]; });
+      document.querySelectorAll('[data-consent]').forEach((r) => { const t = r.querySelector('input[type=checkbox]'); if (t) t.checked = !!consents[r.dataset.consent]; });
+      const fd = document.querySelector('#ma-feed-row input[type=checkbox]'); if (fd) fd.checked = !!p.showInActivityFeed;
     } catch (e) {}
   }
   on('[data-action="save-profile-settings"]', async (b) => {
     const done = busy(b, 'Saving…');
     try {
-      const r = await API.patch('/me', { name: document.getElementById('profile-name')?.value?.trim() || undefined, mobile: document.getElementById('profile-mobile')?.value?.trim() || undefined });
-      await API.put('/me/preferences', { defaultInvestment: +document.getElementById('default-investment').value, defaultSip: +document.getElementById('default-sip').value });
+      const v = (id) => document.getElementById(id)?.value?.trim();
+      const r = await API.patch('/me', { name: v('profile-name') || undefined, mobile: v('profile-mobile') || undefined, billingStateCode: v('bill-state') || null, billingGstin: (v('bill-gstin') || '').toUpperCase() || null, billingAddress: v('bill-address') || null });
       S.user = r.user; currentUser.name = r.user.name; done(); notify('Profile saved.'); renderUser('settings');
     } catch (e) { done(); fail(e); }
   });
   on('[data-action="save-settings"]', async (b) => {
     const done = busy(b, 'Saving…');
     try {
-      if (settingsTab === 'notifications') {
-        const ch = document.querySelectorAll('.v22-chan input'); const tg = document.querySelectorAll('.v22-set-card:nth-of-type(2) .v22-trow input[type=checkbox]');
-        const topics = ['sipReminder', 'datePublished', 'billing', 'weeklyDigest', 'announcements'];
-        await API.put('/me/preferences', { channels: { email: ch[0]?.checked, sms: ch[1]?.checked, push: ch[2]?.checked }, topics: Object.fromEntries(topics.map((k, i) => [k, !!tg[i]?.checked])), reminderTiming: document.querySelector('.v22-set-card:nth-of-type(2) select')?.value });
-      } else {
-        const nums = document.querySelectorAll('.v22-set-card input[type=number]'); const per = document.querySelector('.v22-seg-pills button.active')?.textContent;
-        await API.put('/me/preferences', { defaultInvestment: +nums[0]?.value || undefined, defaultSip: +nums[1]?.value || undefined, defaultPeriod: ['1Y', '3Y', '5Y', '10Y'].includes(per) ? per : undefined });
-      }
+      const ch = document.querySelectorAll('.v22-chan input');
+      const topics = Object.fromEntries([...document.querySelectorAll('[data-topic]')].map((r) => [r.dataset.topic, !!r.querySelector('input[type=checkbox]')?.checked]));
+      await API.put('/me/preferences', { channels: { email: ch[0]?.checked, sms: ch[1]?.checked, push: ch[2]?.checked }, topics });
       done(); notify('Preferences saved.');
     } catch (e) { done(); fail(e); }
   });
   window.addEventListener('change', async (e) => {
-    if (!/#\/user\/settings/.test(location.hash) || settingsTab !== 'privacy') return;
-    const rows = [...document.querySelectorAll('.v22-set-card .v22-trow input[type=checkbox]')], i = rows.indexOf(e.target);
+    if (!/#\/user\/settings/.test(location.hash) || !e.target.closest('#ma-privacy')) return;
     if (e.target.closest('#ma-feed-row')) { try { await API.put('/me/preferences', { showInActivityFeed: e.target.checked }); notify(e.target.checked ? 'You will appear as “first name + initial” on the home page.' : 'You will appear as “A new member”.'); } catch (er) { e.target.checked = !e.target.checked; fail(er); } return; }
-    if (i < 0 || i > 1) return;
-    try { await API.put('/me/consents', i === 0 ? { analytics: e.target.checked } : { marketing: e.target.checked }); notify('Consent updated.'); } catch (er) { e.target.checked = !e.target.checked; fail(er); }
+    const row = e.target.closest('[data-consent]'); if (!row) return;
+    try { await API.put('/me/consents', { [row.dataset.consent]: e.target.checked }); notify('Consent updated.'); } catch (er) { e.target.checked = !e.target.checked; fail(er); }
   }, true);
   on('[data-ma-verify-email]', async () => { try { await API.post('/me/verify-email'); notify('Verification email sent.'); } catch (e) { fail(e); } });
   on('[data-action="change-password"]', () => {

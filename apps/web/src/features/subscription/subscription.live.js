@@ -32,7 +32,7 @@
     }
   }
   // After payment: reload the plan and go to the dashboard.
-  async function paid() { S.ent = await API.get('/me/entitlements'); notify(`${S.ent.plan} plan activated. Thank you!`); go('user/subscription'); renderUser('subscription'); }
+  async function paid() { S.ent = await API.get('/me/entitlements'); await MA_LIVE.refreshSip(); notify(`${S.ent.plan} plan activated. Thank you!`); go('user/subscription'); renderUser('subscription'); }
   // Load an external script once (Razorpay checkout).
   const loadScript = (src) => new Promise((res, rej) => { if (document.querySelector(`script[src="${src}"]`)) return res(); const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Could not load payment checkout')); document.head.appendChild(s); });
   on('[data-plan]', (b) => startCheckout(b.dataset.plan, b));
@@ -46,8 +46,21 @@
     return cur + baseSubPage().replace(/<div class="subscription-footnote">[\s\S]*?<\/div>/, '<div class="subscription-footnote">Prices include GST. First-time subscribers complete KYC before activation.</div>');
   };
   on('[data-ma-cancel]', async (b) => { if (!confirm('Cancel your plan? It stays active until the end of the current billing period.')) return; try { const r = await API.post(`/billing/subscriptions/${b.dataset.maCancel}/cancel`); S.ent = await API.get('/me/entitlements'); notify(r.message); renderUser('subscription'); } catch (e) { fail(e); } });
+  // Billing history: every GST tax invoice, each one downloadable as a PDF (GET /billing/invoices/:id/pdf).
   on('[data-ma-invoices], [data-action="billing-details"]', async () => {
-    try { const r = await API.get('/billing/invoices'); showModal('Billing history', r.items.length ? `<div class="v22"><table class="v22-table"><thead><tr><th>Invoice</th><th>Plan</th><th>Amount</th><th>Date</th><th></th></tr></thead><tbody>${r.items.map((i) => `<tr><td class="mono">${esc(i.number)}</td><td>${esc(i.plan_id || '')} ${esc(i.billing_cycle || '')}</td><td>${inr(i.amount_inr)}</td><td>${fmt(i.issued_at)}</td><td><button class="v22-row-btn" data-ma-inv="${i.id}">View</button></td></tr>`).join('')}</tbody></table></div>` : '<p class="v22-sub">No invoices yet.</p>'); } catch (e) { fail(e); }
+    try {
+      const r = await API.get('/billing/invoices');
+      const b = S.user && S.user.billing, noState = !(b && b.stateCode);
+      showModal('Billing history', `<div class="v22 ma-inv-hist">${r.items.length ? `<table class="v22-table"><thead><tr><th>Invoice no.</th><th>Plan</th><th>Date</th><th style="text-align:right">Amount (incl. GST)</th><th></th></tr></thead><tbody>${r.items.map((i) => `<tr><td class="mono">${esc(i.number)}</td><td>${esc(i.plan_id || '')} · ${esc(i.billing_cycle || '')}</td><td>${fmt(i.issued_at)}</td><td style="text-align:right">${inr(i.amount_inr)}</td><td style="text-align:right;white-space:nowrap"><button class="v22-row-btn" data-ma-inv="${i.id}">View</button> <button class="v22-row-btn" data-ma-inv-dl="${i.id}" data-no="${esc(i.number)}">${ic('download')} PDF</button></td></tr>`).join('')}</tbody></table>` : '<p class="v22-sub">No invoices yet. A GST tax invoice is created after every payment.</p>'}
+        ${noState ? `<p class="v22-hint" style="margin-top:12px">${ic('info')} Add your state (and GSTIN, for a business) under <a href="#/user/settings" data-ma-goto-billing>Settings → Profile → Billing details</a> so your next invoice shows the right place of supply.</p>` : ''}</div>`);
+    } catch (e) { fail(e); }
   });
-  on('[data-ma-inv]', async (b) => { try { const { invoice: i } = await API.get(`/billing/invoices/${b.dataset.maInv}`); const w = window.open('', '_blank'); w.document.write(`<title>${i.number}</title><body style="font-family:Inter,sans-serif;padding:40px;max-width:640px"><h2>${i.seller}</h2><p>Tax invoice <b>${i.number}</b><br>Date: ${fmt(i.issued_at)}</p><p>Billed to: ${esc(i.full_name)}<br>${esc(i.email || '')}</p><table style="width:100%;border-collapse:collapse" border="1" cellpadding="8"><tr><td>Mod Alpha ${esc(i.plan_id)} plan (${esc(i.billing_cycle)})</td><td align="right">₹${i.taxable}</td></tr><tr><td>GST 18%</td><td align="right">₹${i.gst_inr}</td></tr><tr><td><b>Total</b></td><td align="right"><b>₹${i.amount_inr}</b></td></tr></table><p style="color:#666;font-size:12px">${i.note}</p><button onclick="print()">Print</button></body>`); } catch (e) { fail(e); } });
+  // Open the invoice PDF in a new tab (blob URL, so the session cookie stays with the API).
+  on('[data-ma-inv]', async (b) => {
+    const w = window.open('', '_blank');
+    try { const r = await API.get(`/billing/invoices/${b.dataset.maInv}/pdf`, null, { raw: true }); const url = URL.createObjectURL(await r.blob()); if (w) w.location.href = url; else location.href = url; }
+    catch (e) { if (w) w.close(); fail(e); }
+  });
+  on('[data-ma-inv-dl]', async (b) => { try { await API.download(`/billing/invoices/${b.dataset.maInvDl}/pdf`, null, `Mod-Alpha-invoice-${b.dataset.no.replace(/\//g, '-')}.pdf`); } catch (e) { fail(e); } });
+  on('[data-ma-goto-billing]', () => { modalRoot.innerHTML = ''; settingsTab = 'profile'; });
 })();

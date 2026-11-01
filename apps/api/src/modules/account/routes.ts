@@ -14,6 +14,7 @@ import { randomToken, requireUser, sha256 } from '../auth/session.js';
 import { audit } from '../../shared/audit.js';
 import { userView } from '../auth/routes.js';
 import { entitlements } from '../billing/routes.js';
+import { GST_STATES, GSTIN_RE } from '../../shared/gst.js';
 
 // Preferences a new user starts with. sipReminder: 'modalpha' = Mod Alpha's published date; 'custom' = the user's
 // own day (paid plans).
@@ -34,11 +35,20 @@ export default async function me(app: FastifyInstance) {
   // PATCH /me — update name / mobile (a changed mobile must be verified again).
   app.patch('/me', async (req) => {
     const u = requireUser(req);
-    const b = parse(z.object({ name: z.string().trim().min(2).max(80).optional(), mobile: z.string().trim().max(20).optional().nullable(), country: z.string().max(40).optional() }), req.body);
+    const b = parse(z.object({ name: z.string().trim().min(2).max(80).optional(), mobile: z.string().trim().max(20).optional().nullable(), country: z.string().max(40).optional(),
+      // billing details for the GST invoice: state (place of supply), address, GSTIN for businesses
+      billingStateCode: z.string().regex(/^\d{2}$/).refine((c) => c in GST_STATES, 'Unknown state').optional().nullable(),
+      billingAddress: z.string().trim().max(300).optional().nullable(),
+      billingGstin: z.string().trim().toUpperCase().refine((g) => g === '' || GSTIN_RE.test(g), 'Enter a valid 15-character GSTIN').optional().nullable() }), req.body);
     if (b.mobile) {
       const m = b.mobile.replace(/[^\d+]/g, ''); if (!/^\+?\d{10,13}$/.test(m)) throw badRequest('Enter a valid mobile number');
       const taken = await db.query('SELECT 1 FROM users WHERE mobile=$1 AND id<>$2', [m, u.id]); if (taken.rows[0]) throw badRequest('This mobile number is linked to another account');
       await db.query('UPDATE users SET mobile=$2, mobile_verified_at=NULL WHERE id=$1 AND coalesce(mobile,\'\')<>$2', [u.id, m.startsWith('+') ? m : `+91${m}`]);
+    }
+    if (b.billingStateCode !== undefined || b.billingAddress !== undefined || b.billingGstin !== undefined) {
+      if (b.billingGstin && b.billingStateCode && b.billingGstin.slice(0, 2) !== b.billingStateCode) throw badRequest('The GSTIN belongs to a different state than the one selected');
+      await db.query(`UPDATE users SET billing_state_code=CASE WHEN $2 THEN $3 ELSE billing_state_code END, billing_address=CASE WHEN $4 THEN $5 ELSE billing_address END, billing_gstin=CASE WHEN $6 THEN $7 ELSE billing_gstin END WHERE id=$1`,
+        [u.id, b.billingStateCode !== undefined, b.billingStateCode || null, b.billingAddress !== undefined, b.billingAddress || null, b.billingGstin !== undefined, b.billingGstin || null]);
     }
     const r = await db.query('UPDATE users SET full_name=coalesce($2, full_name), updated_at=now() WHERE id=$1 RETURNING *', [u.id, b.name ?? null]);
     return { user: userView(r.rows[0]) };

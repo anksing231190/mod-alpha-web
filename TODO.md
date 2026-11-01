@@ -48,6 +48,15 @@ Mod Alpha holds SEBI registration, so client KYC is **mandatory** before any pai
 
 ---
 
+## 1b. GST invoices — details needed from the business
+- [ ] Company **GSTIN**, registered address, PAN, LLPIN → `INVOICE_SELLER_*` on stage and prod (prod refuses to start without GSTIN and address).
+- [ ] GST state code of the registered office (`INVOICE_SELLER_STATE_CODE`, default 29 Karnataka — change if different).
+- [ ] CA to confirm the **SAC code** (default 997156) and whether a quarterly/yearly plan needs any different wording.
+- [ ] SEBI registration text for `INVOICE_SEBI_REG` (e.g. "Research Analyst INH000000000"); this also switches on the SEBI disclaimer on the invoice.
+- [ ] Optional: collect the state at checkout (today it comes from Settings → Profile → Billing details; without it the seller state is used).
+
+---
+
 ## 2. Fund house logos
 - [ ] Add official AMC logo files to `apps/web/assets/funds/` and list them in `assets/funds/manifest.js`. Monograms are shown until then. The build environment cannot reach AMC sites, so these must be supplied.
 

@@ -48,6 +48,7 @@
     S.user = user; currentUser = { name: user.name, email: user.email || user.mobile || '' };
     window.dispatchEvent(new CustomEvent('ma:signed-in', { detail: { session } }));   // starts the inactivity timer
     try { S.ent = await API.get('/me/entitlements'); } catch (e) {}
+    await MA_LIVE.refreshSip();   // the best SIP date is only sent to subscribers
     const next = sessionStorage.getItem('ma-next'); sessionStorage.removeItem('ma-next');
     go(next && (!next.startsWith('admin') || user.role !== 'user') ? next : user.role !== 'user' ? 'admin/dashboard' : 'user/overview');
   };

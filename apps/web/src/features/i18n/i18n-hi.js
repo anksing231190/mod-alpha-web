@@ -437,3 +437,19 @@ Object.assign(window.MA_I18N_DICT, {
 Object.assign(window.MA_I18N_DICT,{'Reminder:':'रिमाइंडर:'});
 Object.assign(window.MA_I18N_DICT, { 'Illustrative': 'उदाहरण', 'Fund Analytics': 'फंड एनालिटिक्स', 'SIP Intelligence': 'SIP इंटेलिजेंस', 'Portfolio Insights': 'पोर्टफ़ोलियो इनसाइट्स',
  'SMART REMINDERS': 'स्मार्ट रिमाइंडर', 'A reminder before every best SIP date': 'हर सबसे अच्छी SIP तारीख से पहले रिमाइंडर', 'HIGHER RETURNS': 'ज़्यादा रिटर्न', 'vs a fixed-date SIP (backtest)': 'फ़िक्स्ड-डेट SIP की तुलना में (बैकटेस्ट)' });
+// v23.18: locked SIP date, billing details, privacy section, invoices
+Object.assign(window.MA_I18N_DICT, {
+  'Unlock this month’s best date': 'इस महीने की सबसे अच्छी तारीख अनलॉक करें',
+  'Available with Pro and Premium, with a reminder before the date.': 'Pro और Premium में उपलब्ध, तारीख से पहले रिमाइंडर के साथ।',
+  'See plans': 'प्लान देखें', 'Subscribe to unlock': 'अनलॉक करने के लिए सब्सक्राइब करें',
+  'Billing details': 'बिलिंग विवरण', 'Printed on your GST tax invoice.': 'आपके GST टैक्स इनवॉइस पर छपता है।',
+  'State': 'राज्य', 'Select your state': 'अपना राज्य चुनें', 'Decides CGST + SGST or IGST on your invoice.': 'इससे तय होता है कि इनवॉइस पर CGST + SGST लगेगा या IGST।',
+  '(optional, for businesses)': '(वैकल्पिक, व्यवसायों के लिए)', 'Billing address': 'बिलिंग पता',
+  'Privacy & your data': 'गोपनीयता और आपका डेटा', 'Changes apply to your account.': 'बदलाव आपके खाते पर लागू होंगे।',
+  'Personal details, KYC, billing & privacy': 'व्यक्तिगत विवरण, KYC, बिलिंग और गोपनीयता',
+  'Manage your profile, KYC, billing details, notifications and privacy.': 'अपनी प्रोफ़ाइल, KYC, बिलिंग विवरण, नोटिफ़िकेशन और गोपनीयता संभालें।',
+  'Billing history': 'बिलिंग इतिहास', 'Invoice no.': 'इनवॉइस नं.', 'Amount (incl. GST)': 'राशि (GST सहित)',
+  'A reminder before your SIP date (Pro and Premium).': 'आपकी SIP तारीख से पहले रिमाइंडर (Pro और Premium)।',
+  'Renewals, invoices and payment status.': 'रिन्यूअल, इनवॉइस और भुगतान की स्थिति।',
+  'Figures are based on historical data and are not investment advice.': 'आंकड़े ऐतिहासिक डेटा पर आधारित हैं और निवेश सलाह नहीं हैं।',
+});

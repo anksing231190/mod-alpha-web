@@ -459,3 +459,9 @@ html[data-theme="light"] .ma-dp-time{border-top-color:#e4d6bf}html[data-theme="l
 html[data-theme="light"] .ma-dp-time select{background:#fffaf1;border-color:#dcc7a5;color:#2b2218}html[data-theme="light"] .ma-dp-time b{color:#7a6a58}
 html[data-theme="light"] .ma-dp-ampm{border-color:#dcc7a5}html[data-theme="light"] .ma-dp-ampm button{color:#5c4b38}
 html[data-theme="light"] .ma-dp-ampm button.on{background:linear-gradient(135deg,#a8641c,#7a3f5a);color:#fff}
+
+/* Inputs that sit inside a bordered field wrapper (login fields, search boxes, the ₹ amount field…) must not
+   draw their own focus box — the wrapper shows the focus ring instead. Otherwise you see a box inside a box. */
+html[data-theme="light"] :is(.v22-auth-in,.v22-field,.v22-search,.v22-ask,.v22-help-search,.workspace-search) input:focus{border-color:transparent!important;box-shadow:none!important;outline:none!important}
+html[data-theme="light"] :is(.v22-auth-in,.v22-field,.v22-help-search):focus-within{border-color:var(--sand-caramel)!important;box-shadow:0 0 0 3px rgba(168,105,47,.18)!important}
+html[data-theme="light"] :is(.v22-search,.v22-ask,.workspace-search):focus-within{border-color:var(--sand-caramel)!important}

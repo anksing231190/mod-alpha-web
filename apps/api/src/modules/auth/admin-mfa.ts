@@ -31,7 +31,9 @@ export function adminMfa(app: FastifyInstance) {
   async function adminChallenge(req: any, u: any, remember: boolean) {
     if (!u.email || !u.mobile) {
       await audit(db, req, { action: 'ADMIN_LOGIN_BLOCKED', category: 'Access', resource: u.id, outcome: 'Blocked', actorLabel: u.email ?? u.mobile, meta: { reason: 'missing email or mobile' } });
-      throw new HttpError(403, 'admin_contact_required', 'Admin sign-in needs both a verified email and mobile number on the account. Ask a super admin to add them.');
+      // local / stage: say exactly how to fix the bootstrap admin (prod keeps the neutral message)
+      const hint = cfg.APP_ENV !== 'prod' && u.email === cfg.ADMIN_BOOTSTRAP_EMAIL ? ' On this environment: set ADMIN_BOOTSTRAP_MOBILE=+91XXXXXXXXXX in .env.local and restart the API.' : ' Ask a super admin to add them.';
+      throw new HttpError(403, 'admin_contact_required', `Admin sign-in needs both a verified email and mobile number on the account.${hint}`);
     }
     const ec = String(crypto.randomInt(100000, 1000000)), sc = String(crypto.randomInt(100000, 1000000));
     const ch = (await db.query(`INSERT INTO login_challenges (user_id, email_code_hash, sms_code_hash, remember, expires_at, ip) VALUES ($1,$2,$3,$4, now() + interval '10 minutes', $5) RETURNING id`, [u.id, sha256(ec), sha256(sc), remember, req.ip])).rows[0];

@@ -1,6 +1,9 @@
 /**
  * SIP date module — the monthly recommended investment day, Mod Alpha's core output.
  *   GET /sip-dates/current · GET /sip-dates (history)
+ *   The day itself is a paid feature: for the current and future months, only admins and users with an active
+ *   paid plan get recommended_day / alternative days. Everyone else gets the row with those fields set to null
+ *   and `locked: true` (the screen then shows a blurred card with an upgrade button). Past months stay visible.
  *   POST /admin/sip-dates/validate (checks only) · POST /admin/sip-dates/publish (new version + reminder campaign)
  */
 import type { FastifyInstance } from 'fastify';
@@ -11,24 +14,50 @@ import { requireAdmin } from '../auth/session.js';
 import { audit } from '../../shared/audit.js';
 import { tx } from '../../db.js';
 import { addDays } from '../../shared/dates.js';
+import { entitlements } from '../billing/routes.js';
+import type { FastifyRequest } from 'fastify';
 
 // Request body for validate / publish: month YYYY-MM, day 1–28, a reason (kept for the audit trail) and optional
 // alternative days.
 const month = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Use YYYY-MM');
 const body = z.object({ month, day: z.number().int().min(1).max(28), reason: z.string().trim().min(5, 'Give a reason (min 5 characters)').max(500), upliftPct: z.number().min(-50).max(50).optional(), alternatives: z.array(z.object({ day: z.number().int().min(1).max(28), upliftPct: z.number() })).max(3).optional() });
 
+// Current month in India (YYYY-MM): months from here on are locked for non-subscribers.
+const istMonth = () => new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 7);
+
 export default async function sip(app: FastifyInstance) {
   const { db } = app.deps;
+  // Can this request see the recommended day? Admins always; users only with an active paid plan.
+  async function canSeeDay(req: FastifyRequest) {
+    const u = req.user;
+    if (!u) return false;
+    if (u.role !== 'user') return true;
+    const e = await entitlements(db, u.id);
+    return e.plan !== 'Free' && e.subscription?.status === 'Active';
+  }
+  // Hide the day (and internal fields) of current/future months from people who have not subscribed.
+  function view(row: any, open: boolean, isAdmin: boolean) {
+    if (!row) return row;
+    const out: any = { ...row };
+    if (!isAdmin) { delete out.reason; delete out.published_by; }
+    if (!open && row.month >= istMonth()) {
+      Object.assign(out, { recommended_day: null, alt_day_1: null, alt_day_2: null, alt_day_3: null, locked: true });
+    }
+    return out;
+  }
   // GET /sip-dates/current — latest published date (public).
-  app.get('/sip-dates/current', async () => {
+  app.get('/sip-dates/current', async (req) => {
     const r = await db.query(`SELECT * FROM sip_dates WHERE status='Published' ORDER BY (month = to_char(CURRENT_DATE,'YYYY-MM')) DESC, (month <= to_char(CURRENT_DATE,'YYYY-MM')) DESC, CASE WHEN month <= to_char(CURRENT_DATE,'YYYY-MM') THEN month END DESC, month ASC LIMIT 1`);
     const upcoming = await db.query(`SELECT * FROM sip_dates WHERE status='Published' AND month > to_char(CURRENT_DATE,'YYYY-MM') ORDER BY month LIMIT 3`);
-    return { current: r.rows[0] ?? null, upcoming: upcoming.rows };
+    const open = await canSeeDay(req), adm = !!req.user && req.user.role !== 'user';
+    return { current: view(r.rows[0] ?? null, open, adm), upcoming: upcoming.rows.map((x) => view(x, open, adm)), locked: !open };
   });
   // GET /sip-dates — published history, optional ?from=&to= months.
   app.get('/sip-dates', async (req) => {
     const p = parse(z.object({ from: month.optional(), to: month.optional() }), req.query);
-    return { items: (await db.query(`SELECT * FROM sip_dates WHERE status<>'Draft' AND ($1::text IS NULL OR month >= $1) AND ($2::text IS NULL OR month <= $2) ORDER BY month DESC`, [p.from ?? null, p.to ?? null])).rows };
+    const open = await canSeeDay(req), adm = !!req.user && req.user.role !== 'user';
+    const rows = (await db.query(`SELECT * FROM sip_dates WHERE status<>'Draft' AND ($1::text IS NULL OR month >= $1) AND ($2::text IS NULL OR month <= $2) ORDER BY month DESC`, [p.from ?? null, p.to ?? null])).rows;
+    return { items: rows.map((x) => view(x, open, adm)), locked: !open };
   });
 
   // Pre-publish checks: weekend, market holiday, already published (re-publishing creates a new version), past
@@ -64,7 +93,7 @@ export default async function sip(app: FastifyInstance) {
       await c.query(`INSERT INTO sip_dates (month, recommended_day, uplift_pct, alt_day_1, alt_uplift_1, alt_day_2, alt_uplift_2, alt_day_3, alt_uplift_3, status, published_on, version, reason, published_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'Published',CURRENT_DATE,$10,$11,$12)
         ON CONFLICT (month) DO UPDATE SET recommended_day=$2, uplift_pct=coalesce($3, sip_dates.uplift_pct), alt_day_1=coalesce($4, sip_dates.alt_day_1), alt_uplift_1=coalesce($5, sip_dates.alt_uplift_1), alt_day_2=coalesce($6, sip_dates.alt_day_2), alt_uplift_2=coalesce($7, sip_dates.alt_uplift_2), alt_day_3=coalesce($8, sip_dates.alt_day_3), alt_uplift_3=coalesce($9, sip_dates.alt_uplift_3), status='Published', published_on=CURRENT_DATE, version=$10, reason=$11, published_by=$12`,
         [b.month, b.day, b.upliftPct ?? null, a[0]?.day ?? null, a[0]?.upliftPct ?? null, a[1]?.day ?? null, a[1]?.upliftPct ?? null, a[2]?.day ?? null, a[2]?.upliftPct ?? null, version, b.reason, admin.id]);
-      await c.query(`INSERT INTO notifications (user_id, kind, title, body, link) VALUES (NULL,'sip_date',$1,$2,'#/user/overview')`, [`SIP date for ${b.month} published`, `This month's recommended SIP date is ${v.date}. You will get a reminder before the date.`]);
+      await c.query(`INSERT INTO notifications (user_id, kind, title, body, link) VALUES (NULL,'sip_date',$1,$2,'#/user/overview')`, [`SIP date for ${b.month} published`, `The recommended SIP date for ${b.month} is on your dashboard. Subscribers get a reminder before the date.`]);
       // schedule the reminder campaign (sent by the jobs worker)
       const tpl = (await c.query(`SELECT id, channels FROM notification_templates WHERE key='sip_reminder'`)).rows[0];
       if (tpl) await c.query(`INSERT INTO campaigns (name, template_id, channels, audience, scheduled_for, status, created_by) VALUES ($1,$2,$3,'active_subscribers', (($4::date - 2) + time '09:00') AT TIME ZONE 'Asia/Kolkata', 'Scheduled', $5)`, [`SIP reminder ${b.month}`, tpl.id, tpl.channels, v.date, admin.id]);

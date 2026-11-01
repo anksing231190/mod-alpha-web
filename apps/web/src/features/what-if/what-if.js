@@ -41,7 +41,7 @@ function whatIf(){
  <article class="v22-card v22-input-card"><label class="v22-label" for="calc-amount">Investment Amount</label><div class="v22-field">${ic('wallet')}<input id="calc-amount" value="${Number(v22WhatIf.amount).toLocaleString('en-IN')}" inputmode="numeric" aria-label="Investment amount in rupees"></div><div class="v22-opts">${[[10000,'10K'],[50000,'50K'],[100000,'1L'],[500000,'5L'],[1000000,'10L']].map(x=>`<button type="button" data-v22-amount="${x[0]}" class="${v22WhatIf.amount===x[0]?'active':''}">${x[1]}</button>`).join('')}</div></article></section>
  <section class="v22-journey-grid"><article class="v22-card"><h2 class="v22-h2">Investment Journey</h2><div id="v22-journey">${v22JourneyChart(r,v22WhatIf.amount)}</div></article>
  <article class="v22-card v22-results"><h2 class="v22-h2 sm">Results</h2><div class="v22-result-box" id="v22-results">${v22ResultRows(r)}</div></article></section>
- <section class="v22-insight-row v2"><span class="v22-ins-badge">${v22BrandMark(28)}</span><div class="v22-insight-body"><b>AI Insight <em>Illustrative</em></b><p id="v22-insight-text">${v22InsightText(r,d)}</p></div></section>
+ <section class="v22-insight-row v2"><span class="v22-ins-badge">${v22BrandMark(28)}</span><div class="v22-insight-body"><b>AI Insight</b><p id="v22-insight-text">${v22InsightText(r,d)}</p></div></section>
  <p class="v22-note">Illustrative values for interface testing only. Actual calculations require verified historical NAV data and precise date handling.</p></div>`;
 }
 

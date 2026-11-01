@@ -37,7 +37,8 @@ export async function dispatchCampaign(deps: Deps, campaignId: string) {
   for (const u of users) {
     // subscribers who chose their own reminder day get it from the customSipReminders job instead
     if (t.key === 'sip_reminder' && u.prefs?.sipReminder?.mode === 'custom') { stats.skipped++; continue; }
-    const vars = { name: u.full_name, date: sip ? `${sip.recommended_day} ${new Date(sip.month + '-01').toLocaleString('en-GB', { month: 'long' })}` : '', month: sip?.month ?? '' };
+    // the day is only for subscribers; other audiences get a pointer to the dashboard instead
+    const vars = { name: u.full_name, date: c.audience !== 'active_subscribers' ? 'on your dashboard' : sip ? `${sip.recommended_day} ${new Date(sip.month + '-01').toLocaleString('en-GB', { month: 'long' })}` : '', month: sip?.month ?? '' };
     for (const ch of c.channels as string[]) {
       if (ch !== 'inapp' && u.prefs?.channels && u.prefs.channels[ch] === false) { stats.skipped++; continue; }
       stats.scheduled++;

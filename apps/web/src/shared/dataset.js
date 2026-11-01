@@ -148,7 +148,7 @@ async function v22LoadDataset(){
   const res=await fetch(V22_BUNDLED_URL,{cache:'no-cache'});if(!res.ok)throw new Error(`Could not load ${V22_BUNDLED_URL} (HTTP ${res.status})`);
   const buf=await res.arrayBuffer();const wb=XLSX.read(buf,{type:'array',dense:true});
   const rep=v22Validate(wb,null);if(rep.fatal||rep.errors)throw new Error('Bundled test workbook failed validation: '+(rep.fatal||rep.errors+' errors'));
-  const sheets=v22Strip(rep.merged),meta={fileName:'mod-alpha-test-data.xlsx',loadedAt:new Date().toISOString(),by:'Bundled test data',counts:Object.fromEntries(Object.entries(sheets).map(([k,v])=>[k,v.length]))};
+  const sheets=v22Strip(rep.merged),meta={fileName:'mod-alpha-test-data.xlsx',loadedAt:new Date().toISOString(),by:'Bundled dataset',counts:Object.fromEntries(Object.entries(sheets).map(([k,v])=>[k,v.length]))};
   await v22Put('bundled',{version:V22_BUNDLE_VERSION,sheets,meta});v22Apply(sheets,meta);V22D.source='bundled';
  }catch(e){V22D.error=e.message;V22D.source='fallback';console.warn('[Mod Alpha] test data not loaded:',e)}
  finally{V22D.loaded=true}

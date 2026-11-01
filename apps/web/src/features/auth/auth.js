@@ -9,7 +9,6 @@
 function renderAuthForm(){
  const signup=authMode==='signup',mobile=maAuthMethod==='mobile';
  app.innerHTML=`${topbar(true)}<main class="v22 v22-auth"><div class="v22-auth-bg" aria-hidden="true">${v22NetworkBg()}</div><section class="v22-auth-card">
- <div class="v22-auth-brand">${v22Mark(36)}<b>Mod Alpha</b></div>
  <h1>${signup?'Create Account':'Welcome Back'}</h1><p>${signup?'Start your AI-powered investment insights':'Continue to your AI-powered investment insights'}</p>
  <div class="v22-seg" role="tablist"><button type="button" class="${!mobile?'active':''}" data-auth-method="email">Email</button><button type="button" class="${mobile?'active':''}" data-auth-method="mobile">Mobile</button></div>
  <form id="auth-form" novalidate>

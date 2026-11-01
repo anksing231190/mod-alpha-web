@@ -23,8 +23,14 @@ describe('config', () => {
     expect(() => loadConfig({ APP_ENV: 'stage', DATABASE_URL: 'postgres://x', JWT_SECRET: 'p'.repeat(40), PAYMENT_PROVIDER: 'razorpay' } as any)).toThrow(/RAZORPAY_KEY_ID/);
   });
   it('allows an explicit temporary mock exception in prod', () => {
-    const c = loadConfig({ APP_ENV: 'prod', DATABASE_URL: 'postgres://x', JWT_SECRET: 'p'.repeat(40), ALLOW_MOCK_PROVIDERS: 'email,sms,payments,kyc' } as any);
+    const c = loadConfig({ APP_ENV: 'prod', DATABASE_URL: 'postgres://x', JWT_SECRET: 'p'.repeat(40), ALLOW_MOCK_PROVIDERS: 'email,sms,payments,kyc', INVOICE_SELLER_GSTIN: '29ABCDE1234F1Z5', INVOICE_SELLER_ADDRESS: '1 Test Street, Bengaluru' } as any);
     expect(c.allowMocks.has('payments')).toBe(true);
+  });
+  it('requires the GST seller details in prod', () => {
+    expect(() => loadConfig({ APP_ENV: 'prod', DATABASE_URL: 'postgres://x', JWT_SECRET: 'p'.repeat(40), ALLOW_MOCK_PROVIDERS: 'email,sms,payments,kyc' } as any)).toThrow(/INVOICE_SELLER_GSTIN is required/);
+  });
+  it('rejects a malformed seller GSTIN', () => {
+    expect(() => loadConfig({ APP_ENV: 'stage', DATABASE_URL: 'postgres://x', JWT_SECRET: 'p'.repeat(40), INVOICE_SELLER_GSTIN: '12345' } as any)).toThrow(/Not a valid GSTIN/);
   });
 });
 
@@ -148,7 +154,7 @@ describe('assistant quotas', () => {
     const c = client(app);
     await c.post('/auth/signup', { name: 'Ai User', email: 'ai@example.com', password: 'secret-pass-1' });
     const a = await c.post('/assistant/messages', { messages: [{ role: 'user', content: 'What is the best SIP date this month?' }] });
-    expect(a.statusCode).toBe(200); expect(a.json().reply).toMatch(/published date/);
+    expect(a.statusCode).toBe(200); expect(a.json().reply).toMatch(/Pro and Premium/);   // the day is a paid feature
     expect((await c.post('/assistant/messages', { messages: [{ role: 'user', content: 'and CAGR?' }] })).statusCode).toBe(429);
   });
 });
@@ -511,5 +517,67 @@ describe('public activity feed', () => {
     const named = (await client(app).get('/public/activity')).json().events;
     expect(named.map((e: any) => e.name)).toContain('Rahul V.');
     expect(JSON.stringify(named)).not.toMatch(/feed@example|Verma/);
+  });
+});
+
+describe('paid features: SIP date lock and GST invoices', () => {
+  // sign up, pass KYC and pay for Pro (mock providers)
+  const payingUser = async (email: string, billing?: Record<string, unknown>) => {
+    const c = client(app);
+    await c.post('/auth/signup', { name: 'Gst User', email, password: 'secret-pass-1' });
+    if (billing) expect((await c.patch('/me', billing)).statusCode).toBe(200);
+    const k = (await c.post('/kyc/sessions')).json();
+    await c.post('/kyc/mock/complete', { ref: k.ref, decision: 'Verified' });
+    const co = (await c.post('/billing/checkout', { planId: 'Pro', cycle: 'Monthly' })).json();
+    await c.post('/billing/mock/complete', { orderId: co.order.orderId });
+    return c;
+  };
+  it('hides the recommended day of current/future months from visitors and Free users, shows it to subscribers', async () => {
+    const a = await adminClient(app);
+    expect((await a.post('/admin/sip-dates/publish', { month: '2027-03', day: 9, reason: 'Model output Mar 2027', upliftPct: 2.1, alternatives: [{ day: 17, upliftPct: 1.2 }] })).json().ok).toBe(true);
+    const find = (items: any[]) => items.find((x) => x.month === '2027-03');
+    const anon = (await client(app).get('/sip-dates')).json();
+    expect(anon.locked).toBe(true);
+    expect(find(anon.items)).toMatchObject({ recommended_day: null, alt_day_1: null, locked: true, uplift_pct: 2.1 });
+    expect(find(anon.items).reason).toBeUndefined();
+    const free = client(app); await free.post('/auth/signup', { name: 'Free User', email: 'free-sip@example.com', password: 'secret-pass-1' });
+    expect(find((await free.get('/sip-dates')).json().items).recommended_day).toBeNull();
+    // the assistant does not reveal it either
+    const ans = (await free.post('/assistant/messages', { messages: [{ role: 'user', content: 'What is the best date this month?' }] })).json();
+    expect(ans.reply).toMatch(/Pro and Premium/);
+    const paid = await payingUser('paid-sip@example.com');
+    const p = (await paid.get('/sip-dates')).json();
+    expect(p.locked).toBe(false);
+    expect(find(p.items)).toMatchObject({ recommended_day: 9, alt_day_1: 17 });
+    expect((await a.get('/sip-dates')).json().items.find((x: any) => x.month === '2027-03').reason).toBe('Model output Mar 2027');
+  });
+  it('issues a numbered GST tax invoice (CGST+SGST in the seller state, IGST otherwise) and serves it as a PDF', async () => {
+    // seller state defaults to 29 (Karnataka)
+    const intra = await payingUser('gst-ka@example.com', { billingStateCode: '29', billingAddress: '12 MG Road, Bengaluru 560001' });
+    const i1 = (await intra.get('/billing/invoices')).json().items[0];
+    expect(i1.number).toMatch(/^MA\/\d{2}-\d{2}\/\d{5}$/);
+    const v1 = (await intra.get(`/billing/invoices/${i1.id}`)).json().invoice;
+    expect(v1).toMatchObject({ total: 299, taxable: 253.39, igst: 0, pos: '29', sac: '997156' });
+    expect(+(v1.cgst + v1.sgst).toFixed(2)).toBe(45.61); expect(Math.abs(v1.cgst - v1.sgst)).toBeLessThan(0.02);
+    expect(v1.buyer.address).toContain('MG Road');
+    const pdf = await intra.get(`/billing/invoices/${i1.id}/pdf`);
+    expect(pdf.statusCode).toBe(200);
+    expect(pdf.headers['content-type']).toContain('application/pdf');
+    const raw = pdf.rawPayload.toString('latin1');
+    expect(raw.startsWith('%PDF-1.4')).toBe(true);
+    for (const t of ['TAX INVOICE', i1.number, 'CGST @ 9%', 'SGST @ 9%', 'Rupees Two Hundred Ninety Nine Only', 'Karnataka \\(29\\)', '997156']) expect(raw).toContain(t);
+    // another state → IGST; invoice numbers are consecutive
+    const inter = await payingUser('gst-mh@example.com', { billingStateCode: '27', billingGstin: '27ABCDE1234F1Z5' });
+    const i2 = (await inter.get('/billing/invoices')).json().items[0];
+    expect(+i2.number.slice(-5)).toBeGreaterThan(+i1.number.slice(-5));
+    const v2 = (await inter.get(`/billing/invoices/${i2.id}`)).json().invoice;
+    expect(v2).toMatchObject({ igst: 45.61, cgst: 0, sgst: 0, pos: '27' });
+    expect(v2.buyer.gstin).toBe('27ABCDE1234F1Z5');
+    expect((await inter.get(`/billing/invoices/${i2.id}/pdf`)).rawPayload.toString('latin1')).toContain('IGST @ 18%');
+    // someone else's invoice is not reachable
+    expect((await intra.get(`/billing/invoices/${i2.id}/pdf`)).statusCode).toBe(404);
+    // billing details are validated
+    expect((await inter.patch('/me', { billingGstin: 'NOT-A-GSTIN' })).statusCode).toBe(400);
+    expect((await inter.patch('/me', { billingStateCode: '29', billingGstin: '27ABCDE1234F1Z5' })).statusCode).toBe(400);
   });
 });

@@ -7,7 +7,7 @@ import { type Ctx, http } from './shared.js';
 import { mockAnswer } from './mock-ai.js';
 
 export interface AiProvider { name: string; complete(i: { system: string; messages: { role: 'user' | 'assistant'; content: string }[]; maxTokens?: number }): Promise<{ text: string; tokensIn: number; tokensOut: number }> }
-export const mockAi = (ctx: Ctx): AiProvider => ({ name: 'mock', async complete(i) { const q = i.messages.at(-1)?.content ?? ''; return { text: await mockAnswer(ctx.db, q), tokensIn: 0, tokensOut: 0 }; } });
+export const mockAi = (ctx: Ctx): AiProvider => ({ name: 'mock', async complete(i) { const q = i.messages.at(-1)?.content ?? ''; return { text: await mockAnswer(ctx.db, q, !i.system.includes('subscribers only')), tokensIn: 0, tokensOut: 0 }; } });
 export const anthropic = (ctx: Ctx): AiProvider => ({
   name: 'anthropic',
   async complete(i) {

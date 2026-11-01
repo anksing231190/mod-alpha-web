@@ -4,7 +4,7 @@
    ========================================================================== */
 
 /** Demo audit entries. */
-const V22_AUDIT=[['28 Oct 2026 10:42','admin.demo','SIP_DATE_PUBLISHED','November 2026 · v1.0','Success','Configuration','calendar'],['27 Oct 2026 16:18','data.ops','NAV_BATCH_PUBLISHED','NAV-DEMO-028','Success','Data','db'],['26 Oct 2026 13:04','superadmin.demo','PLAN_CONFIGURATION_UPDATED','Premium plan','Success','Subscription','crown'],['25 Oct 2026 11:32','admin.demo','NOTIFICATION_TEMPLATE_EDITED','SIP reminder','Success','Configuration','bell'],['24 Oct 2026 09:12','system.demo','LOGIN_RATE_LIMIT_EVENT','Auth service','Blocked','Access','shield'],['23 Oct 2026 18:47','admin.demo','USER_SUSPENDED','U-10024','Success','Access','user']];
+const V22_AUDIT=[['28 Oct 2026 10:42','admin','SIP_DATE_PUBLISHED','November 2026 · v1.0','Success','Configuration','calendar'],['27 Oct 2026 16:18','data.ops','NAV_BATCH_PUBLISHED','NAV-028','Success','Data','db'],['26 Oct 2026 13:04','superadmin','PLAN_CONFIGURATION_UPDATED','Premium plan','Success','Subscription','crown'],['25 Oct 2026 11:32','admin','NOTIFICATION_TEMPLATE_EDITED','SIP reminder','Success','Configuration','bell'],['24 Oct 2026 09:12','system','LOGIN_RATE_LIMIT_EVENT','Auth service','Blocked','Access','shield'],['23 Oct 2026 18:47','admin','USER_SUSPENDED','U-10024','Success','Access','user']];
 
 /** Audit log screen. */
 function adminAudit(){return `<div class="v22 v22-adm">${v22Head('Audit Logs','Review administrative actions and sensitive platform events.',`<button type="button" class="v22-outline-btn" data-action="export-audit">${ic('download')} Export logs</button>`,'ADMIN · SECURITY')}${adminNotice()}

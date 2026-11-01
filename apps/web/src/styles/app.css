@@ -2097,3 +2097,38 @@ html[lang="hi"] :where(.v22-eyebrow,.v22-crumb,.side-label,th,.hd-best small){te
    ========================================================================== */
 :root{--vh100:100vh;--ma-sidebar-width:272px}
 @media (min-width:1100px){html{zoom:.85}:root{--vh100:calc(100vh / .85)}}
+
+/* ==========================================================================
+   Locked SIP date (no paid plan): blurred placeholder day + lock message + See plans.
+   The real day is never sent to these users; the blurred number is a placeholder.
+   ========================================================================== */
+.ma-sip-locked{position:relative}
+.ma-blur{filter:blur(9px);user-select:none;opacity:.75}
+.ma-locked-val{font-style:normal;filter:blur(7px);user-select:none}
+.ma-lock-over{display:grid;justify-items:center;text-align:center;gap:6px;margin:18px 0 6px;padding:14px;border-radius:12px;border:1px dashed rgba(124,179,255,.35);background:rgba(124,179,255,.06)}
+.ma-lock-over b{font-size:15px}
+.ma-lock-over small{font-size:12.5px;color:#8ea0c4;max-width:240px}
+.ma-sip-locked .v22-best-act a.v22-grad-btn{display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;width:100%}
+.ma-cal-locked .v22-cal-days span{pointer-events:none}
+html[data-theme="light"] .ma-lock-over{border-color:rgba(139,90,43,.35);background:rgba(139,90,43,.06)}
+html[data-theme="light"] .ma-lock-over small{color:#6b5641}
+
+/* Settings → Profile: billing details and privacy sections (v23.18) */
+.v22-set-h .v22-set-sub{margin-left:auto;font-size:12.5px;font-weight:500;color:#8ea0c4}
+.v22-fl .v22-opt{font-style:normal;font-weight:400;font-size:12px;color:#8ea0c4}
+.v22-fl-wide{grid-column:1/-1}
+.ma-data-acts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+.ma-data-acts .v22-act{border:1px solid var(--v-border,rgba(255,255,255,.1));border-radius:14px;padding:16px}
+@media (max-width:760px){.ma-data-acts{grid-template-columns:1fr}}
+html[data-theme="light"] .v22-set-h .v22-set-sub,html[data-theme="light"] .v22-fl .v22-opt{color:#6b5641}
+html[data-theme="light"] .ma-data-acts .v22-act{border-color:rgba(139,90,43,.2)}
+
+/* Sign-in cards (login, sign-up, reset password, admin codes): no logo inside the card — the top bar shows it. */
+.v22-auth-card .v22-auth-brand{display:none}
+
+/* Billing history (GST invoices) pop-up: wide enough for one line per invoice */
+.modal:has(.ma-inv-hist){width:min(820px,94vw);max-width:820px}
+.ma-inv-hist th,.ma-inv-hist td{white-space:nowrap}
+.ma-inv-hist .v22-row-btn{display:inline-flex;align-items:center;gap:6px}
+.v22-set-who>div{min-width:0}
+.v22-set-who small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
