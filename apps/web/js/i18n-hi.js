@@ -428,3 +428,5 @@ Object.assign(window.MA_I18N_DICT, {
   'Too many attempts. Log in again to get new codes.': 'बहुत ज़्यादा प्रयास। नए कोड के लिए फिर से लॉग इन करें।',
 });
 Object.assign(window.MA_I18N_DICT,{'Reminder:':'रिमाइंडर:'});
+Object.assign(window.MA_I18N_DICT, { 'Illustrative': 'उदाहरण', 'Fund Analytics': 'फंड एनालिटिक्स', 'SIP Intelligence': 'SIP इंटेलिजेंस', 'Portfolio Insights': 'पोर्टफ़ोलियो इनसाइट्स',
+ 'SMART REMINDERS': 'स्मार्ट रिमाइंडर', 'A reminder before every best SIP date': 'हर सबसे अच्छी SIP तारीख से पहले रिमाइंडर', 'HIGHER RETURNS': 'ज़्यादा रिटर्न', 'vs a fixed-date SIP (backtest)': 'फ़िक्स्ड-डेट SIP की तुलना में (बैकटेस्ट)' });

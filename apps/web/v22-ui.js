@@ -165,14 +165,32 @@ function v22HeroArtC(){
  <div class="hc-legend"><span><i class="m"></i>MOD Alpha (AI dates)</span><span><i class="f"></i>Fixed date</span><em>Illustrative backtest</em></div></div>`;
 }
 function v22HeroArtD(){
- return `<div class="v22-hero-art hd" aria-hidden="true"><div class="hb-glow"></div>
- <svg class="hd-bg" viewBox="0 0 900 600" preserveAspectRatio="xMaxYMid slice"><path d="M0 470 L120 440 L230 450 L340 400 L450 410 L560 340 L660 350 L760 260 L900 200" fill="none" stroke="#3b82f6" stroke-opacity=".5" stroke-width="1.2"/><path d="M0 500 L150 485 L300 470 L450 455 L600 430 L750 410 L900 380" fill="none" stroke="#94a3b8" stroke-opacity=".35" stroke-width="1" stroke-dasharray="4 6"/></svg>
+ // Lucide icon paths (lucide.dev, ISC licence)
+ const L=(d)=>`<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+ const SPARK=L('<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>');
+ const CAL=L('<path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h5"/><path d="M17.5 17.5 16 16.3V14"/><circle cx="16" cy="16" r="6"/>');
+ const PIE=L('<path d="M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z"/><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>');
+ const ARC='M20 372 A270 316 0 0 1 560 372';
+ const mark=typeof v22BrandMark==='function'?v22BrandMark(18):v22Mark(20,'hdM1');
+ return `<div class="v22-hero-art hd hd-orbit-art" aria-hidden="true"><div class="hd-stage">
+ <svg class="hd-orbit-svg" viewBox="0 0 580 560"><defs><radialGradient id="hdDotG"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient><path id="hdArc" d="${ARC}"/></defs>
+  <g class="hd-globe">${[0,1,2,3].map(k=>`<ellipse cx="290" cy="372" rx="${270-k*58}" ry="316" />`).join('')}<ellipse cx="290" cy="560" rx="300" ry="70"/><ellipse cx="290" cy="620" rx="320" ry="120"/></g>
+  <path d="${ARC}" class="hd-arc"/>
+  <path d="M70 216 V400" class="hd-dash"/><path d="M510 216 V400" class="hd-dash"/><path d="M290 96 V118" class="hd-dash"/>
+  <path d="M176 452 L192 440" class="hd-dash"/><path d="M404 452 L388 440" class="hd-dash"/>
+  <circle r="4" class="hd-comet"><animateMotion dur="7s" repeatCount="indefinite" rotate="auto"><mpath href="#hdArc"/></animateMotion></circle>
+  <circle r="3" class="hd-comet b"><animateMotion dur="7s" begin="-3.5s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#hdArc"/></animateMotion></circle>
+ </svg>
+ <div class="hd-node top" style="left:290px;top:56px"><span>${SPARK}</span><b>Fund Analytics</b></div>
+ <div class="hd-node" style="left:70px;top:186px"><span>${CAL}</span><b>SIP Intelligence</b></div>
+ <div class="hd-node" style="left:510px;top:186px"><span>${PIE}</span><b>Portfolio Insights</b></div>
  <div class="hd-phone"><div class="hd-notch"></div><div class="hd-time">9:41</div><div class="hd-date">Thursday, 12 November</div>
-  <div class="hd-card n1">${v22Mark(20,'hdM1')}<div><b>Mod Alpha <small>now</small></b><p>Today is your AI-recommended SIP date. Historically +2.8% vs a fixed date.</p></div></div>
+  <div class="hd-card n1"><span class="hd-app">${mark}</span><div><b>Mod Alpha <small>now</small></b><p>Today is your AI-recommended SIP date. Historically +2.8% vs a fixed date.</p></div></div>
   <div class="hd-card n2"><div class="hd-best"><small>NOVEMBER BEST DATE</small><strong>12</strong><span>${ic('target')} Highest confidence</span></div><div class="hd-alts"><span>5th</span><span>20th</span><span>26th</span></div></div>
   <div class="hd-home"></div></div>
- <div class="v22-float hd-f1"><span class="v22-float-ic">${ic('bell')}</span><span>Reminder before<br>every best date</span></div>
- <div class="v22-float hd-f2"><b>${ic('trend')} +18.5%</b><small>Higher returns<br>vs fixed SIP</small></div></div>`;
+ <div class="hd-info l"><small>SMART REMINDERS</small><p>A reminder before every best SIP date</p></div>
+ <div class="hd-info r"><small>HIGHER RETURNS</small><p><b>+18.5%</b> vs a fixed-date SIP (backtest)</p></div>
+ </div></div>`;
 }
 (function(){const base=v22Hero;v22Hero=function(){let h=base();const v=v22HeroVariant();
  if(v!=='hero-a'){const i=h.indexOf('<div class="v22-hero-art"'),j=h.lastIndexOf('</section>');h=h.slice(0,i)+({'hero-b':v22HeroArtB,'hero-c':v22HeroArtC,'hero-d':v22HeroArtD}[v])()+'\n '+h.slice(j)}

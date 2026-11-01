@@ -190,7 +190,7 @@ function fundTab(f,tab){
   <section class="v22-summary"><article><b class="lav">${inr(invested)}</b><small>Invested on 01 Jan 2021</small></article><article><b class="vio">${inr(cur)}</b><small class="ul">Current Value</small></article><article><b class="pos">+${tot.toFixed(1)}%</b><small>Total Returns</small></article><article><b class="pos">${f.returns[5].toFixed(1)}%</b><small>CAGR</small></article><article><b class="sky">5.7 years</b><small>Time Period</small></article></section>`;
  }
  if(tab==='nav')return `<section class="v22-card"><div class="v22-card-head"><h2>NAV History</h2><span class="v22-muted">Illustrative sample NAV data</span></div><div class="table-scroll"><table class="v22-table"><thead><tr><th>Date</th><th>NAV</th><th>Change</th><th>Source</th></tr></thead><tbody>${v22DetailSeries(f,'1Y').slice(-12).reverse().map((v,i,a)=>`<tr><td>${String(30-i*2).padStart(2,'0')} Sep 2026</td><td>₹${v.toFixed(2)}</td><td class="${a[i+1]&&v<a[i+1]?'neg':'pos'}">${a[i+1]?((v/a[i+1]-1)*100).toFixed(2)+'%':'—'}</td><td>Demo dataset</td></tr>`).join('')}</tbody></table></div></section>`;
- if(tab==='ai')return `<section class="v22-insight-row"><div class="v22-insight-logo">${v22Mark(30)}</div><div class="v22-insight-body"><b>AI Insight ${ic('target')}</b><p>${esc(f.short)} shows a ${f.returns[5].toFixed(1)}% illustrative 5-year CAGR in this sample dataset. Review volatility, benchmark (${esc(f.benchmark)}), expense ratio and your horizon before deciding.</p></div></section>`;
+ if(tab==='ai')return `<section class="v22-insight-row v2"><span class="v22-ins-badge">${v22BrandMark(28)}</span><div class="v22-insight-body"><b>AI Insight <em>Illustrative</em></b><p>${esc(f.short)} shows a ${f.returns[5].toFixed(1)}% illustrative 5-year CAGR in this sample dataset. Review volatility, benchmark (${esc(f.benchmark)}), expense ratio and your horizon before deciding.</p></div></section>`;
  return `<section class="v22-card"><h2 class="v22-h2">Fund Information</h2><div class="v22-info-grid">${[['Scheme name',f.name],['AMC',f.amc],['Category',f.category],['Asset class',f.type],['Plan',f.plan],['Option',f.option],['Benchmark',f.benchmark],['AUM',f.aum],['Inception date',f.inception],['Riskometer',f.risk]].map(([a,b])=>`<div><span>${a}</span><b>${esc(b)}</b></div>`).join('')}</div></section>`;
 }
 
@@ -216,7 +216,7 @@ function whatIf(){
  <article class="v22-card v22-input-card"><label class="v22-label" for="calc-amount">Investment Amount</label><div class="v22-field">${ic('wallet')}<input id="calc-amount" value="${Number(v22WhatIf.amount).toLocaleString('en-IN')}" inputmode="numeric" aria-label="Investment amount in rupees"></div><div class="v22-opts">${[[10000,'10K'],[50000,'50K'],[100000,'1L'],[500000,'5L'],[1000000,'10L']].map(x=>`<button type="button" data-v22-amount="${x[0]}" class="${v22WhatIf.amount===x[0]?'active':''}">${x[1]}</button>`).join('')}</div></article></section>
  <section class="v22-journey-grid"><article class="v22-card"><h2 class="v22-h2">Investment Journey</h2><div id="v22-journey">${v22JourneyChart(r,v22WhatIf.amount)}</div></article>
  <article class="v22-card v22-results"><h2 class="v22-h2 sm">Results</h2><div class="v22-result-box" id="v22-results">${v22ResultRows(r)}</div></article></section>
- <section class="v22-insight-row"><div class="v22-insight-logo">${v22Mark(30)}</div><div class="v22-insight-body"><b>AI Insight <span class="v22-ins-ic">${ic('target')}</span></b><p id="v22-insight-text">${v22InsightText(r,d)}</p></div></section>
+ <section class="v22-insight-row v2"><span class="v22-ins-badge">${v22BrandMark(28)}</span><div class="v22-insight-body"><b>AI Insight <em>Illustrative</em></b><p id="v22-insight-text">${v22InsightText(r,d)}</p></div></section>
  <p class="v22-note">Illustrative values for interface testing only. Actual calculations require verified historical NAV data and precise date handling.</p></div>`;
 }
 function v22ResultRows(r){return [['Current Value',inr(r.value),''],['Absolute Gain',inr(r.gain),''],['Total Return','+'+r.ret.toFixed(1)+'%','pos'],['CAGR',r.cagr.toFixed(1)+'%','pos'],['Holding Period',r.yrs.toFixed(1)+' years','']].map(x=>`<div><span>${x[0]}</span><b class="${x[2]}">${x[1]}</b></div>`).join('')}
@@ -418,7 +418,7 @@ function flowLarge(){
   <div class="v22-conn fibers" style="--i:0"><svg viewBox="0 0 130 300" preserveAspectRatio="none" aria-hidden="true">${fibers}${fdots}</svg></div>
   <div class="v22-stage engine" style="--i:1">${head(1)}<div class="v22-vis"><div class="v22-engine">
    <span class="v22-chip tl">${ic('trend')}<b>Pattern<br>Analysis</b></span><span class="v22-chip tr">${ic('bars')}<b>Volatility<br>Windows</b></span>
-   <div class="v22-core"><div class="v22-core-glow"></div>${v22Mark(64,'coreM')}<b>Mod Alpha<br>AI Engine</b></div>
+   <div class="v22-core"><div class="v22-core-glow"></div><span class="v22-core-mark">${v22BrandMark(46)}</span><b>Mod Alpha<br>AI Engine</b></div>
    <span class="v22-chip bl">${ic('clock')}<b>Historical<br>Backtesting</b></span><span class="v22-chip br">${ic('brain')}<b>Multi-Factor<br>Scoring</b></span>
    <svg class="v22-engine-out" viewBox="0 0 70 300" preserveAspectRatio="none" aria-hidden="true">${outf}</svg></div></div></div>
   <div class="v22-conn" style="--i:1">${arrow}</div>

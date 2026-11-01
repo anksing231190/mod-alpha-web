@@ -391,3 +391,18 @@ html[data-theme="light"] #app>.public-footer,html[data-theme="light"] #app>.publ
 html[data-theme="light"] .modal.ma-modal-wide .ma-tpl-actions{background:linear-gradient(180deg,rgba(255,250,241,0),#fffaf1 30%)!important}
 html[data-theme="light"] .v22-mini-table.v22-compact td small{color:#6b5641!important}
 html[data-theme="light"] .sidebar.v22-side>.side-bottom{border-top-color:var(--sand-line)!important}
+/* insight banner + orbit hero (light) */
+html[data-theme="light"] .v22-insight-row.v2{background:linear-gradient(90deg,#f6eadf,#fffaf1)!important;border-color:var(--sand-line2)!important;border-left-color:#8e4a6c!important}
+html[data-theme="light"] .v22-insight-row.v2 .v22-ins-badge{background:#fffaf1!important;border-color:var(--sand-line2)!important}
+html[data-theme="light"] .v22-insight-row.v2 .v22-insight-body b{color:var(--sand-text)!important}
+html[data-theme="light"] .v22-insight-row.v2 .v22-insight-body b em{background:#f1e2ea!important;color:#7d3d5d!important}
+html[data-theme="light"] .v22-insight-row.v2 .v22-insight-body p{color:#3f3226!important}
+html[data-theme="light"] .hd-globe ellipse{stroke:rgba(127,75,34,.12)!important}
+html[data-theme="light"] .hd-arc,html[data-theme="light"] .hd-dash{stroke:rgba(168,105,47,.55)!important}
+html[data-theme="light"] .hd-node span{background:radial-gradient(circle at 35% 30%,#fffaf1,#efdcbc)!important;color:#7f4b22!important;border-color:#c99a62!important}
+html[data-theme="light"] .hd-node b{color:var(--sand-text)!important}
+html[data-theme="light"] .hd-info{background:rgba(255,250,241,.92)!important;border-color:var(--sand-line2)!important;box-shadow:0 10px 26px rgba(94,64,32,.14)}
+html[data-theme="light"] .hd-info small{color:#7f4b22!important}
+html[data-theme="light"] .hd-info p{color:#54442f!important}
+html[data-theme="light"] .hd-info p b{color:#4a6b36!important}
+html[data-theme="light"] .hd-app{background:#2b2118!important}
