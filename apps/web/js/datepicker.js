@@ -24,7 +24,7 @@
   let pop = null, st = null;   // st: { get, set, min, max, view, mode, sel, anchor, rangeOther, rangeRole }
 
   /* ---------- rendering ---------- */
-  function within(d) { return (!st.min || d >= st.min) && (!st.max || d <= st.max); }
+  function within(d) { if (st.monthOnly) { const e = new Date(d.getFullYear(), d.getMonth() + 1, 0); return (!st.min || e >= st.min) && (!st.max || d <= st.max); } return (!st.min || d >= st.min) && (!st.max || d <= st.max); }
   function render() {
     const v = st.view, y = v.getFullYear(), m = v.getMonth();
     let body = '';
@@ -52,8 +52,8 @@
         <button type="button" class="ma-dp-title" data-dp-mode aria-label="${T('Choose month and year')}"><span>${title}</span>${ICON.d}</button>
         <button type="button" class="ma-dp-nav" data-dp-step="1" aria-label="${T('Next month')}">${ICON.r}</button></div>
       ${body}
-      <div class="ma-dp-foot"><span class="ma-dp-sel">${st.sel ? `${st.sel.getDate()} ${MON_S[st.sel.getMonth()]} ${st.sel.getFullYear()}` : T('No date selected')}</span>
-        <div>${st.clearable ? `<button type="button" class="ma-dp-link" data-dp-clear>${T('Clear')}</button>` : ''}<button type="button" class="ma-dp-today" data-dp-today ${within(t) ? '' : 'disabled'}>${T('Today')}</button></div></div>`;
+      <div class="ma-dp-foot"><span class="ma-dp-sel">${st.sel ? (st.monthOnly ? `${MON[st.sel.getMonth()]} ${st.sel.getFullYear()}` : `${st.sel.getDate()} ${MON_S[st.sel.getMonth()]} ${st.sel.getFullYear()}`) : T('No date selected')}</span>
+        <div>${st.clearable ? `<button type="button" class="ma-dp-link" data-dp-clear>${T('Clear')}</button>` : ''}<button type="button" class="ma-dp-today" data-dp-today ${st.monthOnly || within(t) ? '' : 'disabled'}>${T(st.monthOnly ? 'This month' : 'Today')}</button></div></div>`;
     if (st.mode === 'days' && st.kbd) pop.querySelector('.ma-dp-day.focus')?.focus({ preventScroll: true });
   }
   function place() {
@@ -69,7 +69,7 @@
   /* ---------- open / close ---------- */
   function open(opts) {
     close();
-    st = { ...opts, mode: 'days', kbd: !opts.noFocus };
+    st = { ...opts, mode: opts.monthOnly ? 'months' : 'days', kbd: !opts.noFocus };
     st.sel = st.get();
     st.focus = st.sel || (st.max && today() > st.max ? st.max : today());
     st.view = new Date(st.focus.getFullYear(), st.focus.getMonth(), 1);
@@ -97,10 +97,11 @@
     e.preventDefault(); st.kbd = true;
     if (t.dataset.dpDay) return choose(fromIso(t.dataset.dpDay));
     if (t.dataset.dpStep) { const k = +t.dataset.dpStep, v = st.view; st.view = st.mode === 'days' ? new Date(v.getFullYear(), v.getMonth() + k, 1) : new Date(v.getFullYear() + k * (st.mode === 'years' ? 12 : 1), v.getMonth(), 1); if (st.mode === 'days') st.focus = new Date(st.view); return render(); }
-    if (t.hasAttribute('data-dp-mode')) { st.mode = st.mode === 'days' ? 'months' : st.mode === 'months' ? 'years' : 'days'; return render(); }
+    if (t.hasAttribute('data-dp-mode')) { st.mode = st.monthOnly ? (st.mode === 'months' ? 'years' : 'months') : st.mode === 'days' ? 'months' : st.mode === 'months' ? 'years' : 'days'; return render(); }
+    if (t.dataset.dpMonth && st.monthOnly) return choose(new Date(st.view.getFullYear(), +t.dataset.dpMonth, 1));
     if (t.dataset.dpMonth) { st.view = new Date(st.view.getFullYear(), +t.dataset.dpMonth, 1); st.focus = new Date(st.view); st.mode = 'days'; return render(); }
     if (t.dataset.dpYear) { st.view = new Date(+t.dataset.dpYear, st.view.getMonth(), 1); st.mode = 'months'; return render(); }
-    if (t.hasAttribute('data-dp-today')) return choose(today());
+    if (t.hasAttribute('data-dp-today')) { const d = today(); return choose(st.monthOnly ? new Date(d.getFullYear(), d.getMonth(), 1) : d); }
     if (t.hasAttribute('data-dp-clear')) { st.set(null); close(true); }
   });
   document.addEventListener('keydown', (e) => {
@@ -144,14 +145,17 @@
 
   /* ---------- 2) native <input type="date"> → styled trigger ---------- */
   const proto = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+  const fromYm = (s) => { const m = /^(\d{4})-(\d{2})$/.exec(s || ''); return m ? new Date(+m[1], +m[2] - 1, 1) : null; };
+  const ym = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
   function fmt(s) { const d = fromIso(s); return d ? `${pad(d.getDate())} ${MON_S[d.getMonth()]} ${d.getFullYear()}` : T('Select date'); }
   function enhance(input) {
     if (input.dataset.dpReady || input.classList.contains('v22-hidden-date')) return;
     input.dataset.dpReady = '1';
+    const month = input.type === 'month', parse = month ? fromYm : fromIso, ser = month ? ym : iso;
     const trig = document.createElement('button');
     trig.type = 'button'; trig.className = 'ma-dp-trigger';
     trig.setAttribute('aria-haspopup', 'dialog');
-    const paint = () => { trig.innerHTML = `${ICON.cal}<span>${fmt(proto.get.call(input))}</span>`; };
+    const paint = () => { const v = proto.get.call(input), d = parse(v); trig.innerHTML = `${ICON.cal}<span>${month ? (d ? `${MON[d.getMonth()]} ${d.getFullYear()}` : T('Select month')) : fmt(v)}</span>`; };
     // keep the trigger in sync when code sets input.value (e.g. range presets)
     Object.defineProperty(input, 'value', { configurable: true, get() { return proto.get.call(this); }, set(v) { proto.set.call(this, v); paint(); } });
     input.type = 'hidden';
@@ -159,15 +163,15 @@
     const pairRole = /-from$/.test(input.id) ? 'from' : /-to$/.test(input.id) ? 'to' : null;
     const pairEl = () => pairRole && document.getElementById(input.id.replace(/-(from|to)$/, pairRole === 'from' ? '-to' : '-from'));
     trig.addEventListener('click', () => open({
-      anchor: trig, clearable: !input.required && !input.min && !input.max ? true : false,
-      min: fromIso(input.getAttribute('min')), max: fromIso(input.getAttribute('max')),
+      anchor: trig, monthOnly: month, clearable: !month && !input.required && !input.min && !input.max ? true : false,
+      min: parse(input.getAttribute('min')), max: parse(input.getAttribute('max')),
       rangeRole: pairRole, rangeOther: pairRole ? () => fromIso(pairEl()?.value) : null,
-      get: () => fromIso(input.value),
-      set: (d) => { input.value = d ? iso(d) : ''; input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true })); },
+      get: () => parse(input.value),
+      set: (d) => { input.value = d ? ser(d) : ''; input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true })); },
     }));
   }
-  const scan = (root) => root.querySelectorAll && root.querySelectorAll('input[type="date"]:not(.v22-hidden-date)').forEach(enhance);
-  new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach((n) => n.nodeType === 1 && (n.matches?.('input[type="date"]') ? enhance(n) : scan(n))))).observe(document.documentElement, { childList: true, subtree: true });
+  const scan = (root) => root.querySelectorAll && root.querySelectorAll('input[type="date"]:not(.v22-hidden-date),input[type="month"]').forEach(enhance);
+  new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach((n) => n.nodeType === 1 && (n.matches?.('input[type="date"],input[type="month"]') ? enhance(n) : scan(n))))).observe(document.documentElement, { childList: true, subtree: true });
   if (document.body) scan(document.body); else document.addEventListener('DOMContentLoaded', () => scan(document.body));
   window.MA_DATEPICKER = { open, close };
 })();

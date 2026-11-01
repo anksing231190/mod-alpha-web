@@ -33,7 +33,7 @@ function v22AuthAnim(cv){
  let mx=-999,my=-999;cv.parentElement.parentElement.addEventListener('pointermove',e=>{const r=cv.getBoundingClientRect();mx=e.clientX-r.left;my=e.clientY-r.top});
  const draw=()=>{if(!cv.isConnected){removeEventListener('resize',size);return}t+=.006;ctx.clearRect(0,0,W,H);const lt=document.documentElement.dataset.theme==='light';
   // flowing waves
-  for(let k=0;k<14;k++){ctx.beginPath();const base=H*.62+k*9,amp=40+k*5;for(let x=0;x<=W;x+=12){const y=base+Math.sin(x/260+t*2+k*.35)*amp*.5+Math.sin(x/120-t*3+k)*8;x?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.strokeStyle=`rgba(${lt?(k%2?'142,74,108':'168,105,47'):(k%2?'99,102,241':'59,130,246')},${(lt?.07:.05)+k*.012})`;ctx.lineWidth=1;ctx.stroke()}
+  for(let k=0;k<(cv.dataset.noWaves?0:14);k++){ctx.beginPath();const base=H*.62+k*9,amp=40+k*5;for(let x=0;x<=W;x+=12){const y=base+Math.sin(x/260+t*2+k*.35)*amp*.5+Math.sin(x/120-t*3+k)*8;x?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.strokeStyle=`rgba(${lt?(k%2?'142,74,108':'168,105,47'):(k%2?'99,102,241':'59,130,246')},${(lt?.07:.05)+k*.012})`;ctx.lineWidth=1;ctx.stroke()}
   // particles + links
   for(const p of pts){p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;const dm=Math.hypot(p.x-mx,p.y-my);if(dm<140){p.x+=(p.x-mx)/dm*.6;p.y+=(p.y-my)/dm*.6}}
   for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){const a=pts[i],b=pts[j],d=Math.hypot(a.x-b.x,a.y-b.y);if(d<130){ctx.strokeStyle=`rgba(${lt?'150,98,52':'96,165,250'},${(1-d/130)*(lt?.28:.22)})`;ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}}

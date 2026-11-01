@@ -288,7 +288,7 @@ function v22ReminderState(){return (window.MA_REMINDER&&MA_REMINDER.get())||{mod
 function v22ReminderCard(SP,MN){
  const y=v22CalMonth.y,pick=v22PickDay&&v22PickDay!==SP.day?v22PickDay:null,alt=pick&&SP.alts.find(a=>a[0]===pick),st=v22ReminderState();
  const day=pick||SP.day,wd=new Date(y,v22CalMonth.m,day).toLocaleDateString('en-GB',{weekday:'long'});
- const now=`<p class="v22-rem-now">${ic('bell')}<span>Your reminder: <b>${st.mode==='custom'&&st.day?`day ${st.day} of every month`:'Mod Alpha date'}</b></span></p>`;
+ const now=`<p class="v22-rem-now">${ic('bell')}<span>Reminder: <b>${st.mode==='custom'&&st.day?`day ${st.day} of every month`:'Mod Alpha date'}</b></span></p>`;
  const tag=pick?'<em class="mine">Your date</em>':'<em>Best Date</em>';
  const gain=pick?(alt?`<strong class="v22-best-gain">+${alt[1]}%<small>vs. fixed date SIP</small></strong>`:`<p class="v22-best-sub">Not a Mod Alpha recommended date</p>`):`<strong class="v22-best-gain">+${SP.uplift}%<small>vs. fixed date SIP</small></strong>`;
  return `<div class="v22-best ${pick?'is-custom':''}"><div class="v22-best-info"><div class="v22-best-top">${tag}</div>
@@ -638,7 +638,7 @@ const V22_SOCIAL=[
  const fq=document.getElementById('faq-preview');if(fq)fq.outerHTML=v22Faq();
  document.querySelector('.v22-how-replay')?.remove();
  // faint version of the login-page particle animation behind the whole landing page
- if(typeof v22AuthAnim==='function'&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const bg=document.createElement('div');bg.className='v22-land-bg';bg.setAttribute('aria-hidden','true');bg.innerHTML='<div><canvas></canvas></div>';app.prepend(bg);v22AuthAnim(bg.querySelector('canvas'))}
+ if(typeof v22AuthAnim==='function'&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const bg=document.createElement('div');bg.className='v22-land-bg';bg.setAttribute('aria-hidden','true');bg.innerHTML='<div><canvas></canvas></div>';app.prepend(bg);bg.querySelector('canvas').dataset.noWaves='1';v22AuthAnim(bg.querySelector('canvas'))}
  v22InitReveal();}})();
 (function(){const base=renderPublic;renderPublic=function(type){if(type==='faq'){app.innerHTML=`${topbar(true)}<main class="public-page v22-public-faq">${v22Faq(true)}</main>${publicFooter()}`;v22InitReveal();return}base(type);v22InitReveal()}})();
 function v22InitReveal(){
@@ -789,7 +789,7 @@ function adminData(){return `<div class="v22 v22-adm">${v22Head('Data Management
  <p class="v22-callout">${cic('shield',20)} Files are staged, schema-checked, deduplicated and reconciled before atomic publishing. This prototype simulates validation only and does not persist uploaded NAV data.</p></div>`}
 
 /* ---------------- Admin: Notifications ---------------- */
-function adminNotifications(){return `<div class="v22 v22-adm">${v22Head('Notifications','Manage templates, subscriber campaigns, delivery status and consent-aware reminders.',`<button type="button" class="v22-grad-btn" data-action="new-campaign">${ic('spark')} New campaign</button>`,'ADMIN · MESSAGING')}${adminNotice()}
+function adminNotifications(){return `<div class="v22 v22-adm">${v22Head('Notifications','Manage templates, subscriber campaigns, delivery status and consent-aware reminders.',`<button type="button" class="v22-grad-btn" data-action="new-campaign">${ic('spark')} Send announcement</button>`,'ADMIN · MESSAGING')}${adminNotice()}
  ${v22Kpis([['users','Scheduled recipients','3,218','Next SIP reminder · 12 Nov',''],['check','Delivery success','97.6%','+0.8% vs October','pos'],['refund','Failed / retry','78','Auto-retry in 30 min','warn'],['bell','Opt-in rate','88.4%','Consent-aware sends','']])}
  <section class="v22-card"><div class="v22-card-head"><h2>Notification templates</h2><span class="v22-muted">4 templates</span></div>${window.MA_TPL?MA_TPL.grid(MA_TPL.demoList(),'data-ma-tpl-demo'):''}</section>
  <div class="v22-notif-two"><section class="v22-card"><div class="v22-card-head"><h2>Recent campaigns</h2><span class="v22-pill neutral">Demo history</span></div>${[['November SIP reminder','Email + In-app',3218,3140,78,'Scheduled'],['October SIP reminder','Email',3101,3022,79,'Completed'],['Pro plan launch','Email + Push',8840,8655,185,'Completed']].map(c=>`<div class="v22-camp"><div><b>${c[0]}</b><small>${c[1]} · ${c[2].toLocaleString('en-IN')} recipients</small></div><div class="v22-camp-bar"><i class="v22-bar"><em style="width:${(c[3]/c[2]*100).toFixed(1)}%"></em></i><small>${(c[3]/c[2]*100).toFixed(1)}% delivered · ${c[4]} failed</small></div>${v22Status(c[5])}</div>`).join('')}</section>

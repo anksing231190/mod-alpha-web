@@ -427,3 +427,4 @@ Object.assign(window.MA_I18N_DICT, {
   'New codes sent to your email and mobile.': 'आपके ईमेल और मोबाइल पर नए कोड भेजे गए।', 'This sign-in code has expired. Log in again.': 'इस साइन-इन कोड की समय-सीमा खत्म हो गई। फिर से लॉग इन करें।',
   'Too many attempts. Log in again to get new codes.': 'बहुत ज़्यादा प्रयास। नए कोड के लिए फिर से लॉग इन करें।',
 });
+Object.assign(window.MA_I18N_DICT,{'Reminder:':'रिमाइंडर:'});

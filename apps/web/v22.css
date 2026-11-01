@@ -1924,3 +1924,22 @@ html[lang="hi"] :where(.v22-eyebrow,.v22-crumb,.side-label,th,.hd-best small){te
 .v22-mini-box .v22-opts{display:flex!important;flex-wrap:wrap!important;gap:6px}
 .v22-mini-box .v22-opts button{flex:1 1 auto!important;min-width:max-content!important;padding:0 8px!important;font-size:13px!important;overflow:visible}
 .v22-opts button{overflow:visible;text-overflow:clip}
+
+/* v23.11 — sidebar keeps its shape at any resolution/zoom: menu scrolls, footer stays put */
+@media (min-width:861px){
+ .sidebar.v22-side{display:flex!important;flex-direction:column!important;overflow:hidden!important}
+ .sidebar.v22-side>.side-brand,.sidebar.v22-side>.side-label{flex:none}
+ .sidebar.v22-side>nav{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;align-content:start;padding-right:2px;scrollbar-width:thin}
+ .sidebar.v22-side>.side-bottom{flex:none;margin-top:12px!important;padding-top:12px;border-top:1px solid var(--v-border)}
+}
+.ma-env-badge{left:auto!important;right:12px!important;bottom:auto!important;top:12px!important}
+/* admin KPI tiles: no "Last month" line */
+.v22-akpi-prev{display:none!important}
+/* user dashboard KPI icons bigger */
+.v22-kpis .v22-tile{width:54px!important;height:54px!important;border-radius:14px!important}
+.v22-kpis .v22-tile .v22-ic{width:28px!important;height:28px!important}
+/* "Your reminder: Mod Alpha date" on one line */
+.v22-rem-now span{white-space:nowrap}
+.v22-cal-side .v22-rem-now{font-size:12.5px!important}
+.v22-cal-wrap{grid-template-columns:minmax(0,1.3fr) minmax(262px,1fr)!important}
+.v22-cal-side,.v22-cal-side .v22-best{min-width:0}

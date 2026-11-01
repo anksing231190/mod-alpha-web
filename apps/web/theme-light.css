@@ -7106,3 +7106,11 @@ html[data-theme="light"] .modal.ma-modal-wide .ma-tpl-actions {
 html[data-theme="light"] .v22-mini-table.v22-compact td small {
     color: #6b5542
 }
+@media (min-width:861px) {
+    html[data-theme="light"] .sidebar.v22-side>.side-bottom {
+        border-top: 1px solid var(--v-border)
+    }
+}
+html[data-theme="light"] .v22-kpis .v22-tile {
+    border-radius: 14px !important
+}

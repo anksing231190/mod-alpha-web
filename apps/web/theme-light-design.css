@@ -390,3 +390,4 @@ html[data-theme="light"] .ma-tpl-subj span{color:#6b5641!important}
 html[data-theme="light"] #app>.public-footer,html[data-theme="light"] #app>.public-footer span,html[data-theme="light"] #app>.public-footer .footer-link-col h3,html[data-theme="light"] #app>.public-footer a{color:#4a3a2c!important}
 html[data-theme="light"] .modal.ma-modal-wide .ma-tpl-actions{background:linear-gradient(180deg,rgba(255,250,241,0),#fffaf1 30%)!important}
 html[data-theme="light"] .v22-mini-table.v22-compact td small{color:#6b5641!important}
+html[data-theme="light"] .sidebar.v22-side>.side-bottom{border-top-color:var(--sand-line)!important}

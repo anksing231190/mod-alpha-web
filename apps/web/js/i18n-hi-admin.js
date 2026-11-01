@@ -208,3 +208,5 @@ Object.assign(window.MA_I18N_DICT, {
   'You receive this because SIP reminders are on. Unsubscribe: Settings → Notifications.': 'आपको यह इसलिए मिला क्योंकि SIP रिमाइंडर चालू हैं। बंद करें: सेटिंग्स → सूचनाएँ।',
   'Choose at least one channel.': 'कम से कम एक चैनल चुनें।', 'Template saved for this demo session.': 'टेम्पलेट इस डेमो सेशन के लिए सहेजा गया।',
 });
+Object.assign(window.MA_I18N_DICT, { 'Send announcement': 'घोषणा भेजें', 'Select month': 'महीना चुनें',
+  "One-off message to a group of users (e.g. a new feature or a service notice). Monthly SIP reminders are sent automatically when a SIP date is published — you don't need this for them.": 'यूज़र्स के किसी समूह को एक बार का संदेश (जैसे नई सुविधा या सेवा सूचना)। मासिक SIP रिमाइंडर SIP तारीख प्रकाशित होते ही अपने-आप भेजे जाते हैं — उनके लिए इसकी ज़रूरत नहीं है।' });
