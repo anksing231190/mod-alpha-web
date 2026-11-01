@@ -50,7 +50,7 @@ mod-alpha/
 | Test workbook | yes | yes (`npm run seed -- --workbook=…`) | **refused** |
 | Users/Subscriptions sheets in uploads | allowed | allowed | **rejected** (they come from real sign-ups/payments) |
 | Stage-only endpoints (`/billing/mock/complete`, `/kyc/mock/complete`, OTP `devCode`) | on | on | **off** |
-| UI badge | LOCAL | STAGE (bottom-left) | none |
+| UI badge | none (removed) | none (removed) | none |
 
 All differences are driven by `APP_ENV` and provider env vars, so the **same images** run in both environments.
 

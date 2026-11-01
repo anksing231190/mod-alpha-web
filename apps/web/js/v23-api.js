@@ -22,8 +22,7 @@
 
   // ------------------------------------------------------------------ environment badge
   if (API.env !== 'prod') {
-    const b = document.createElement('div'); b.className = 'ma-env-badge'; b.textContent = API.env.toUpperCase();
-    b.title = 'Non-production environment — payments, KYC and messages use test providers'; document.body.appendChild(b);
+    // no on-screen environment badge (removed on request); the environment is still shown in Admin → System Settings
   }
 
   // ------------------------------------------------------------------ data bootstrap (replaces the bundled workbook)
