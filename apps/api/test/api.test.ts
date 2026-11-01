@@ -377,3 +377,76 @@ describe('admin sign-in: password + email OTP + SMS OTP', () => {
     expect(acts).toEqual(expect.arrayContaining(['ADMIN_LOGIN_CHALLENGE', 'ADMIN_LOGIN_CODE_FAILED', 'ADMIN_LOGIN']));
   });
 });
+
+describe('session timeouts: 15 min inactivity, 12 h (users) / 8 h (admins) absolute limit', () => {
+  /** Move a session's clock back instead of waiting: last activity and/or absolute end. */
+  const age = (email: string, set: string) => db.query(`UPDATE sessions SET ${set} WHERE user_id=(SELECT id FROM users WHERE email=$1) AND revoked_at IS NULL`, [email]);
+
+  it('tells the browser its timers and caps users at 12 h, admins at 8 h', async () => {
+    const c = client(app);
+    const r = (await c.post('/auth/signup', { name: 'Timer User', email: 'timer@example.com', password: 'secret-pass-1' })).json();
+    expect(r.session.idleTimeoutSec).toBe(15 * 60);
+    const hours = (Date.parse(r.session.absoluteExpiresAt) - Date.now()) / 3600_000;
+    expect(hours).toBeGreaterThan(11.9); expect(hours).toBeLessThanOrEqual(12);
+    const s = (await c.get('/auth/session')).json();
+    expect(s).toMatchObject({ idleTimeoutSec: 900, warnBeforeSec: 60 });
+    const a = await adminClient(app);
+    const as = (await a.get('/auth/session')).json();
+    const ah = (Date.parse(as.absoluteExpiresAt) - Date.now()) / 3600_000;
+    expect(ah).toBeGreaterThan(7.9); expect(ah).toBeLessThanOrEqual(8);
+  });
+
+  it('ends a session after 15 minutes without activity; activity keeps it alive', async () => {
+    const c = client(app), other = client(app);
+    await c.post('/auth/signup', { name: 'Idle User', email: 'idle@example.com', password: 'secret-pass-1' });
+    // 14 minutes idle → still fine, and the heartbeat resets the clock
+    await age('idle@example.com', `last_seen_at = now() - interval '14 minutes'`);
+    expect((await c.get('/auth/me')).statusCode).toBe(200);
+    const hb = (await c.post('/auth/activity')).json();
+    expect(Date.now() - Date.parse(hb.lastSeenAt)).toBeLessThan(5000);
+    // background requests do not count as activity
+    await age('idle@example.com', `last_seen_at = now() - interval '10 minutes'`);
+    await c.raw('GET', '/me/notifications', undefined, { 'x-ma-background': '1' });
+    const seen = (await db.query(`SELECT last_seen_at FROM sessions WHERE user_id=(SELECT id FROM users WHERE email='idle@example.com') AND revoked_at IS NULL`)).rows[0].last_seen_at;
+    expect(Date.now() - new Date(seen).getTime()).toBeGreaterThan(9 * 60_000);
+    // a second device signs in; then this one goes idle for 16 minutes
+    await other.post('/auth/login', { email: 'idle@example.com', password: 'secret-pass-1' });
+    await db.query(`UPDATE sessions SET last_seen_at = now() - interval '16 minutes' WHERE refresh_hash=$1`, [crypto.createHash('sha256').update(c.jar.ma_rt).digest('hex')]);
+    const res = await c.get('/auth/me');
+    expect(res.statusCode).toBe(401);
+    expect(res.json().error).toMatchObject({ code: 'session_expired', details: { reason: 'idle' } });
+    // the refresh cookie cannot revive it, and the other device is NOT signed out
+    const rf = await c.post('/auth/refresh');
+    expect(rf.statusCode).toBe(401); expect(rf.json().error.details.reason).toBe('idle');
+    expect((await other.get('/auth/me')).statusCode).toBe(200);
+    const acts = (await db.query(`SELECT count(*)::int n FROM audit_log WHERE action='SESSION_TIMEOUT_IDLE'`)).rows[0].n;
+    expect(acts).toBe(1);
+  });
+
+  it('ends a session at its absolute limit, and refreshing never extends it', async () => {
+    const c = client(app);
+    await c.post('/auth/signup', { name: 'Long User', email: 'long@example.com', password: 'secret-pass-1' });
+    const before = (await c.get('/auth/session')).json().absoluteExpiresAt;
+    expect((await c.post('/auth/refresh')).statusCode).toBe(200);           // rotate the refresh token
+    expect((await c.get('/auth/session')).json().absoluteExpiresAt).toBe(before);
+    await age('long@example.com', `absolute_expires_at = now() - interval '1 second'`);
+    const res = await c.get('/auth/me');
+    expect(res.statusCode).toBe(401); expect(res.json().error.details.reason).toBe('absolute');
+    expect((await c.post('/auth/refresh')).statusCode).toBe(401);
+  });
+
+  it('records a sign-out triggered by the browser timer, and a password change ends the other devices only', async () => {
+    const c = client(app), d = client(app);
+    await c.post('/auth/signup', { name: 'Pw User', email: 'pw@example.com', password: 'secret-pass-1' });
+    await d.post('/auth/login', { email: 'pw@example.com', password: 'secret-pass-1' });
+    expect((await c.post('/me/password', { currentPassword: 'secret-pass-1', newPassword: 'secret-pass-2' })).json().otherSessionsEnded).toBe(1);
+    expect((await d.get('/auth/me')).statusCode).toBe(401);
+    expect((await c.get('/auth/me')).statusCode).toBe(200);
+    // replaying the password-change-ended refresh token on D does not sign out C (not treated as theft)
+    expect((await d.post('/auth/refresh')).statusCode).toBe(401);
+    expect((await c.get('/auth/me')).statusCode).toBe(200);
+    expect((await c.post('/auth/logout', { reason: 'idle' })).json().ok).toBe(true);
+    const a = (await db.query(`SELECT action FROM audit_log WHERE resource=(SELECT id::text FROM users WHERE email='pw@example.com') ORDER BY id DESC LIMIT 1`)).rows[0];
+    expect(a.action).toBe('SESSION_TIMEOUT_IDLE');
+  });
+});

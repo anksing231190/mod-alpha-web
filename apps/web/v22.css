@@ -1993,3 +1993,19 @@ html[lang="hi"] :where(.v22-eyebrow,.v22-crumb,.side-label,th,.hd-best small){te
 /* α mark on the cream tile everywhere (both themes) */
 .v22-core-mark,.v22-insight-row.v2 .v22-ins-badge,.hd-app{background:linear-gradient(160deg,#fffdf8,#f3e7d3)!important;border:1px solid #e2cfae!important;box-shadow:0 1px 2px rgba(94,64,32,.1),inset 0 1px 0 #fff!important}
 .v22-core-mark{width:72px!important;height:72px!important;border-radius:18px!important}
+
+/* ==========================================================================
+   v23.15 — Session timeout warning (js/session-timeout.js)
+   "Are you still there?" dialog shown 60 s before the inactivity sign-out.
+   ========================================================================== */
+.ma-sw-backdrop{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:16px;background:#020611c4;backdrop-filter:blur(6px);animation:maSwIn .18s ease-out}
+.ma-sw{width:min(420px,100%);text-align:center;background:#101b34;border:1px solid #3d5687;border-radius:18px;padding:26px 24px 22px;box-shadow:0 25px 80px #000b;color:#eef3ff}
+.ma-sw-ic{width:52px;height:52px;margin:0 auto 12px;border-radius:15px;display:grid;place-items:center;color:#fbbf24;background:#2a2410;border:1px solid #5c4a14}
+.ma-sw h3{margin:0 0 6px;font:700 20px Manrope,sans-serif}
+.ma-sw p{margin:0 auto 16px;max-width:330px;color:#a9b6d3;font-size:14px;line-height:1.5}
+.ma-sw-count{display:flex;flex-direction:column;align-items:center;gap:2px;margin:0 0 20px}
+.ma-sw-count b{font:800 40px/1 Manrope,sans-serif;font-variant-numeric:tabular-nums;color:#fbbf24}
+.ma-sw-count small{color:#8e9bb7;font-size:12px}
+.ma-sw-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.ma-sw-actions button{min-width:150px}
+@keyframes maSwIn{from{opacity:0}to{opacity:1}}

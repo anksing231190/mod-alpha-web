@@ -406,3 +406,11 @@ html[data-theme="light"] .hd-info small{color:#7f4b22!important}
 html[data-theme="light"] .hd-info p{color:#54442f!important}
 html[data-theme="light"] .hd-info p b{color:#4a6b36!important}
 html[data-theme="light"] .hd-app{background:#2b2118!important}
+
+/* ---------- v23.15 session timeout warning ---------- */
+html[data-theme="light"] .ma-sw-backdrop{background:rgba(70,52,30,.38)}
+html[data-theme="light"] .ma-sw{background:var(--sand-card,#fffaf1);border-color:#e2cfae;color:#2b2218;box-shadow:0 25px 70px rgba(80,55,25,.25)}
+html[data-theme="light"] .ma-sw-ic{background:linear-gradient(160deg,#fffdf8,#f3e7d3);border-color:#e2cfae;color:#a8641c}
+html[data-theme="light"] .ma-sw p{color:#5c4b38}
+html[data-theme="light"] .ma-sw-count b{color:#a8641c}
+html[data-theme="light"] .ma-sw-count small{color:#7a6a58}

@@ -57,10 +57,16 @@
     catch (e) { S.user = null; }
     if (S.user) {
       currentUser = { name: S.user.name, email: S.user.email || S.user.mobile || '' };
+      window.dispatchEvent(new CustomEvent('ma:signed-in', { detail: {} }));   // page reload with a live session → restart the timer
       try { S.ent = await API.get('/me/entitlements'); } catch (e) { S.ent = null; }
     }
   }
-  window.addEventListener('ma:unauthorized', () => { if (S.user) { S.user = null; notify('Your session expired. Please log in again.'); go('login'); } });
+  // The API answered 401 (session ended elsewhere, or a timeout the server noticed first) → back to login.
+  window.addEventListener('ma:unauthorized', (e) => {
+    if (!S.user) return;
+    const reason = e.detail && e.detail.reason;
+    signedOut(reason === 'idle' ? (window.MA_SESSION ? MA_SESSION.idleMessage() : 'You were signed out after a period of inactivity.') : reason === 'absolute' ? 'Your session reached its time limit. Please sign in again.' : 'Your session expired. Please log in again.');
+  });
   const isAdmin = () => S.user && S.user.role !== 'user';
 
   // route guard + extra routes
@@ -80,8 +86,9 @@
     baseRoute();
     if (/^(user|admin)\b/.test(h)) refreshBell();
   };
-  const afterLogin = async (user) => {
+  const afterLogin = async (user, session) => {
     S.user = user; currentUser = { name: user.name, email: user.email || user.mobile || '' };
+    window.dispatchEvent(new CustomEvent('ma:signed-in', { detail: { session } }));   // starts the inactivity timer
     try { S.ent = await API.get('/me/entitlements'); } catch (e) {}
     const next = sessionStorage.getItem('ma-next'); sessionStorage.removeItem('ma-next');
     go(next && (!next.startsWith('admin') || user.role !== 'user') ? next : user.role !== 'user' ? 'admin/dashboard' : 'user/overview');
@@ -96,6 +103,7 @@
     if (msg) notify(msg);
   }
   async function logout() { try { await API.post('/auth/logout'); } catch (e) {} signedOut('You have been logged out.'); }
+  window.MA_AUTH = { signedOut, logout };   // used by js/session-timeout.js
   on('[data-action="logout"]', logout);
   on('[data-action="logout-all"]', () => {
     showModal('Sign out of all devices?', `<div class="v22"><p style="margin:0 0 18px;line-height:1.55">This ends every Mod Alpha session on all your phones, tablets and computers, including this one. You will need to log in again.</p><div class="ma-rem-actions"><button type="button" class="v22-ghost-btn" data-modal-close>Cancel</button><button type="button" class="v22-grad-btn" data-ma-logout-all>Sign out everywhere</button></div></div>`);
@@ -111,9 +119,9 @@
   // ------------------------------------------------------------------ login / signup / OTP / Google / forgot
   // admins: step 2 (email code + SMS code) before a session is issued
   async function loginResult(r) {
-    if (!r || !r.mfaRequired) return afterLogin(r.user);
+    if (!r || !r.mfaRequired) return afterLogin(r.user, r.session);
     MA_MFA.show(r, {
-      verify: async (emailCode, smsCode) => { const v = await API.post('/auth/login/verify', { challengeId: r.challengeId, emailCode, smsCode }); await afterLogin(v.user); },
+      verify: async (emailCode, smsCode) => { const v = await API.post('/auth/login/verify', { challengeId: r.challengeId, emailCode, smsCode }); await afterLogin(v.user, v.session); },
       resend: () => API.post('/auth/login/resend', { challengeId: r.challengeId }),
       cancel: () => { location.hash = '#/login'; },
     });
@@ -125,6 +133,7 @@
     const form = document.getElementById('auth-form'); if (!form) return;
     const err = document.getElementById('form-error');
     const mobile = maAuthMethod === 'mobile', signup = authMode === 'signup';
+    if (!mobile && !signup) { try { const saved = localStorage.getItem('ma-remember-email'); const em = form.querySelector('input[name=email]'); if (saved && em && !em.value) em.value = saved; } catch (e) {} }
     if (mobile) {
       form.querySelector('input[name=password]')?.closest('label')?.remove();
       form.querySelector('input[name=confirm]')?.closest('label')?.remove();
@@ -154,9 +163,11 @@
         if (signup) {
           if (fd.get('password') !== fd.get('confirm')) throw new Error('Passwords do not match.');
           const r = await API.post('/auth/signup', { name: String(fd.get('name') || ''), email: id, password: String(fd.get('password') || '') });
-          notify('Account created. Check your email to verify your address.'); await afterLogin(r.user); return;
+          notify('Account created. Check your email to verify your address.'); await afterLogin(r.user, r.session); return;
         }
+        // "Remember my email" only pre-fills the email next time; it does not lengthen the session
         const remember = form.querySelector('.v22-auth-opts input[type=checkbox]')?.checked !== false;
+        try { remember ? localStorage.setItem('ma-remember-email', id) : localStorage.removeItem('ma-remember-email'); } catch (e2) {}
         const r = await API.post('/auth/login', { email: id, password: String(fd.get('password') || ''), remember });
         await loginResult(r);
       } catch (ex) { done(); err.style.color = ''; err.textContent = ex.details?.[0]?.message || errMsg(ex); }

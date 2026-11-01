@@ -352,7 +352,7 @@ function renderAuth(){
   <label class="v22-auth-in">${ic(mobile?'msg':'user')}<input name="email" type="${mobile?'tel':'email'}" placeholder="${mobile?'+91 98765 43210':'you@example.com'}" required autocomplete="${mobile?'tel':'email'}"></label>
   <label class="v22-auth-in">${ic('lock')}<input name="password" id="v22-pass" type="password" placeholder="••••••••••" minlength="6" required autocomplete="${signup?'new-password':'current-password'}"><button type="button" class="v22-eye" data-v22-eye aria-label="Show password">${ic('eye')}</button></label>
   ${signup?`<label class="v22-auth-in">${ic('lock')}<input name="confirm" type="password" placeholder="Confirm password" required autocomplete="new-password"></label>`:''}
-  <div class="v22-auth-opts"><label><input type="checkbox" checked> Remember me</label><button type="button" data-action="forgot">Forgot Password?</button></div>
+  <div class="v22-auth-opts"><label><input type="checkbox" checked> Remember my email</label><button type="button" data-action="forgot">Forgot Password?</button></div>
   <div id="form-error" class="v22-err" role="alert"></div>
   <button class="v22-grad-btn wide lg" type="submit">${signup?'Create Account':'Login'} ${ic('arrowR')}</button>
  </form>

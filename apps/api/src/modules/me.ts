@@ -38,8 +38,10 @@ export default async function me(app: FastifyInstance) {
     const row = (await db.query('SELECT password_hash FROM users WHERE id=$1', [u.id])).rows[0];
     if (row?.password_hash && !(b.currentPassword && (await bcrypt.compare(b.currentPassword, row.password_hash)))) throw unauthorized('Current password is incorrect');
     await db.query('UPDATE users SET password_hash=$2, updated_at=now() WHERE id=$1', [u.id, await bcrypt.hash(b.newPassword, 11)]);
-    await audit(db, req, { action: 'PASSWORD_CHANGED', category: 'Access', resource: u.id });
-    return { ok: true };
+    // A new password signs out every OTHER device; this browser stays signed in.
+    const ended = await db.query(`UPDATE sessions SET revoked_at=now(), end_reason='password_change' WHERE user_id=$1 AND id<>$2 AND revoked_at IS NULL`, [u.id, u.sid]);
+    await audit(db, req, { action: 'PASSWORD_CHANGED', category: 'Access', resource: u.id, meta: { otherSessionsEnded: ended.rowCount } });
+    return { ok: true, otherSessionsEnded: ended.rowCount };
   });
 
   app.post('/me/verify-email', async (req) => {

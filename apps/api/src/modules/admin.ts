@@ -84,7 +84,7 @@ export default async function admin(app: FastifyInstance) {
     if (id === admin.id && b.accountStatus && b.accountStatus !== 'Active') throw badRequest('You cannot suspend your own account');
     const r = await db.query('UPDATE users SET account_status=coalesce($2, account_status), role=coalesce($3, role), updated_at=now() WHERE id=$1 RETURNING id', [id, b.accountStatus ?? null, b.role ?? null]);
     if (!r.rows[0]) throw notFound();
-    if (b.accountStatus && b.accountStatus !== 'Active') await db.query('UPDATE sessions SET revoked_at=now() WHERE user_id=$1 AND revoked_at IS NULL', [id]);
+    if (b.accountStatus && b.accountStatus !== 'Active') await db.query(`UPDATE sessions SET revoked_at=now(), end_reason='suspended' WHERE user_id=$1 AND revoked_at IS NULL`, [id]);
     await audit(db, req, { action: b.role ? 'USER_ROLE_CHANGED' : `USER_${(b.accountStatus ?? '').toUpperCase()}`, category: 'Access', resource: id, meta: b });
     return { ok: true };
   });
@@ -139,7 +139,7 @@ export default async function admin(app: FastifyInstance) {
   app.get('/admin/settings', async (req) => {
     requireAdmin(req);
     const r = (await db.query(`SELECT value, updated_at FROM settings WHERE key='platform'`)).rows[0];
-    return { settings: { ...DEFAULT_SETTINGS, ...(r?.value ?? {}) }, updatedAt: r?.updated_at ?? null, environment: cfg.APP_ENV, security: { adminMfa: 'Pending (AUTH-09)', rbac: 'Enforced: user / admin / superadmin', sessions: `Access ${cfg.ACCESS_TOKEN_TTL_MIN} min · refresh ${cfg.REFRESH_TOKEN_TTL_DAYS} days, rotating`, auditTrail: 'Append-only (database trigger)' } };
+    return { settings: { ...DEFAULT_SETTINGS, ...(r?.value ?? {}) }, updatedAt: r?.updated_at ?? null, environment: cfg.APP_ENV, security: { adminMfa: 'Email code + SMS code required for every admin sign-in', rbac: 'Enforced: user / admin / superadmin', sessions: `Sign-out after ${cfg.SESSION_IDLE_MINUTES} min inactivity · max ${cfg.SESSION_MAX_HOURS_USER} h (users) / ${cfg.SESSION_MAX_HOURS_ADMIN} h (admins) · access token ${cfg.ACCESS_TOKEN_TTL_MIN} min, rotating refresh`, auditTrail: 'Append-only (database trigger)' } };
   });
   app.put('/admin/settings', async (req) => {
     const admin = requireAdmin(req, true);

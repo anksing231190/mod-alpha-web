@@ -7196,3 +7196,28 @@ html[data-theme="light"] .hd-app {
 html[data-theme="light"] .v22-core-mark {
     border-radius: 18px !important
 }
+html[data-theme="light"] .ma-sw-backdrop {
+    background: rgba(244,237,223,0.9)
+}
+html[data-theme="light"] .ma-sw {
+    background: #fcf8ef;
+    border: 1px solid #bfa988;
+    border-radius: 18px;
+    box-shadow: 0 25px 80px rgba(94,64,32,0.2);
+    color: #30261d
+}
+html[data-theme="light"] .ma-sw-ic {
+    border-radius: 15px;
+    color: #fbbf24;
+    background: #fdf8f0;
+    border: 1px solid #e3d7c1
+}
+html[data-theme="light"] .ma-sw p {
+    color: #5b4838
+}
+html[data-theme="light"] .ma-sw-count b {
+    color: #8b6014
+}
+html[data-theme="light"] .ma-sw-count small {
+    color: #705945
+}

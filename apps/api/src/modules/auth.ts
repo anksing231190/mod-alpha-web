@@ -4,7 +4,7 @@ import crypto from 'node:crypto';
 import { z } from 'zod';
 import { parse } from '../lib/validate.js';
 import { badRequest, conflict, forbidden, tooMany, unauthorized, HttpError } from '../lib/errors.js';
-import { AuthUser, clearSession, issueSession, randomToken, requireUser, sha256 } from '../lib/auth.js';
+import { AuthUser, clearSession, endForTimeout, expiredBy, issueSession, randomToken, requireUser, sessionExpired, sessionInfo, sha256 } from '../lib/auth.js';
 import { audit } from '../lib/audit.js';
 
 const pw = z.string().min(8, 'Password must be at least 8 characters').max(128);
@@ -146,34 +146,71 @@ export default async function auth(app: FastifyInstance) {
   });
   app.post('/auth/oauth/apple', async () => { throw new HttpError(501, 'not_implemented', 'Sign in with Apple is not available yet (AUTH-05).'); });
 
+  /**
+   * POST /auth/refresh — swap the refresh cookie for a new access token (the browser does this silently when
+   * the 15-minute access token expires). The refresh token rotates: the old session row is closed with
+   * end_reason 'rotated' and a new row continues it with the SAME absolute end time and last activity.
+   * Presenting an already-rotated refresh token again means it was copied → every session of the user ends.
+   * A session that hit its inactivity or absolute limit cannot be refreshed (401 session_expired).
+   */
   app.post('/auth/refresh', async (req, reply) => {
     const t = (req.cookies as any)?.ma_rt ?? (req.body as any)?.refreshToken;
     if (!t) throw unauthorized('No session');
     const r = await db.query(`SELECT s.*, u.role, u.full_name, u.email, u.account_status, u.deleted_at FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.refresh_hash=$1`, [sha256(t)]);
     const s = r.rows[0];
-    if (!s || s.revoked_at || new Date(s.expires_at) < new Date()) {
-      if (s && s.revoked_at) await db.query('UPDATE sessions SET revoked_at=now() WHERE user_id=$1 AND revoked_at IS NULL', [s.user_id]); // reuse detected → revoke all
+    if (!s) { clearSession(cfg, reply); throw unauthorized('Session expired. Please log in again.'); }
+    if (s.revoked_at) {
+      if (s.end_reason === 'idle' || s.end_reason === 'absolute') { clearSession(cfg, reply); throw sessionExpired(s.end_reason); }
+      // A rotated or logged-out refresh token is never sent again by the real browser (it got a new one, or the
+      // cookie was cleared) — seeing it again means it was copied → treat as stolen and end every session.
+      // Sessions ended by a timeout, password change or suspension are NOT treated this way: the user's other
+      // devices may still hold those cookies legitimately.
+      if (s.end_reason === null || s.end_reason === 'rotated' || s.end_reason === 'logout') {
+        await db.query(`UPDATE sessions SET revoked_at=now(), end_reason='reuse' WHERE user_id=$1 AND revoked_at IS NULL`, [s.user_id]);
+        await audit(db, req, { action: 'REFRESH_TOKEN_REUSE', category: 'Access', resource: s.user_id, outcome: 'Blocked', actorLabel: 'system' });
+      }
       clearSession(cfg, reply); throw unauthorized('Session expired. Please log in again.');
     }
+    const ended = expiredBy(cfg, s);
+    if (ended) { await endForTimeout(db, req, s, ended); clearSession(cfg, reply); throw sessionExpired(ended); }
     active(s);
-    await db.query('UPDATE sessions SET revoked_at=now() WHERE id=$1', [s.id]);
-    return issueSession(db, cfg, reply, req, { id: s.user_id, role: s.role, name: s.full_name, email: s.email });
+    await db.query(`UPDATE sessions SET revoked_at=now(), end_reason='rotated' WHERE id=$1`, [s.id]);
+    return issueSession(db, cfg, reply, req, { id: s.user_id, role: s.role, name: s.full_name, email: s.email }, true,
+      { absoluteExpiresAt: new Date(s.absolute_expires_at), lastSeenAt: new Date(s.last_seen_at) });
+  });
+
+  /** GET /auth/session — timers for the browser (inactivity limit, absolute end). Does not count as activity. */
+  app.get('/auth/session', async (req) => {
+    const u = requireUser(req);
+    const s = (await db.query('SELECT absolute_expires_at, last_seen_at FROM sessions WHERE id=$1', [u.sid])).rows[0];
+    if (!s) throw unauthorized();
+    return sessionInfo(cfg, s);
+  });
+  /** POST /auth/activity — heartbeat sent by the browser while the person is active, and by "Stay signed in". */
+  app.post('/auth/activity', async (req) => {
+    const u = requireUser(req);
+    const s = (await db.query('UPDATE sessions SET last_seen_at=now() WHERE id=$1 RETURNING absolute_expires_at, last_seen_at', [u.sid])).rows[0];
+    if (!s) throw unauthorized();
+    return sessionInfo(cfg, s);
   });
 
   // Logout ends this session server-side: the refresh token and the access token (via its session id) stop working.
+  // Body { reason: 'idle' | 'absolute' } is sent when the browser's own timer signs the person out.
   app.post('/auth/logout', async (req, reply) => {
+    const reason = (req.body as any)?.reason === 'idle' || (req.body as any)?.reason === 'absolute' ? (req.body as any).reason : 'logout';
     const t = (req.cookies as any)?.ma_rt;
-    const r = t ? await db.query('UPDATE sessions SET revoked_at=now() WHERE refresh_hash=$1 AND revoked_at IS NULL RETURNING user_id', [sha256(t)]) : null;
-    if (req.user?.sid) await db.query('UPDATE sessions SET revoked_at=now() WHERE id=$1 AND revoked_at IS NULL', [req.user.sid]);
+    const r = t ? await db.query('UPDATE sessions SET revoked_at=now(), end_reason=$2 WHERE refresh_hash=$1 AND revoked_at IS NULL RETURNING user_id', [sha256(t), reason]) : null;
+    if (req.user?.sid) await db.query('UPDATE sessions SET revoked_at=now(), end_reason=$2 WHERE id=$1 AND revoked_at IS NULL', [req.user.sid, reason]);
     const uid = req.user?.id ?? r?.rows[0]?.user_id;
-    if (uid) await audit(db, req, { action: 'LOGOUT', category: 'Access', resource: uid, actorLabel: req.user?.email ?? undefined });
+    const action = reason === 'idle' ? 'SESSION_TIMEOUT_IDLE' : reason === 'absolute' ? 'SESSION_TIMEOUT_ABSOLUTE' : 'LOGOUT';
+    if (uid && (r?.rowCount || req.user)) await audit(db, req, { action, category: 'Access', resource: uid, actorLabel: req.user?.email ?? undefined });
     clearSession(cfg, reply);
     return { ok: true };
   });
   // "Sign out of all devices": revoke every session of this user.
   app.post('/auth/logout-all', async (req, reply) => {
     const u = requireUser(req);
-    const r = await db.query('UPDATE sessions SET revoked_at=now() WHERE user_id=$1 AND revoked_at IS NULL', [u.id]);
+    const r = await db.query(`UPDATE sessions SET revoked_at=now(), end_reason='logout_all' WHERE user_id=$1 AND revoked_at IS NULL`, [u.id]);
     await audit(db, req, { action: 'LOGOUT_ALL_DEVICES', category: 'Access', resource: u.id, meta: { sessions: r.rowCount } });
     clearSession(cfg, reply);
     return { ok: true, sessionsEnded: r.rowCount };
@@ -197,7 +234,7 @@ export default async function auth(app: FastifyInstance) {
     if (!pr || pr.used_at || new Date(pr.expires_at) < new Date()) throw badRequest('This reset link is invalid or has expired.');
     await db.query('UPDATE users SET password_hash=$2, updated_at=now() WHERE id=$1', [pr.user_id, await bcrypt.hash(b.password, 11)]);
     await db.query('UPDATE password_resets SET used_at=now() WHERE token_hash=$1', [pr.token_hash]);
-    await db.query('UPDATE sessions SET revoked_at=now() WHERE user_id=$1 AND revoked_at IS NULL', [pr.user_id]);
+    await db.query(`UPDATE sessions SET revoked_at=now(), end_reason='password_reset' WHERE user_id=$1 AND revoked_at IS NULL`, [pr.user_id]);
     await audit(db, req, { action: 'PASSWORD_RESET', category: 'Access', resource: pr.user_id, actorLabel: 'user' });
     return { ok: true };
   });

@@ -16,8 +16,13 @@ const Env = z.object({
   DATABASE_URL: z.string().min(1),
   DATABASE_SSL: bool,
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
+  // Access token lifetime. The browser renews it silently while the session is still valid.
   ACCESS_TOKEN_TTL_MIN: z.coerce.number().default(15),
-  REFRESH_TOKEN_TTL_DAYS: z.coerce.number().default(30),
+  // Session rules: sign out after this many minutes without activity …
+  SESSION_IDLE_MINUTES: z.coerce.number().positive().default(15),
+  // … and in any case this many hours after signing in (users / admins).
+  SESSION_MAX_HOURS_USER: z.coerce.number().positive().default(12),
+  SESSION_MAX_HOURS_ADMIN: z.coerce.number().positive().default(8),
   COOKIE_DOMAIN: z.string().optional(),
   ADMIN_BOOTSTRAP_EMAIL: z.string().email().optional(),
   ADMIN_BOOTSTRAP_PASSWORD: z.string().min(12).optional(),
