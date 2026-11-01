@@ -1954,7 +1954,8 @@ html[lang="hi"] :where(.v22-eyebrow,.v22-crumb,.side-label,th,.hd-best small){te
 /* engine: brand mark; fibres reach the card (no gap) */
 .v22-core-mark{display:grid;place-items:center;width:64px;height:64px;border-radius:16px;background:rgba(255,255,255,.1)}
 .v22-conn.fibers{position:relative;z-index:0}
-.v22-conn.fibers svg{width:calc(100% + 64px)!important;margin-right:-64px;overflow:visible}
+.v22-conn.fibers svg{overflow:visible}
+.v22-conn.fibers{justify-content:flex-start!important}
 .v22-stage.engine .v22-core{z-index:2}
 .v22-engine-out{left:76%!important;right:auto!important;width:42%!important;z-index:0}
 
@@ -1987,3 +1988,8 @@ html[lang="hi"] :where(.v22-eyebrow,.v22-crumb,.side-label,th,.hd-best small){te
 .hd-info p b{color:#86efac}
 @media (max-width:1180px){.v22-hero.hero-d .v22-hero-art.hd-orbit-art{width:100%!important;position:relative;height:560px}}
 @media (prefers-reduced-motion:reduce){.hd-globe,.hd-arc,.hd-node span,.hd-orbit-art .hd-phone{animation:none!important}.hd-comet{display:none}}
+.v22-conn.fibers{z-index:3!important}
+.v22-conn.fibers{clip-path:none!important}
+/* α mark on the cream tile everywhere (both themes) */
+.v22-core-mark,.v22-insight-row.v2 .v22-ins-badge,.hd-app{background:linear-gradient(160deg,#fffdf8,#f3e7d3)!important;border:1px solid #e2cfae!important;box-shadow:0 1px 2px rgba(94,64,32,.1),inset 0 1px 0 #fff!important}
+.v22-core-mark{width:72px!important;height:72px!important;border-radius:18px!important}

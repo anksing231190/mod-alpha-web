@@ -637,6 +637,7 @@ const V22_SOCIAL=[
  const pp=document.getElementById('pricing-preview');if(pp)pp.innerHTML=pricingSection(true);
  const fq=document.getElementById('faq-preview');if(fq)fq.outerHTML=v22Faq();
  document.querySelector('.v22-how-replay')?.remove();
+ v22FitFibers();
  // faint version of the login-page particle animation behind the whole landing page
  if(typeof v22AuthAnim==='function'&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const bg=document.createElement('div');bg.className='v22-land-bg';bg.setAttribute('aria-hidden','true');bg.innerHTML='<div><canvas></canvas></div>';app.prepend(bg);bg.querySelector('canvas').dataset.noWaves='1';v22AuthAnim(bg.querySelector('canvas'))}
  v22InitReveal();}})();
@@ -863,3 +864,10 @@ function v22FilterAudit(){const q=(document.getElementById('v22-audit-search')?.
 document.addEventListener('dragover',e=>{if(e.target.closest?.('.v22-drop.big')){e.preventDefault()}});
 document.addEventListener('drop',e=>{const d=e.target.closest?.('.v22-drop.big');if(!d)return;e.preventDefault();const inp=document.getElementById('nav-file');if(e.dataTransfer.files.length){inp.files=e.dataTransfer.files;inp.dispatchEvent(new Event('change',{bubbles:true}))}});
 route();
+
+/* incoming flow lines always run up to the AI engine card, whatever the screen width */
+function v22FitFibers(){const conn=document.querySelector('.v22-conn.fibers'),svg=conn&&conn.querySelector('svg'),core=document.querySelector('.v22-stage.engine .v22-core');if(!svg||!core)return;
+ if(getComputedStyle(conn).flexDirection==='column'||innerWidth<=900){svg.style.width='';svg.style.marginRight='';return}
+ svg.style.width='';svg.style.marginRight='';const ext=Math.max(0,Math.round(core.getBoundingClientRect().left-conn.getBoundingClientRect().right+1));
+ svg.style.setProperty('width',(conn.clientWidth+ext)+'px','important');svg.style.setProperty('margin-right',(-ext)+'px','important')}
+addEventListener('resize',()=>requestAnimationFrame(v22FitFibers));
