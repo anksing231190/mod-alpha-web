@@ -57,8 +57,10 @@ export async function bootstrapAdmin(db: Db, cfg: Config) {
   return r.rows[0].id;
 }
 
+// Load a workbook into the database. Database set-up passes allowPersonal=false: the Users / Subscriptions sheets
+// are skipped, so a new database starts with no users or subscribers. Only the API tests load them (true), as fixtures.
 export async function importWorkbookFile(db: Db, file: string, allowPersonal: boolean) {
-  const { report, data } = validateWorkbook(fs.readFileSync(file), { fileName: file, existingFundIds: new Set(), existingUserRefs: new Set(), allowPersonal, todayIso: today() });
+  const { report, data } = validateWorkbook(fs.readFileSync(file), { fileName: file, existingFundIds: new Set(), existingUserRefs: new Set(), allowPersonal, skipPersonal: !allowPersonal, todayIso: today() });
   if (!report.ok) throw new Error(`Workbook failed validation: ${report.fatal ?? report.errors + ' errors'}`);
   return tx(db, (c) => importData(c, data));
 }
@@ -70,6 +72,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   await migrate(db); await seedReference(db); const admin = await bootstrapAdmin(db, cfg);
   console.log('reference data seeded', admin ? `· admin ${cfg.ADMIN_BOOTSTRAP_EMAIL}` : '');
   const wb = process.argv.find((a) => a.startsWith('--workbook='))?.slice(11);
-  if (wb) { if (cfg.APP_ENV === 'prod') throw new Error('Refusing to import a test workbook in prod'); console.log('imported', await importWorkbookFile(db, wb, true)); }
+  if (wb) { if (cfg.APP_ENV === 'prod') throw new Error('Refusing to import a test workbook in prod'); console.log('imported (funds, NAV, SIP dates, holidays — no users or subscriptions)', await importWorkbookFile(db, wb, false)); }
   await db.end();
 }

@@ -43,7 +43,7 @@ In a terminal, inside the unzipped `mod-alpha` folder:
    docker compose -f infra/docker-compose.yml up --build -d
    ```
 
-3. Load the test data (24 funds, 10 years of NAV, 12,568 test users). Run this once.
+3. Load the reference data (24 funds, 10 years of NAV, SIP dates, holidays). Users and subscribers are not loaded: they come from sign-ups, or from a backup (`npm run db:restore`). Run this once.
    ```bash
    docker compose -f infra/docker-compose.yml run --rm api node dist/cli/seed.js --workbook=/seed/mod-alpha-test-data.xlsx
    ```

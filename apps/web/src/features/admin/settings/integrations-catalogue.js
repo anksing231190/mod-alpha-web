@@ -124,6 +124,8 @@ window.V22_INTEGRATIONS=[
 
 /* Recent progress shown in Admin → System Settings → Build progress (newest first). */
 window.V22_PROGRESS_LOG=[
+ ['02 Nov 2026','v23.20','New databases start without users or subscribers (spreadsheet Users / Subscriptions sheets skipped at set-up, refused on upload)'],
+ ['02 Nov 2026','v23.20','Backup and restore: npm run db:backup / db:restore (safety copy first, migrations after); reset backs up first; plan in docs/27'],
  ['02 Nov 2026','v23.19','Login signs in existing accounts only (mobile OTP and Google); unknown ones are pointed to Create account'],
  ['02 Nov 2026','v23.19','Super admins add admins (email invitation to set a password) and change roles from Admin → Users'],
  ['02 Nov 2026','v23.19','Upgrade Plan hidden for subscribers; Billing history buttons aligned'],

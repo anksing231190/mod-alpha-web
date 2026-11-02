@@ -127,7 +127,7 @@ Already in the repo:
 - [ ] Website security headers: add HSTS and a Content-Security-Policy (nginx or CDN).
 - [ ] Uploaded workbooks: move from Postgres `bytea` to S3 (Mumbai, encrypted, pre-signed URLs).
 - [ ] Monitoring: Sentry (API + web), uptime checks on `/health`, alerts (5xx rate, latency, DB CPU/storage, job failures, webhook failures).
-- [ ] Backups: automated PITR, a monthly restore drill on stage, written RPO/RTO.
+- [ ] Backups (plan in `docs/27_backup_and_recovery.md`; `npm run db:backup` / `db:restore` already built): RDS PITR 35 days, nightly dump to an S3 bucket with Object Lock + 8-year lifecycle + Hyderabad copy, missing-backup alert, monthly restore drill on stage.
 - [ ] Separate stage and prod accounts/projects; least-privilege IAM; deploy role for GitHub via OIDC (no long-lived keys).
 - [ ] Load test (k6) of SIP-date publish day + reminder fan-out.
 - [ ] Runbooks: deploy/rollback, incident response, key rotation, restore.

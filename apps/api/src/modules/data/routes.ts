@@ -3,7 +3,7 @@
  *   POST /admin/data/uploads (validate only, stored as a draft) → GET …/uploads/:id (report)
  *   POST …/uploads/:id/publish (replace the sheets it contains, in one transaction) · …/discard
  *   GET /admin/data/summary · GET /admin/data/export.xlsx · POST /admin/data/recompute-metrics · GET /admin/data/schema
- * Sheet rules: workbook.ts and docs/21_test_data_excel_format.md. Prod rejects Users / Subscriptions sheets.
+ * Sheet rules: workbook.ts and docs/21_test_data_excel_format.md. Users / Subscriptions sheets are refused in every environment (they come from sign-ups or a backup).
  */
 import type { FastifyInstance } from 'fastify';
 import XLSX from 'xlsx';
@@ -97,7 +97,7 @@ export default async function dataModule(app: FastifyInstance) {
     const buf: Buffer = await file.toBuffer();
     const csvAs = (file.fields?.csvAs as any)?.value;
     let result;
-    try { result = validateWorkbook(buf, { fileName: file.filename, csvAs, ...(await existing()), allowPersonal: cfg.APP_ENV !== 'prod', todayIso: today() }); }
+    try { result = validateWorkbook(buf, { fileName: file.filename, csvAs, ...(await existing()), allowPersonal: false, todayIso: today() }); }
     catch (e: any) { throw badRequest(`Could not read this file: ${e.message}`); }
     const r = await db.query(`INSERT INTO data_uploads (file_name, size_bytes, storage_key, content, sheets, report, status, uploaded_by) VALUES ($1,$2,'db',$3,$4,$5,$6,$7) RETURNING id, created_at`, [file.filename, buf.length, buf, Object.keys(result.data), JSON.stringify(result.report), result.report.ok ? 'validated' : 'failed', admin.id]);
     await audit(db, req, { action: result.report.ok ? 'DATA_UPLOAD_VALIDATED' : 'DATA_UPLOAD_FAILED', category: 'Data', resource: file.filename, outcome: result.report.ok ? 'Success' : 'Failed', meta: { errors: result.report.errors } });
@@ -121,7 +121,7 @@ export default async function dataModule(app: FastifyInstance) {
     const up = (await db.query('SELECT * FROM data_uploads WHERE id=$1', [id])).rows[0];
     if (!up) throw notFound();
     if (up.status !== 'validated') throw badRequest(`Only a validated upload can be published (status: ${up.status})`);
-    const { report, data } = validateWorkbook(up.content, { fileName: up.file_name, ...(await existing()), allowPersonal: cfg.APP_ENV !== 'prod', todayIso: today() });
+    const { report, data } = validateWorkbook(up.content, { fileName: up.file_name, ...(await existing()), allowPersonal: false, todayIso: today() });
     if (!report.ok) { await db.query(`UPDATE data_uploads SET status='failed', report=$2 WHERE id=$1`, [id, JSON.stringify(report)]); throw badRequest('The data changed since validation and no longer passes. Upload again.', report); }
     const counts = await tx(db, async (c) => { const n = await importData(c, data); await c.query(`UPDATE data_uploads SET status='published', published_at=now() WHERE id=$1`, [id]); return n; });
     await audit(db, req, { action: 'DATASET_PUBLISHED', category: 'Data', resource: up.file_name, meta: counts });
@@ -159,6 +159,6 @@ export default async function dataModule(app: FastifyInstance) {
   });
   // Recompute fund metrics now; GET /admin/data/schema returns the sheet rules for the upload screen.
   app.post('/admin/data/recompute-metrics', async (req) => { requireAdmin(req); return { funds: await computeFundMetrics(db) }; });
-  app.get('/admin/data/schema', async (req) => { requireAdmin(req); return { schema: SCHEMA, personalSheetsAllowed: cfg.APP_ENV !== 'prod' }; });
+  app.get('/admin/data/schema', async (req) => { requireAdmin(req); return { schema: SCHEMA, personalSheetsAllowed: false }; });
   void parse; void z;
 }

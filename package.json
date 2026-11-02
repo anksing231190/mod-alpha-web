@@ -13,6 +13,8 @@
     "build:web:stage": "node scripts/build-web.mjs stage",
     "build:web:prod": "node scripts/build-web.mjs prod",
     "migrate": "npm --workspace apps/api run migrate",
+    "db:backup": "bash scripts/db/backup.sh",
+    "db:restore": "bash scripts/db/restore.sh",
     "seed": "npm --workspace apps/api run seed",
     "test": "npm --workspace apps/api test",
     "typecheck": "npm --workspace apps/api run typecheck"

@@ -3,7 +3,7 @@
 #  Mod Alpha — start everything locally (macOS / Linux)
 #
 #    ./scripts/start-local.sh            start (first run sets everything up)
-#    ./scripts/start-local.sh --reset    wipe the local database and reload test data
+#    ./scripts/start-local.sh --reset    back up, then wipe the local database and reload reference data
 #    ./scripts/start-local.sh --no-open  don't open the browser
 #    ./scripts/start-local.sh --jobs     also run the background-jobs worker
 #
@@ -95,15 +95,19 @@ fi
 
 # ---------------------------------------------------------------- 5. database + data
 step "Database"
-if [ "$RESET" = 1 ]; then node scripts/local/db.mjs reset; fi
+if [ "$RESET" = 1 ]; then
+  # keep a copy first: users and subscribers are never re-created from test data (restore: npm run db:restore -- latest)
+  if node scripts/local/db.mjs seeded && command -v pg_dump >/dev/null; then bash scripts/db/backup.sh --label before-reset >/dev/null && ok "backup saved in var/backups (restore: npm run db:restore -- latest)"; fi
+  node scripts/local/db.mjs reset
+fi
 node scripts/local/db.mjs ensure || die "Could not create the database"
 if node scripts/local/db.mjs seeded; then
   npm run --silent seed >/dev/null            # applies new migrations, keeps data
   ok "database ready (existing data kept)"
 else
-  echo "  loading test data (24 funds, 10 years of NAV, 12,568 test users) — about 30 seconds…"
+  echo "  loading reference data (funds, 10 years of NAV, SIP dates, holidays; no users or subscribers) — about 30 seconds…"
   npm run --silent seed:test >/dev/null
-  ok "test data loaded"
+  ok "reference data loaded — users and subscribers come from sign-ups, or from a backup (npm run db:restore)"
 fi
 
 # ---------------------------------------------------------------- 6. ports

@@ -91,7 +91,7 @@ function readSheet(ws: XLSX.WorkSheet, name: string, todayIso: string) {
  */
 // Validate a whole workbook (or a CSV as one sheet): sheet names, cross-sheet references (NAV → Funds,
 // Subscriptions → Users) and the personal-data rule.
-export function validateWorkbook(buf: Buffer, opts: { fileName: string; csvAs?: string; existingFundIds: Set<string>; existingUserRefs: Set<string>; allowPersonal: boolean; todayIso: string }) {
+export function validateWorkbook(buf: Buffer, opts: { fileName: string; csvAs?: string; existingFundIds: Set<string>; existingUserRefs: Set<string>; allowPersonal: boolean; skipPersonal?: boolean; todayIso: string }) {
   const wb = XLSX.read(buf, { type: 'buffer', dense: true });
   const report: Report = { ok: false, sheets: [], ignored: [], errors: 0, warnings: 0 };
   const map: Record<string, string> = {};
@@ -101,7 +101,12 @@ export function validateWorkbook(buf: Buffer, opts: { fileName: string; csvAs?: 
   const data: Record<string, any[]> = {};
   for (const s of Object.keys(SCHEMA)) {
     if (!map[s]) continue;
-    if (SCHEMA[s].personal && !opts.allowPersonal) { report.sheets.push({ name: s, total: 0, valid: 0, errors: [{ row: '—', msg: `${s} cannot be imported in production — users and subscriptions come from real sign-ups and payments.` }], warnings: [] }); continue; }
+    // Users / Subscriptions never come from a spreadsheet: only from real sign-ups and payments, or from a
+    // database backup (npm run db:restore). skipPersonal ignores the sheets (database set-up); otherwise they are refused.
+    if (SCHEMA[s].personal && !opts.allowPersonal) {
+      if (opts.skipPersonal) { report.ignored.push(map[s]); continue; }
+      report.sheets.push({ name: s, total: 0, valid: 0, errors: [{ row: '—', msg: `${s} cannot be uploaded — users and subscriptions come only from real sign-ups and payments, or from a database backup.` }], warnings: [] }); continue;
+    }
     const r = readSheet(wb.Sheets[map[s]], s, opts.todayIso);
     if (!r.missing.length) data[s] = r.rows;
     report.sheets.push(r.rep);

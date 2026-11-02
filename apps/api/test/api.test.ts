@@ -250,6 +250,18 @@ describe('admin', () => {
     expect((await a.post(`/admin/data/uploads/${r2.id}/publish`)).json().counts.Market_Holidays).toBe(2);
     expect((await a.get('/admin/data/uploads')).json().items.length).toBeGreaterThanOrEqual(2);
     expect(fs.existsSync(WORKBOOK)).toBe(true);
+    // users and subscriptions are never loaded from a spreadsheet (only sign-ups / payments / a backup restore)
+    const ppl = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(ppl, XLSX.utils.aoa_to_sheet([['user_id', 'full_name', 'email'], ['U-1', 'Some One', 'some@example.com']]), 'Users');
+    const m3 = multipart(XLSX.write(ppl, { type: 'buffer', bookType: 'xlsx' }), 'users.xlsx');
+    const r3 = (await a.raw('POST', '/admin/data/uploads', m3.body, m3.headers)).json();
+    expect(r3.report.ok).toBe(false); expect(JSON.stringify(r3.report)).toContain('database backup');
+  });
+  it('setting up a database from the workbook loads funds, NAV and SIP dates but no users or subscriptions', async () => {
+    const { validateWorkbook } = await import('../src/modules/data/workbook.js');
+    const { report, data } = validateWorkbook(fs.readFileSync(WORKBOOK), { fileName: 'wb.xlsx', existingFundIds: new Set(), existingUserRefs: new Set(), allowPersonal: false, skipPersonal: true, todayIso: '2026-11-02' });
+    expect(report.ok).toBe(true);
+    expect(data.Funds.length).toBeGreaterThan(0); expect(data.Users).toBeUndefined(); expect(data.Subscriptions).toBeUndefined();
   });
   it('reports which providers are mocked (integrated later)', async () => {
     const a = await adminClient(app);
