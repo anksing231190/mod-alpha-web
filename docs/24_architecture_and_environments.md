@@ -51,7 +51,7 @@ mod-alpha/
 | Deploys | manual | every push to `main` | on release tag `v*` + GitHub Environment approval |
 | Providers | mocks | mocks by default; vendor sandboxes when testing | real vendors (payments/KYC/email/SMS required) |
 | Test workbook | yes | yes (`npm run seed -- --workbook=…`) | **refused** |
-| Users/Subscriptions sheets in uploads | allowed | allowed | **rejected** (they come from real sign-ups/payments) |
+| Users/Subscriptions sheets in uploads | **rejected** | **rejected** | **rejected** (users come from sign-ups or a backup restore) |
 | Stage-only endpoints (`/billing/mock/complete`, `/kyc/mock/complete`, OTP `devCode`) | on | on | **off** |
 | UI badge | none (removed) | none (removed) | none |
 

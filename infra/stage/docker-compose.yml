@@ -1,0 +1,41 @@
+# Mod Alpha — STAGE on one server (Docker). Images come from GitHub Container Registry (built by
+# .github/workflows/deploy.yml on every push to main). Caddy gets HTTPS certificates automatically.
+#
+#   Website  https://stage.modalpha.in      → web (nginx, static site)
+#   API      https://api.stage.modalpha.in  → api (Node)
+#   jobs     reminders, NAV import, lifecycle (exactly ONE copy)
+#   db       PostgreSQL 16 (data in the "pgdata" volume; nightly backup with scripts/db/backup.sh)
+#
+# Files next to this one on the server: .env.stage (secrets, never in git), Caddyfile, deploy.sh.
+name: modalpha-stage
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment: { POSTGRES_DB: modalpha, POSTGRES_USER: modalpha, POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env.stage}" }
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD", "pg_isready", "-U", "modalpha"], interval: 5s, retries: 30 }
+  api:
+    image: ghcr.io/${GHCR_OWNER:?set GHCR_OWNER in .env.stage}/mod-alpha-api:${TAG:-stage}
+    restart: unless-stopped
+    env_file: .env.stage
+    environment: { DATABASE_URL: "postgres://modalpha:${POSTGRES_PASSWORD}@db:5432/modalpha", MIGRATE_ON_START: "true", APP_ENV: stage }
+    depends_on: { db: { condition: service_healthy } }
+    volumes: [./seed:/seed:ro]
+  jobs:
+    image: ghcr.io/${GHCR_OWNER}/mod-alpha-api:${TAG:-stage}
+    restart: unless-stopped
+    env_file: .env.stage
+    environment: { DATABASE_URL: "postgres://modalpha:${POSTGRES_PASSWORD}@db:5432/modalpha", APP_ENV: stage }
+    command: ["node", "dist/cli/jobs.js"]
+    depends_on: [api]
+  web:
+    image: ghcr.io/${GHCR_OWNER}/mod-alpha-web:${TAG:-stage}
+    restart: unless-stopped
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    volumes: [./Caddyfile:/etc/caddy/Caddyfile:ro, caddy_data:/data, caddy_config:/config]
+    depends_on: [api, web]
+volumes: { pgdata: {}, caddy_data: {}, caddy_config: {} }

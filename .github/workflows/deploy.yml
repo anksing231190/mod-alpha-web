@@ -33,8 +33,17 @@ jobs:
             --build-arg WEB_GOOGLE_CLIENT_ID="${{ vars.WEB_GOOGLE_CLIENT_ID }}" \
             -t $REGISTRY/mod-alpha-web:${{ github.sha }} -t $REGISTRY/mod-alpha-web:$APP_ENV .
           docker push --all-tags $REGISTRY/mod-alpha-web
+      - name: Roll out to the stage server (SSH)
+        # Set these in GitHub → Settings → Environments → stage: variable STAGE_SSH_HOST (e.g. 13.233.x.x),
+        # variable STAGE_SSH_USER (e.g. ubuntu), secret STAGE_SSH_KEY (private key of a deploy-only user).
+        if: ${{ env.APP_ENV == 'stage' && vars.STAGE_SSH_HOST != '' }}
+        run: |
+          install -m 600 /dev/null key && echo "${{ secrets.STAGE_SSH_KEY }}" > key
+          ssh -i key -o StrictHostKeyChecking=accept-new ${{ vars.STAGE_SSH_USER }}@${{ vars.STAGE_SSH_HOST }} "cd ~/modalpha-stage && ./deploy.sh ${{ github.sha }}"
+          rm -f key
       - name: Roll out
         # Host-agnostic: call the platform's deploy hook (Render/Railway/Coolify/your CD) with the new image tag.
         # Runtime env vars (DATABASE_URL, JWT_SECRET, provider keys) live in the hosting platform's secret store.
         if: ${{ vars.DEPLOY_HOOK_URL != '' }}
-        run: curl -fsS -X POST "${{ vars.DEPLOY_HOOK_URL }}" -H "Authorization: Bearer ${{ secrets.DEPLOY_HOOK_TOKEN }}" -d "{\"tag\":\"${{ github.sha }}\",\"env\":\"$APP_ENV\"}"
+        run: |
+          curl -fsS -X POST "${{ vars.DEPLOY_HOOK_URL }}" -H "Authorization: Bearer ${{ secrets.DEPLOY_HOOK_TOKEN }}" -d "{\"tag\":\"${{ github.sha }}\",\"env\":\"$APP_ENV\"}"

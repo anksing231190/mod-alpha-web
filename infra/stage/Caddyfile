@@ -1,0 +1,21 @@
+# HTTPS for stage (certificates from Let's Encrypt, renewed automatically).
+# DNS: stage.modalpha.in and api.stage.modalpha.in must point to this server before the first start.
+{
+	email ops@modalpha.in
+}
+
+stage.modalpha.in {
+	encode gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		# stage is not for search engines
+		X-Robots-Tag "noindex, nofollow"
+	}
+	reverse_proxy web:80
+}
+
+api.stage.modalpha.in {
+	encode gzip
+	header Strict-Transport-Security "max-age=31536000"
+	reverse_proxy api:8080
+}
