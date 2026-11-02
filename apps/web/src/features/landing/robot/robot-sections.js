@@ -175,9 +175,9 @@
       ['how-it-works', 'Just 5 easy steps', ' ✓', ['thumb', 'is-happy'], ''], // How it works has 5 steps
       ['pricing-preview', 'Pro is the favourite', ' 😉', ['point-l'], 'glasses'],
       ['faq-preview', 'Questions? Ask me!', '', ['think'], ''],
-      ['.public-footer', 'See you inside!', ' 👋', ['wave', 'is-happy'], ''],
     ];
-    const own = ['.v22-hero', '#beat-the-ai', '#timing']; // sections with their own robot: the guide hides there (it sits bottom-right like a chat button)
+    const own = ['.v22-hero', '#beat-the-ai', '#timing'];
+    const footerShown = () => { const f = document.querySelector('.public-footer'); return !!f && f.getBoundingClientRect().top < innerHeight - 40; }; // never over the footer // sections with their own robot: the guide hides there (it sits bottom-right like a chat button)
     let cur = -2;
     const upd = () => {
       if (innerWidth < 1100) { b.classList.add('off'); hush(sb); cur = -2; return; }
@@ -185,7 +185,7 @@
       const busy = own.some((q) => { const n = main.querySelector(q) || document.querySelector(q); if (!n) return false; const r = n.getBoundingClientRect(); return r.top < innerHeight * 0.6 && r.bottom > innerHeight * 0.4; });
       let idx = -1;
       steps.forEach((st, i) => { const n = st[0][0] === '.' ? document.querySelector(st[0]) : document.getElementById(st[0]); if (n && n.getBoundingClientRect().top < mid) idx = i; });
-      const show = !busy && idx >= 0;
+      const show = !busy && idx >= 0 && !footerShown();
       b.classList.toggle('off', !show); if (!show) { hush(sb); cur = -1; return; }
       if (idx === cur) return; cur = idx;
       const [, txt, suf, p, acc] = steps[idx];

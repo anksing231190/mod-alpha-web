@@ -27,8 +27,11 @@ function initPublicActivityToast(){
  };
  // one-line notification: avatar · "<name> joined Mod Alpha · 2 min ago" · ✓
  // (outside <main>, so it floats above the footer; text kept short and trimmed with … if needed)
+ // never over the footer: hide while the footer is on screen, skip new ones until it scrolls away
+ const footerShown=()=>{const f=document.querySelector('.public-footer');return !!f&&f.getBoundingClientRect().top<innerHeight-40};
+ if(!toast._footHook){toast._footHook=1;addEventListener('scroll',()=>{if(toast.isConnected&&footerShown()&&toast.classList.contains('is-visible'))hide()},{passive:true})}
  const show=()=>{
-  if(!events.length||document.hidden)return;
+  if(!events.length||document.hidden||footerShown())return;
   const ev=events[index%events.length];index++;
   const name=ev.name?short(ev.name):'A new member',sub=ev.type==='subscription_activated';
   toast.querySelector('.activity-toast-avatar').innerHTML=ev.name?esc(initials(ev.name.replace('.',''))):'<img src="assets/brand/mod-alpha-mark.png" alt="">';
