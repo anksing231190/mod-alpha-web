@@ -2343,25 +2343,29 @@ html[data-theme="light"] .ma-drawer-scrim{background:rgba(60,40,20,.32)}
 }
 
 /* ==========================================================================
-   Phone (≤ 600 px) = app-style screens with only the important content.
-   Landing becomes a welcome screen (headline, one-line pitch, illustration, Get started / Log in);
-   the long marketing sections, the menu links, the activity pop-up and the footer stay on the website only.
-   Login / sign-up / pricing pages drop the menu links and footer too.
+   Phone (≤ 600 px)
+   • Mobile browser: the FULL website, laid out for a narrow screen (scrolls normally, footer included).
+   • Android / installed app (html.ma-app — set in index.html for an app WebView, an installed PWA, or ?app=1):
+     landing becomes a short welcome screen (headline, pitch, illustration, Get started / Log in); the long
+     marketing sections, menu links, activity pop-up and footer are left out.
    ========================================================================== */
 @media (max-width:600px){
-  html body header.public-topbar .public-nav{display:none!important}
-  html body .public-footer{display:none!important}
-  html body .public-activity-toast{display:none!important}
-  html body main.v22-landing>section:not(.v22-hero),html body main.v22-landing>div:not(.public-activity-toast){display:none!important}
-  html body .v22-hero.hero-d{min-height:calc(100dvh - 60px)!important;align-content:start!important;padding-bottom:24px!important}
-  html body .v22-hero.hero-d .v22-hero-stats{display:none!important}
   html body .v22-hero.hero-d .v22-hero-badge{font-size:12px!important;padding:5px 10px!important}
   html body .v22-hero.hero-d h1{font-size:34px!important;margin:12px 0 10px!important}
-  html body .v22-hero.hero-d .v22-hero-copy>p{font-size:15px!important;line-height:1.5!important;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  html body .v22-hero.hero-d .v22-hero-copy>p{font-size:15px!important;line-height:1.5!important}
   html body .v22-hero.hero-d .v22-hero-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important;margin-top:16px!important}
   html body .v22-hero.hero-d .v22-hero-actions>*{width:100%!important;justify-content:center!important;font-size:15px!important;padding:13px 10px!important;margin:0!important}
-  html body .v22-hero.hero-d .v22-hero-art{order:-1;height:330px!important;margin:-6px 0 -10px!important}
   html body .v22-hero.hero-d .hd-stage{--hds:.6}
+  html body .v22-hero.hero-d .v22-hero-art{height:330px!important}
+  /* app only */
+  html.ma-app body header.public-topbar .public-nav{display:none!important}
+  html.ma-app body .public-footer{display:none!important}
+  html.ma-app body .public-activity-toast{display:none!important}
+  html.ma-app body main.v22-landing>section:not(.v22-hero),html.ma-app body main.v22-landing>div:not(.public-activity-toast){display:none!important}
+  html.ma-app body .v22-hero.hero-d{min-height:calc(100dvh - 60px)!important;align-content:start!important;padding-bottom:24px!important}
+  html.ma-app body .v22-hero.hero-d .v22-hero-stats{display:none!important}
+  html.ma-app body .v22-hero.hero-d .v22-hero-copy>p{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  html.ma-app body .v22-hero.hero-d .v22-hero-art{order:-1;margin:-6px 0 -10px!important}
 }
 
 /* Phone: signed-in screens — compact, app-like (less chrome, smaller type, 2-up tiles) */

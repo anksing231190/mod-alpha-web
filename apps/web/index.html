@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="src/styles/theme-light.generated.css">
 <link rel="stylesheet" href="src/styles/theme-light.css">
 <script>try{if(localStorage.getItem('mod-alpha-lang')==='hi'){document.documentElement.lang='hi';document.documentElement.dataset.lang='hi'}}catch(e){}</script>
+<script>/* app mode (Android WebView, installed app, or ?app=1 — ?app=0 turns it off): shorter, app-style public screens */try{var q=new URLSearchParams(location.search);if(q.get('app')==='1')localStorage.setItem('ma-app','1');if(q.get('app')==='0')localStorage.removeItem('ma-app');if(matchMedia('(display-mode: standalone)').matches||navigator.standalone||/; wv\)/.test(navigator.userAgent)||localStorage.getItem('ma-app')==='1')document.documentElement.classList.add('ma-app')}catch(e){}</script>
 <script>try{if(localStorage.getItem('mod-alpha-theme')==='light'){document.documentElement.dataset.theme='light';document.querySelector('meta[name=theme-color]').content='#f4ecdd'}}catch(e){}</script>
 </head>
 <body><div class="ambient ambient-a"></div><div class="ambient ambient-b"></div><div id="app"></div><div id="toast" class="toast" role="status" aria-live="polite"></div><div id="modal-root"></div>
