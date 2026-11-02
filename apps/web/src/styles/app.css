@@ -2205,7 +2205,7 @@ html[data-theme="light"] .ma-ins-kind.text{background:rgba(168,105,47,.1);color:
 /* Reel player pop-up, Instagram style: a narrow portrait card — video on top, title + caption below.
    Width is capped so the whole card (video + caption) fits the screen height. The Instagram player is sized from
    the card width (container units): its header (account) stays, the like/comment bar under the video is cut off. */
-.modal:has(.ma-reel-modal){width:min(440px,calc(100vw - 24px),calc((var(--vh100,100vh) - 350px) / 1.25 + 32px))!important;max-width:none!important;min-width:300px;height:auto;max-height:calc(var(--vh100,100vh) - 24px)}
+.modal:has(.ma-reel-modal){width:min(650px,calc(100vw - 24px),calc((var(--vh100,100vh) - 350px) / 1.25 + 32px))!important;max-width:none!important;min-width:300px;height:auto;max-height:calc(var(--vh100,100vh) - 24px)}
 .modal:has(.ma-reel-modal)>.modal-body{overflow-y:auto;padding:0 0 4px!important}
 .modal:has(.ma-reel-modal) .modal-head{padding:12px 16px!important}
 .ma-reel-head{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:700}
