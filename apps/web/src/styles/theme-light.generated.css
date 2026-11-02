@@ -7542,3 +7542,33 @@ html[data-theme="light"] .ma-ins-all .ma-reel-thumb {
 html[data-theme="light"] .ma-ins-all .v22-ins>.v22-tile {
     border-radius: 14px
 }
+html[data-theme="light"] .ma-signout-note {
+    border-radius: 14px;
+    border: 1px solid rgba(228,173,78,0.45);
+    background: linear-gradient(135deg,rgba(228,173,78,0.192),rgba(228,173,78,0.072))
+}
+html[data-theme="light"] .ma-signout-note.info {
+    border-color: rgba(121,167,90,0.4);
+    background: linear-gradient(135deg,rgba(183,162,133,0.14),rgba(183,162,133,0.05))
+}
+html[data-theme="light"] .ma-sn-ic {
+    border-radius: 12px;
+    background: rgba(228,173,78,0.24);
+    color: #f5b13d
+}
+html[data-theme="light"] .ma-signout-note.info .ma-sn-ic {
+    background: rgba(183,162,133,0.18);
+    color: #2ed391
+}
+html[data-theme="light"] .ma-sn-txt small {
+    color: #6b5542
+}
+html[data-theme="light"] .ma-sn-x {
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit
+}
+html[data-theme="light"] .ma-sn-x:hover {
+    background: rgba(52,36,20,0.033)
+}

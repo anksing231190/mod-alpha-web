@@ -465,3 +465,10 @@ Object.assign(window.MA_I18N_DICT, {
   'Insights and clips are for education only — not investment advice. Past performance does not guarantee future returns.': 'इनसाइट और क्लिप केवल जानकारी के लिए हैं — निवेश सलाह नहीं। पिछला प्रदर्शन भविष्य के रिटर्न की गारंटी नहीं देता।',
   'For education only — not investment advice.': 'केवल जानकारी के लिए — निवेश सलाह नहीं।', 'Loading…': 'लोड हो रहा है…',
 });
+// sign-out notice
+Object.assign(window.MA_I18N_DICT, {
+  'Signed out for your security': 'आपकी सुरक्षा के लिए साइन आउट किया गया', 'Session time limit reached': 'सत्र की समय-सीमा पूरी हुई', 'Your session has ended': 'आपका सत्र समाप्त हो गया', 'You have been logged out': 'आप लॉग आउट हो गए हैं',
+  'Nothing was lost. Sign in again to continue where you left off.': 'कुछ भी नहीं खोया। जहाँ छोड़ा था वहीं से जारी रखने के लिए फिर से साइन इन करें।',
+  'For safety, every session has a maximum length. Sign in again to continue.': 'सुरक्षा के लिए हर सत्र की एक अधिकतम अवधि होती है। जारी रखने के लिए फिर से साइन इन करें।',
+  'Please sign in again to continue.': 'जारी रखने के लिए कृपया फिर से साइन इन करें।', 'See you soon.': 'जल्द मिलते हैं।',
+});

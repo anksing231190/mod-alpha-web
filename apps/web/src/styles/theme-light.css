@@ -470,3 +470,10 @@ html[data-theme="light"] :is(.v22-search,.v22-ask,.workspace-search):focus-withi
 html[data-theme="light"] body .ma-reel-thumb,html[data-theme="light"] body .ma-ins-kind.instagram,html[data-theme="light"] body .ma-ins-cover #ma-ins-cv{background:linear-gradient(135deg,#f58529 0%,#dd2a7b 45%,#8134af 75%,#515bd4 100%)!important;color:#fff!important}
 html[data-theme="light"] body .ma-reel-src{color:#c13584!important}
 html[data-theme="light"] body .ma-reel-stage{background:#000!important}
+/* sign-out notice (kept out of the colour mapping so the amber / green stay clear) */
+html[data-theme="light"] .ma-signout-note{border-color:#e9c47f!important;background:linear-gradient(135deg,#fff3dc,#fffaf0)!important;color:#3b2a14}
+html[data-theme="light"] .ma-signout-note .ma-sn-ic{background:#fde4b0!important;color:#a8641a!important}
+html[data-theme="light"] .ma-signout-note.info{border-color:#a8dcc0!important;background:linear-gradient(135deg,#e6f6ed,#f6fcf8)!important}
+html[data-theme="light"] .ma-signout-note.info .ma-sn-ic{background:#c9ecd8!important;color:#1f7a4d!important}
+html[data-theme="light"] .ma-sn-txt b{color:#2b1d0e}
+html[data-theme="light"] .ma-sn-txt small{color:#7a6248!important}

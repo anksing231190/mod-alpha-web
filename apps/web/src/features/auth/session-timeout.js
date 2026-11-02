@@ -158,12 +158,42 @@
       const b = document.createElement('button'); b.type = 'button'; b.dataset.action = 'logout'; b.hidden = true;
       document.body.appendChild(b); b.click(); b.remove();
       try { sessionStorage.removeItem('ma-demo-session-start'); } catch (e) {}
-      setTimeout(() => (window.notify ? notify(msg) : null), 50);
+      setTimeout(() => showNotice(msg, reason === 'idle' || !MESSAGES[reason] ? 'idle' : reason), 50);
     }
     st.expiring = false;
   }
   /** A toast that stays a little longer than the default. */
   function notifyLong(msg) { if (typeof notify === 'function') notify(msg); }
+
+  /* ---------- sign-out notice on the login card ----------
+     Instead of a small toast, the reason is shown as a card at the top of the login form (icon, title, reason,
+     close button). It stays until the person signs in again or closes it, and survives the page switch. */
+  const NOTICE_KEY = 'ma-signout-notice';
+  const NOTICE_TITLES = { idle: 'Signed out for your security', absolute: 'Session time limit reached', expired: 'Your session has ended', user: 'You have been logged out' };
+  function showNotice(msg, kind) {
+    const k = kind || (/inactivity/i.test(msg) ? 'idle' : /time limit/i.test(msg) ? 'absolute' : /logged out/i.test(msg) ? 'user' : 'expired');
+    try { sessionStorage.setItem(NOTICE_KEY, JSON.stringify({ k, msg, at: now() })); } catch (e) {}
+    paintNotice();
+  }
+  function clearNotice() { try { sessionStorage.removeItem(NOTICE_KEY); } catch (e) {} document.querySelector('.ma-signout-note')?.remove(); }
+  function paintNotice() {
+    let n = null; try { n = JSON.parse(sessionStorage.getItem(NOTICE_KEY)); } catch (e) {}
+    const card = document.querySelector('.v22-auth-card'); if (!n || !card) return;
+    card.querySelector('.ma-signout-note')?.remove();
+    const security = n.k !== 'user';
+    const icon = security
+      ? '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3.2 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
+      : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const tip = n.k === 'idle' ? T('Nothing was lost. Sign in again to continue where you left off.') : n.k === 'absolute' ? T('For safety, every session has a maximum length. Sign in again to continue.') : n.k === 'user' ? T('See you soon.') : T('Please sign in again to continue.');
+    const el = document.createElement('div');
+    el.className = `ma-signout-note ${security ? 'security' : 'info'}`; el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite');
+    el.innerHTML = `<span class="ma-sn-ic">${icon}</span><div class="ma-sn-txt"><b>${T(NOTICE_TITLES[n.k] || NOTICE_TITLES.expired)}</b><p>${esc(n.msg)}</p><small>${tip}</small></div><button type="button" class="ma-sn-x" aria-label="${T('Close')}">×</button>`;
+    el.querySelector('.ma-sn-x').onclick = clearNotice;
+    card.prepend(el);
+  }
+  // draw it whenever the login / sign-up screen is drawn; forget it once signed in
+  if (typeof renderAuth === 'function') { const baseRenderAuth = renderAuth; renderAuth = function () { const r = baseRenderAuth.apply(this, arguments); paintNotice(); return r; }; }
+  window.addEventListener('ma:signed-in', clearNotice);
 
   /* ---------- start / stop ---------- */
   function applyInfo(r) {
@@ -213,5 +243,5 @@
   // another tab signed out because of a timeout → this tab hides its dialog too (the logout sync does the rest)
   window.addEventListener('storage', (e) => { if (e.key === 'mod-alpha-logout') hideWarning(); });
 
-  window.MA_SESSION = { start, stop, state: st, idleMessage };
+  window.MA_SESSION = { start, stop, state: st, idleMessage, showNotice, clearNotice };
 })();

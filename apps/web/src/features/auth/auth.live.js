@@ -59,7 +59,8 @@
     try { localStorage.setItem('mod-alpha-logout', String(Date.now())); } catch (e) {}
     window.dispatchEvent(new CustomEvent('ma:logout'));
     history.replaceState(null, '', '#/login'); route();
-    if (msg) notify(msg);
+    // the reason appears as a notice card on the login form (features/auth/session-timeout.js)
+    if (msg) { if (window.MA_SESSION && MA_SESSION.showNotice) MA_SESSION.showNotice(msg); else notify(msg); }
   }
   // Log out: end the session on the server, then locally.
   async function logout() { try { await API.post('/auth/logout'); } catch (e) {} signedOut('You have been logged out.'); }
