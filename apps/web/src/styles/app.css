@@ -2407,3 +2407,13 @@ html[data-theme="light"] .ma-drawer-scrim{background:rgba(60,40,20,.32)}
   .ma-inv-hist td:first-child{font-weight:700}
   .ma-inv-hist .ma-inv-acts{justify-content:flex-start;margin-top:8px}
 }
+@media (max-width:760px){
+  /* top bar stays visible while scrolling (sticky is broken by an overflow rule on an ancestor) */
+  html body .workspace-topbar{position:fixed!important;top:0!important;left:0!important;right:0!important;margin:0!important;width:auto!important}
+  html body .main-area{padding-top:66px!important}
+}
+@media (max-width:600px){
+  html body .v22-prof-tags{display:flex!important;flex-wrap:wrap!important;gap:6px!important}
+  html body .v22-prof-tags .v22-pill{max-width:none!important;overflow:visible!important;white-space:nowrap!important;text-overflow:clip!important}
+  html body .v22-prof-main{min-width:0;flex:1 1 180px}
+}
