@@ -96,8 +96,8 @@
   // Instagram's own player in a dialog (no API key). If Instagram blocks the embed, the link still works.
   function openReel(it) {
     const ig = parseIg(it.url) || {}; const embed = it.embedUrl || ig.embed;
-    showModal(esc(it.title), `<div class="v22 ma-reel-modal"><div class="ma-reel-frame"><iframe src="${esc(embed)}" title="${esc(it.title)}" allow="autoplay; encrypted-media; picture-in-picture; clipboard-write" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
-      ${it.body ? `<p class="v22-sub">${esc(it.body)}</p>` : ''}<div class="ma-reel-foot"><a class="v22-outline-btn" href="${esc(it.url)}" target="_blank" rel="noopener">${igGlyph} ${T('Open on Instagram')}</a><small>${T('For education only — not investment advice.')}</small></div></div>`);
+    showModal(esc(it.title), `<div class="v22 ma-reel-modal"><div class="ma-reel-stage"><iframe src="${esc(embed)}" title="${esc(it.title)}" allow="autoplay; encrypted-media; picture-in-picture; clipboard-write" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin" scrolling="no"></iframe></div>
+      <div class="ma-reel-side"><span class="ma-reel-acct">${igGlyph} ${T('Instagram reel')}</span>${it.body ? `<p>${esc(it.body)}</p>` : ''}<a class="v22-outline-btn" href="${esc(it.url)}" target="_blank" rel="noopener">${igGlyph} ${T('Open on Instagram')}</a><small>${T('For education only — not investment advice.')}</small></div></div>`);
   }
   function openAll() {
     showModal(T('Latest AI Insights'), `<div class="v22 ma-ins-all"><div class="v22-ins-list">${(items || []).map(cardHtml).join('') || `<p class="v22-muted">${T('No insights yet.')}</p>`}</div><p class="ma-ins-disc">${T('Insights and clips are for education only — not investment advice. Past performance does not guarantee future returns.')}</p></div>`);

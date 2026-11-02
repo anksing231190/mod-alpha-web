@@ -469,3 +469,4 @@ html[data-theme="light"] :is(.v22-search,.v22-ask,.workspace-search):focus-withi
 /* Instagram reel cards keep Instagram's own colours (this file is not colour-mapped by theme:build) */
 html[data-theme="light"] body .ma-reel-thumb,html[data-theme="light"] body .ma-ins-kind.instagram,html[data-theme="light"] body .ma-ins-cover #ma-ins-cv{background:linear-gradient(135deg,#f58529 0%,#dd2a7b 45%,#8134af 75%,#515bd4 100%)!important;color:#fff!important}
 html[data-theme="light"] body .ma-reel-src{color:#c13584!important}
+html[data-theme="light"] body .ma-reel-stage{background:#000!important}
