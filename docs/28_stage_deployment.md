@@ -19,8 +19,8 @@ Files: `infra/stage/` — `docker-compose.yml`, `Caddyfile` (domain mode), `Cadd
 | Region | **Asia Pacific (Sydney) `ap-southeast-2`** — the Free plan locks the project to one region (see Step 1, problem A) |
 | Server | EC2 `modalpha-stage`, **t3.small** (2 vCPU, 2 GB), Ubuntu 24.04, 30 GB gp3 |
 | Elastic IP | **52.65.52.22** |
-| Address (temporary) | **https://52-65-52-22.sslip.io** (website) and **https://52-65-52-22.sslip.io/api/v1/…** (API) |
-| Address (final) | https://stage.modalpha.in and https://api.stage.modalpha.in — once the domain hold is lifted (Step 7) |
+| Address (live) | **https://stage.modalpha.in** (website) and **https://api.stage.modalpha.in** (API) — HTTPS by Let's Encrypt via Caddy, renewed automatically |
+| Address (used while the domain was on hold) | https://52-65-52-22.sslip.io — retired after Step 13 |
 
 ---
 
@@ -209,11 +209,14 @@ aws CLI is installed. Restore: docs/27.
 | Update stage files after they change in git | `cd ~/mod-alpha-web && git pull && cp infra/stage/{docker-compose.yml,Caddyfile,Caddyfile.temp,deploy.sh,backup.sh} ~/modalpha-stage/` |
 | Pause costs | EC2 → Instance state → **Stop** (disk + IP still billed; do not Terminate) |
 
-## Step 13 — Switch from the temporary address to stage.modalpha.in
+## Step 13 — Switch from the temporary address to stage.modalpha.in (done)
 1. Domain hold lifted and both A records resolve to 52.65.52.22 (Step 7).
 2. (Address now comes from `.env.stage`; the GitHub variable is optional.)
 3. `.env.stage` → the **domain mode** block (Step 9) → `./deploy.sh`. Caddy fetches certificates for both names.
-4. Everyone signs in again (cookies are per address).
+4. Everyone signs in again (cookies are per address). Data needs no copying — same server, same database.
+5. Check: `docker compose --env-file .env.stage logs --tail=20 caddy | grep -iE "certificate obtained|error"` shows
+   **certificate obtained successfully** for both names. A warning *"no OCSP stapling … no OCSP server specified"* is
+   harmless (Let's Encrypt no longer runs OCSP).
 
 ## Smoke test after each deploy
 Sign up (email and mobile) · Login rejects unknown numbers · KYC with a test PAN · mock payment → Pro → best SIP
