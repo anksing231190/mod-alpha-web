@@ -7516,21 +7516,24 @@ html[data-theme="light"][data-theme="light"] .ma-ins-kind.text {
     background: rgba(176,153,121,0.1);
     color: #6d3b1d
 }
+html[data-theme="light"] .ma-reel-head .ma-ig-glyph {
+    color: #6b2c3c
+}
 html[data-theme="light"] .ma-reel-stage {
-    border-radius: 14px;
     background: #f4eddf
 }
 html[data-theme="light"] .ma-reel-stage iframe {
     border: 0;
     background: #ffffff
 }
-html[data-theme="light"] .ma-reel-side .ma-reel-acct .ma-ig-glyph {
-    color: #6b2c3c
-}
-html[data-theme="light"] .ma-reel-side small {
+html[data-theme="light"] .ma-reel-time {
     color: #6b5542
 }
-html[data-theme="light"][data-theme="light"] .ma-reel-side small {
+html[data-theme="light"] .ma-reel-disc {
+    color: #6b5542
+}
+html[data-theme="light"][data-theme="light"] .ma-reel-time,
+html[data-theme="light"][data-theme="light"] .ma-reel-disc {
     color: #574433
 }
 html[data-theme="light"] .ma-ins-all .v22-ins {

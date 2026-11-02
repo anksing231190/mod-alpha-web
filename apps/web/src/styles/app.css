@@ -2202,28 +2202,26 @@ html[data-theme="light"] .ma-ins-disc,html[data-theme="light"] .ma-ins-main smal
 html[data-theme="light"] .ma-ins-row{border-color:rgba(139,90,43,.15)}
 html[data-theme="light"] .ma-ins-kind.text{background:rgba(168,105,47,.1);color:#8b5a2b}
 
-/* Reel player pop-up: 70% of the page wide × 60% high. Left: a square stage holding Instagram's player
-   (sized from the stage height with container units; Instagram's like/comment bar below the video is cut off,
-   its header with the account name stays). Right: caption, Open on Instagram, disclaimer. */
-.modal:has(.ma-reel-modal){width:calc(var(--vw100,100vw) * .7)!important;max-width:calc(var(--vw100,100vw) - 32px)!important;height:calc(var(--vh100,100vh) * .6);min-width:min(680px,calc(var(--vw100,100vw) - 32px));min-height:min(460px,calc(var(--vh100,100vh) - 40px))}
-.modal:has(.ma-reel-modal)>.modal-body{flex:1;overflow:hidden;display:flex}
-.ma-reel-modal{flex:1;min-height:0;display:grid!important;grid-template-columns:auto minmax(200px,1fr);gap:24px;align-items:stretch}
-.ma-reel-stage{height:100%;aspect-ratio:1/1;position:relative;overflow:hidden;border-radius:14px;background:#000;container-type:size}
-.ma-reel-stage iframe{position:absolute;top:0;left:50%;transform:translateX(-50%);width:calc((100cqh - 55px) / 1.25);height:calc(100cqh + 140px);border:0;background:#fff}
-.ma-reel-side{display:flex;flex-direction:column;justify-content:center;gap:16px;min-width:0}
-.ma-reel-side .ma-reel-acct{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:15px}
-.ma-reel-side .ma-reel-acct .ma-ig-glyph{width:18px;height:18px;color:#c13584}
-.ma-reel-side p{margin:0;font-size:15px;line-height:1.6}
-.ma-reel-side a.v22-outline-btn{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
-.ma-reel-side a .ma-ig-glyph{width:16px;height:16px}
-.ma-reel-side small{color:#8ea0c4;font-size:12.5px}
-@media (max-width:760px){
-  .modal:has(.ma-reel-modal){width:calc(100vw - 24px)!important;height:auto;min-width:0}
-  .modal:has(.ma-reel-modal)>.modal-body{overflow-y:auto}
-  .ma-reel-modal{grid-template-columns:1fr}
-  .ma-reel-stage{height:auto;width:100%}
-}
-html[data-theme="light"] .ma-reel-side small{color:#6b5641}
+/* Reel player pop-up, Instagram style: a narrow portrait card — video on top, title + caption below.
+   Width is capped so the whole card (video + caption) fits the screen height. The Instagram player is sized from
+   the card width (container units): its header (account) stays, the like/comment bar under the video is cut off. */
+.modal:has(.ma-reel-modal){width:min(440px,calc(100vw - 24px),calc((var(--vh100,100vh) - 330px) / 1.25 ))!important;max-width:none!important;min-width:300px;height:auto;max-height:calc(var(--vh100,100vh) - 24px)}
+.modal:has(.ma-reel-modal)>.modal-body{overflow-y:auto;padding:0 0 4px!important}
+.modal:has(.ma-reel-modal) .modal-head{padding:12px 16px!important}
+.ma-reel-head{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:700}
+.ma-reel-head .ma-ig-glyph{width:18px;height:18px;color:#c13584}
+.ma-reel-modal{display:block!important;container-type:inline-size}
+.ma-reel-stage{position:relative;width:100%;height:calc(55px + 125cqw);overflow:hidden;background:#000}
+.ma-reel-stage iframe{position:absolute;inset:0 auto auto 0;width:100%;height:calc(55px + 125cqw + 140px);border:0;background:#fff}
+.ma-reel-cap{padding:14px 18px 6px;display:grid;gap:6px}
+.ma-reel-cap b{font-size:15.5px;line-height:1.35}
+.ma-reel-cap p{margin:0;font-size:14px;line-height:1.5;white-space:pre-line}
+.ma-reel-time{font-size:12px;color:#8ea0c4}
+.ma-reel-acts{margin-top:6px}
+.ma-reel-acts a{display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+.ma-reel-acts .ma-ig-glyph{width:16px;height:16px}
+.ma-reel-disc{font-size:12px;color:#8ea0c4}
+html[data-theme="light"] .ma-reel-time,html[data-theme="light"] .ma-reel-disc{color:#6b5641}
 
 /* "View All" insights pop-up: 60% of the page wide */
 .modal:has(.ma-ins-all){width:calc(var(--vw100,100vw) * .6)!important;max-width:calc(var(--vw100,100vw) - 32px)!important}
