@@ -7520,7 +7520,8 @@ html[data-theme="light"] .ma-reel-head .ma-ig-glyph {
     color: #6b2c3c
 }
 html[data-theme="light"] .ma-reel-stage {
-    background: #f4eddf
+    background: #f4eddf;
+    border-radius: 12px
 }
 html[data-theme="light"] .ma-reel-stage iframe {
     border: 0;
