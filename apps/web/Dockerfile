@@ -12,4 +12,6 @@ RUN WEB_API_BASE_URL=$WEB_API_BASE_URL WEB_RAZORPAY_KEY_ID=$WEB_RAZORPAY_KEY_ID 
 FROM nginx:1.27-alpine
 COPY infra/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /site /usr/share/nginx/html
+# API address can be set when the container starts (WEB_API_BASE_URL) — see infra/web-runtime-config.sh
+COPY --chmod=755 infra/web-runtime-config.sh /docker-entrypoint.d/40-ma-runtime-config.sh
 EXPOSE 80

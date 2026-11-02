@@ -32,6 +32,7 @@ services:
   web:
     image: ghcr.io/${GHCR_OWNER}/mod-alpha-web:${TAG:-stage}
     restart: unless-stopped
+    env_file: .env.stage            # WEB_API_BASE_URL (optional) overrides the website's API address
   caddy:
     image: caddy:2.8-alpine
     restart: unless-stopped

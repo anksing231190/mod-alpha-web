@@ -129,6 +129,7 @@ In `.env.stage` set (Ctrl+O, Enter, Ctrl+X to save and exit):
 ```
 CADDYFILE=Caddyfile.temp
 STAGE_HOST=52-65-52-22.sslip.io
+WEB_API_BASE_URL=https://52-65-52-22.sslip.io
 PUBLIC_APP_URL=https://52-65-52-22.sslip.io
 API_PUBLIC_URL=https://52-65-52-22.sslip.io
 CORS_ORIGINS=https://52-65-52-22.sslip.io
@@ -141,6 +142,7 @@ ADMIN_BOOTSTRAP_MOBILE=+91XXXXXXXXXX
 ```
 CADDYFILE=
 STAGE_HOST=
+WEB_API_BASE_URL=https://api.stage.modalpha.in
 PUBLIC_APP_URL=https://stage.modalpha.in
 API_PUBLIC_URL=https://api.stage.modalpha.in
 CORS_ORIGINS=https://stage.modalpha.in
@@ -168,7 +170,14 @@ sign-ups or a backup restore, docs/27).
 Fixed in git: the scripts now let Docker Compose read the file. On a server with the old scripts:
 `sed -i '/^set -a; \. \.\/\.env\.stage; set +a$/d' deploy.sh backup.sh` and run `./deploy.sh` again.
 
+**Problem D — login says "Failed to fetch"; `/config/env.js` shows `https://api.stage.modalpha.in`.** The website
+was built with the default API address (the GitHub variable did not reach the build — it showed as
+`--build-arg WEB_API_BASE_URL=""` in the Deploy log, which happens when it is saved as a *secret* or under another
+name). Fixed for good: the website container now reads **`WEB_API_BASE_URL` from `.env.stage` when it starts**
+(`infra/web-runtime-config.sh`), so no rebuild is needed to change the address. The GitHub variable is optional.
+
 Check:
+- `https://52-65-52-22.sslip.io/config/env.js` → `"API_BASE_URL":"https://52-65-52-22.sslip.io"`
 - `https://52-65-52-22.sslip.io/api/v1/plans` → JSON with the plans
 - `https://52-65-52-22.sslip.io` → the website (the first visit can take ~30 s while Caddy obtains the certificate)
 - **Login** with the bootstrap admin → enter the two codes shown on screen (email and SMS are mocked on stage) →
@@ -196,7 +205,7 @@ aws CLI is installed. Restore: docs/27.
 
 ## Step 13 — Switch from the temporary address to stage.modalpha.in
 1. Domain hold lifted and both A records resolve to 52.65.52.22 (Step 7).
-2. GitHub `stage` variable `WEB_API_BASE_URL` = `https://api.stage.modalpha.in` → **Run workflow** (Deploy, stage).
+2. (Address now comes from `.env.stage`; the GitHub variable is optional.)
 3. `.env.stage` → the **domain mode** block (Step 9) → `./deploy.sh`. Caddy fetches certificates for both names.
 4. Everyone signs in again (cookies are per address).
 
