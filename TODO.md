@@ -124,7 +124,7 @@ Already in the repo:
   - ACM TLS certificates
 - [ ] Jobs worker: add a Postgres advisory lock per job so a second `jobs` replica can never double-send reminders. **Until then, run exactly one `jobs` instance.**
 - [ ] Rate limiting is in-memory per API instance. Fine for 2 replicas; move to Redis (ElastiCache) when scaling out.
-- [ ] Website security headers: add HSTS and a Content-Security-Policy (nginx or CDN).
+- [ ] Website security headers: add HSTS and a Content-Security-Policy (nginx or CDN). The CSP must allow `frame-src https://www.instagram.com` (reels in Latest AI Insights) and `img-src` the API origin (reel covers).
 - [ ] Uploaded workbooks: move from Postgres `bytea` to S3 (Mumbai, encrypted, pre-signed URLs).
 - [ ] Monitoring: Sentry (API + web), uptime checks on `/health`, alerts (5xx rate, latency, DB CPU/storage, job failures, webhook failures).
 - [ ] Backups (plan in `docs/27_backup_and_recovery.md`; `npm run db:backup` / `db:restore` already built): RDS PITR 35 days, nightly dump to an S3 bucket with Object Lock + 8-year lifecycle + Hyderabad copy, missing-backup alert, monthly restore drill on stage.

@@ -9,7 +9,8 @@
  *   data/          workbook upload → validate → publish, export; workbook.ts = the sheet rules
  *   admin/         dashboard metrics, users, subscriptions, audit log, settings, model releases
  *   notifications/ templates and announcement campaigns (email / SMS / push / in-app / WhatsApp)
- *   content/       FAQs, insights, public activity, AI assistant, support tickets
+ *   content/       FAQs, public activity, AI assistant, support tickets
+ *   insights/      "Latest AI Insights" tile: text cards and Instagram reels, managed by admins
  */
 import type { FastifyInstance } from 'fastify';
 import auth from './auth/routes.js';
@@ -22,8 +23,9 @@ import data from './data/routes.js';
 import admin from './admin/routes.js';
 import notifications from './notifications/routes.js';
 import content from './content/routes.js';
+import insights from './insights/routes.js';
 
 // Order does not matter for routing; it only decides the order routes are listed in logs.
 export async function registerModules(api: FastifyInstance) {
-  for (const m of [auth, me, billing, kyc, funds, sip, data, admin, notifications, content]) await m(api);
+  for (const m of [auth, me, billing, kyc, funds, sip, data, admin, notifications, content, insights]) await m(api);
 }

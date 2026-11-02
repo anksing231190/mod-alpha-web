@@ -465,3 +465,7 @@ html[data-theme="light"] .ma-dp-ampm button.on{background:linear-gradient(135deg
 html[data-theme="light"] :is(.v22-auth-in,.v22-field,.v22-search,.v22-ask,.v22-help-search,.workspace-search) input:focus{border-color:transparent!important;box-shadow:none!important;outline:none!important}
 html[data-theme="light"] :is(.v22-auth-in,.v22-field,.v22-help-search):focus-within{border-color:var(--sand-caramel)!important;box-shadow:0 0 0 3px rgba(168,105,47,.18)!important}
 html[data-theme="light"] :is(.v22-search,.v22-ask,.workspace-search):focus-within{border-color:var(--sand-caramel)!important}
+
+/* Instagram reel cards keep Instagram's own colours (this file is not colour-mapped by theme:build) */
+html[data-theme="light"] body .ma-reel-thumb,html[data-theme="light"] body .ma-ins-kind.instagram,html[data-theme="light"] body .ma-ins-cover #ma-ins-cv{background:linear-gradient(135deg,#f58529 0%,#dd2a7b 45%,#8134af 75%,#515bd4 100%)!important;color:#fff!important}
+html[data-theme="light"] body .ma-reel-src{color:#c13584!important}

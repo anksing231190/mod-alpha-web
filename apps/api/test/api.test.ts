@@ -625,3 +625,37 @@ describe('admin accounts', () => {
     expect((await a.patch(`/admin/users/${id}`, { role: 'admin', reason: 'new ops hire' })).statusCode).toBe(400);
   });
 });
+
+describe('insights & Instagram reels', () => {
+  it('reads Instagram links in all common forms and rejects anything else', async () => {
+    const { parseInstagram } = await import('../src/modules/insights/routes.js');
+    expect(parseInstagram('https://www.instagram.com/reel/C9xYz_123ab/?igsh=abc')).toMatchObject({ id: 'C9xYz_123ab', url: 'https://www.instagram.com/reel/C9xYz_123ab/', embed: 'https://www.instagram.com/reel/C9xYz_123ab/embed/' });
+    expect(parseInstagram('instagram.com/reels/C9xYz_123ab')?.url).toBe('https://www.instagram.com/reel/C9xYz_123ab/');
+    expect(parseInstagram('https://www.instagram.com/modalpha/p/DAbc12345/')?.url).toBe('https://www.instagram.com/p/DAbc12345/');
+    for (const bad of ['https://youtube.com/watch?v=x', 'https://www.instagram.com/modalpha/', 'javascript:alert(1)']) expect(parseInstagram(bad)).toBeNull();
+  });
+  it('admins add a reel as a draft, publish and pin it; users see it first; drafts and hidden items stay private', async () => {
+    const a = await adminClient(app);
+    const bad = await a.post('/admin/insights', { kind: 'instagram', title: 'Why dates matter', url: 'https://example.com/x' });
+    expect(bad.statusCode).toBe(400);
+    const png = 'data:image/png;base64,' + Buffer.from('89504e470d0a1a0a0000000d4948445200000001000000010806000000', 'hex').toString('base64');
+    const r = (await a.post('/admin/insights', { kind: 'instagram', title: 'Why the SIP date matters', body: '60-second explainer', url: 'https://www.instagram.com/reel/C9xYz_123ab/?igsh=1', cover: png })).json().item;
+    expect(r).toMatchObject({ kind: 'instagram', status: 'Draft', url: 'https://www.instagram.com/reel/C9xYz_123ab/', embedUrl: 'https://www.instagram.com/reel/C9xYz_123ab/embed/' });
+    expect(r.cover).toContain(`/insights/${r.id}/cover`);
+    const pub = () => client(app).get('/insights').then((x) => x.json().items);
+    expect((await pub()).some((x: any) => x.id === r.id)).toBe(false);          // draft: not public
+    expect((await a.put(`/admin/insights/${r.id}`, { status: 'Published', pinned: true })).json().item.status).toBe('Published');
+    expect((await pub())[0].id).toBe(r.id);                                     // pinned → first
+    const cov = await client(app).get(`/insights/${r.id}/cover`);
+    expect(cov.statusCode).toBe(200); expect(cov.headers['content-type']).toBe('image/png');
+    expect((await a.put(`/admin/insights/${r.id}`, { status: 'Hidden' })).statusCode).toBe(200);
+    expect((await pub()).some((x: any) => x.id === r.id)).toBe(false);
+    // text insights need text; users cannot manage insights
+    expect((await a.post('/admin/insights', { kind: 'text', title: 'No body' })).statusCode).toBe(400);
+    const u = client(app); await u.post('/auth/signup', { name: 'Ins User', email: 'ins@example.com', password: 'secret-pass-1' });
+    expect((await u.post('/admin/insights', { kind: 'text', title: 'Sneaky', body: 'x' })).statusCode).toBe(403);
+    expect((await a.del(`/admin/insights/${r.id}`)).json().ok).toBe(true);
+    const log = (await a.get('/admin/audit?q=INSIGHT_')).json();
+    expect(JSON.stringify(log)).toContain('INSIGHT_DELETED');
+  });
+});

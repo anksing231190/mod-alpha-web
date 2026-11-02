@@ -12,10 +12,10 @@ The list comes from auditing every screen, button and data flow. Since v23 the b
 | P0 — launch-blocking | 40 |
 | P1 — needed for launch quality | 27 |
 | P2 — post-launch | 10 |
-| Pending (not built yet) | 17 |
+| Pending (not built yet) | 16 |
 | Mock — API built, provider mocked (integrated later) | 17 |
 | Manual (interim manual process) | 3 |
-| Ready | 40 |
+| Ready | 41 |
 
 **Status key:** *Ready* — implemented in the API and website · *Mock* — API and UI implemented, the external provider is mocked and will be integrated later (see docs/23) · *Manual* — an interim manual process is in place · *Pending* — not built yet.
 **Priority key:** *P0* launch-blocking · *P1* needed for a quality launch · *P2* post-launch.
@@ -93,7 +93,7 @@ The list comes from auditing every screen, button and data flow. Since v23 the b
 | AI-03 | Model backtesting & release gates | P1 | Ready | AI Models & Insights → Release gates, Open release checklist | `POST /admin/models/:version/evaluations · POST /admin/models/:version/approve` | MLflow, Weights & Biases, own | Built: gates + super-admin approval; evaluation runs pending. |
 | AI-04 | AI assistant (LLM gateway) | P1 | Mock (integrated later) | “Ask Mod Alpha” chat bot (all user pages), Help → Chat with Mod Alpha | `POST /assistant/messages (streaming)` | Anthropic Claude API via server-side gateway | Built; rule-based mock until ANTHROPIC_API_KEY is set. |
 | AI-05 | Grounding / retrieval over approved fund data | P1 | Pending | Assistant answers, AI Insight cards | `Internal retrieval service` | pgvector, OpenSearch, managed vector DB | Basic grounding built (top funds + SIP date in prompt); vector retrieval pending. |
-| AI-06 | AI insights feed generation | P2 | Pending | Dashboard → Latest AI Insights, notification dropdown | `GET /insights · scheduled generation job` | LLM + approved data, human review |  |
+| AI-06 | Latest AI Insights feed (text + Instagram reels) | P2 | Ready | Dashboard → Latest AI Insights; Admin → Insights & Reels | `GET /insights · GET/POST /admin/insights · PUT/DELETE /admin/insights/:id` | Instagram embed (no API key); Meta oEmbed only if automatic thumbnails are wanted | Admins curate text insights and Instagram reels (links to a public account). Automatic AI-generated insights are still to come. |
 | AI-07 | AI safety, cost limits & usage logging | P1 | Pending | AI Models → Model service configuration | `Gateway policies, per-user quotas` | Gateway + secrets manager | Per-plan quotas built; monthly cost cap pending. |
 
 ## Notifications & messaging (7)
@@ -174,7 +174,6 @@ The list comes from auditing every screen, button and data flow. Since v23 the b
 - **SIP_Dates sheet → calendar, Best Date card, SIP Date Configuration** → AI-01 SIP date recommendation engine
 - **“Ask Mod Alpha” chat bot (all user pages), Help → Chat with Mod Alpha** → AI-04 AI assistant (LLM gateway)
 - **Assistant answers, AI Insight cards** → AI-05 Grounding / retrieval over approved fund data
-- **Dashboard → Latest AI Insights, notification dropdown** → AI-06 AI insights feed generation
 - **AI Models → Model service configuration** → AI-07 AI safety, cost limits & usage logging
 - **SIP reminders, receipts, password reset, campaigns** → NOTI-01 Email delivery
 - **SMS reminders, OTP; Notifications → SMS preview** → NOTI-02 SMS delivery (DLT)

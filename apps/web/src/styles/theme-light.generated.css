@@ -7434,3 +7434,85 @@ html[data-theme="light"][data-theme="light"] .ma-data-acts .v22-act {
 html[data-theme="light"] .ma-auth-link {
     color: inherit
 }
+html[data-theme="light"] .ma-reel {
+    color: inherit
+}
+html[data-theme="light"] .ma-reel-thumb {
+    border-radius: 12px;
+    color: #fff;
+    background: linear-gradient(135deg,#9f5023 0%,#963a2c 45%,#6e3c58 75%,#935f2e 100%)
+}
+html[data-theme="light"] .ma-reel-play {
+    border-radius: 50%;
+    background: rgba(52,36,20,0.248)
+}
+html[data-theme="light"] .ma-reel-play svg {
+    color: #292119
+}
+html[data-theme="light"] .ma-reel-thumb.has-img .ma-reel-play {
+    background: rgba(52,36,20,0.275)
+}
+html[data-theme="light"] .ma-reel-src {
+    color: #6b2c3c
+}
+html[data-theme="light"] .ma-ins-disc {
+    color: #6b5542
+}
+html[data-theme="light"] .ma-reel-frame {
+    border-radius: 14px;
+    background: #f4eddf
+}
+html[data-theme="light"] .ma-reel-frame iframe {
+    border: 0;
+    background: #ffffff
+}
+html[data-theme="light"] .ma-reel-foot small {
+    color: #6b5542
+}
+html[data-theme="light"] .ma-ins-how small {
+    color: #6b5542
+}
+html[data-theme="light"] .ma-ins-row {
+    border-top: 1px solid var(--v-border,rgba(126,92,52,0.128))
+}
+html[data-theme="light"] .ma-ins-row:first-of-type {
+    border-top: 0
+}
+html[data-theme="light"] .ma-ins-kind {
+    border-radius: 10px;
+    background: rgba(203,188,167,0.12)
+}
+html[data-theme="light"] .ma-ins-kind.instagram {
+    color: #fff;
+    background: linear-gradient(135deg,#9f5023,#963a2c 45%,#6e3c58 75%,#935f2e)
+}
+html[data-theme="light"] .ma-ins-main small {
+    color: #6b5542
+}
+html[data-theme="light"] .ma-ins-main small a {
+    color: inherit
+}
+html[data-theme="light"] .ma-ins-acts .v22-row-btn.danger {
+    color: #7e3024
+}
+html[data-theme="light"] .ma-ins-cover #ma-ins-cv {
+    border-radius: 10px;
+    color: #fff;
+    background: linear-gradient(135deg,#9f5023,#963a2c 45%,#6e3c58 75%,#935f2e)
+}
+html[data-theme="light"] .ma-check input {
+    accent-color: #733d1e
+}
+html[data-theme="light"][data-theme="light"] .ma-ins-disc,
+html[data-theme="light"][data-theme="light"] .ma-ins-main small,
+html[data-theme="light"][data-theme="light"] .ma-ins-how small,
+html[data-theme="light"][data-theme="light"] .ma-reel-foot small {
+    color: #574433
+}
+html[data-theme="light"][data-theme="light"] .ma-ins-row {
+    border-color: rgba(126,92,52,0.188)
+}
+html[data-theme="light"][data-theme="light"] .ma-ins-kind.text {
+    background: rgba(176,153,121,0.1);
+    color: #6d3b1d
+}

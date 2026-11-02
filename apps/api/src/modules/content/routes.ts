@@ -1,6 +1,6 @@
 /**
  * Content module — public content and help.
- *   GET /faqs · GET /insights · GET /public/activity (anonymous counts for the landing page)
+ *   GET /faqs · GET /public/activity (anonymous counts for the landing page)
  *   POST /assistant/messages (AI assistant; daily limit per plan) · POST /support/tickets
  */
 import type { FastifyInstance } from 'fastify';
@@ -17,9 +17,9 @@ Rules: use only the fund data provided in the context; never give personalised b
 
 export default async function content(app: FastifyInstance) {
   const { db, providers, cfg } = app.deps;
-  // Published FAQs and AI insight cards.
+  // Published FAQs.
   app.get('/faqs', async () => ({ items: (await db.query('SELECT id, category, question, answer FROM faqs WHERE published ORDER BY sort, id')).rows }));
-  app.get('/insights', async () => ({ items: (await db.query(`SELECT id, icon, title, body, published_at FROM insights WHERE status='Published' ORDER BY published_at DESC LIMIT 10`)).rows }));
+  // (GET /insights moved to modules/insights)
 
   /** Aggregated, anonymous public activity for the landing-page toast (no PII). */
   app.get('/public/activity', async (req) => {

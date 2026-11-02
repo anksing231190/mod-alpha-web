@@ -77,7 +77,7 @@ window.V22_INTEGRATIONS=[
  {id:'AI-03',cat:'ai',name:'Model backtesting & release gates',status:'Ready',p:'P1',ui:'AI Models & Insights → Release gates, Open release checklist',api:'POST /admin/models/:version/evaluations · POST /admin/models/:version/approve',opts:'MLflow, Weights & Biases, own',note:'Built: gates + super-admin approval; evaluation runs pending.'},
  {id:'AI-04',cat:'ai',name:'AI assistant (LLM gateway)',status:'Mock',p:'P1',ui:'“Ask Mod Alpha” chat bot (all user pages), Help → Chat with Mod Alpha',api:'POST /assistant/messages (streaming)',opts:'Anthropic Claude API via server-side gateway',note:'Built; rule-based mock until ANTHROPIC_API_KEY is set.'},
  {id:'AI-05',cat:'ai',name:'Grounding / retrieval over approved fund data',status:'Pending',p:'P1',ui:'Assistant answers, AI Insight cards',api:'Internal retrieval service',opts:'pgvector, OpenSearch, managed vector DB',note:'Basic grounding built (top funds + SIP date in prompt); vector retrieval pending.'},
- {id:'AI-06',cat:'ai',name:'AI insights feed generation',status:'Pending',p:'P2',ui:'Dashboard → Latest AI Insights, notification dropdown',api:'GET /insights · scheduled generation job',opts:'LLM + approved data, human review'},
+ {id:'AI-06',cat:'ai',name:'Latest AI Insights feed (text + Instagram reels)',status:'Ready',p:'P2',ui:'Dashboard → Latest AI Insights; Admin → Insights & Reels',api:'GET /insights · GET/POST /admin/insights · PUT/DELETE /admin/insights/:id',opts:'Instagram embed (no API key); Meta oEmbed only if automatic thumbnails are wanted',note:'Admins curate text insights and Instagram reels (links to a public account). Automatic AI-generated insights are still to come.'},
  {id:'AI-07',cat:'ai',name:'AI safety, cost limits & usage logging',status:'Pending',p:'P1',ui:'AI Models → Model service configuration',api:'Gateway policies, per-user quotas',opts:'Gateway + secrets manager',note:'Per-plan quotas built; monthly cost cap pending.'},
 
  // ---- Notifications
@@ -124,6 +124,7 @@ window.V22_INTEGRATIONS=[
 
 /* Recent progress shown in Admin → System Settings → Build progress (newest first). */
 window.V22_PROGRESS_LOG=[
+ ['02 Nov 2026','v23.21','Latest AI Insights: admins add Instagram reels (paste the link) and text insights in Admin → Insights & Reels; draft / publish / pin / order; reels play in the dashboard'],
  ['02 Nov 2026','v23.20','New databases start without users or subscribers (spreadsheet Users / Subscriptions sheets skipped at set-up, refused on upload)'],
  ['02 Nov 2026','v23.20','Backup and restore: npm run db:backup / db:restore (safety copy first, migrations after); reset backs up first; plan in docs/27'],
  ['02 Nov 2026','v23.19','Login signs in existing accounts only (mobile OTP and Google); unknown ones are pointed to Create account'],

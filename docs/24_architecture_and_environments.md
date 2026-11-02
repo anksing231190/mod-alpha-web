@@ -103,7 +103,7 @@ Base path: `/api/v1`. Auth uses httpOnly cookies (`ma_at` for the access token, 
 | KYC | `GET /kyc/status` · `POST /kyc/sessions` · `POST /webhooks/kyc` · `POST /kyc/mock/complete` (stage) |
 | Funds & calculators | `GET /funds` (search, category, sort, paging) · `GET /funds/categories` · `GET /funds/:id` · `GET /funds/:id/nav` · `POST /calc/lumpsum` · `POST /calc/sip-compare` |
 | SIP dates | `GET /sip-dates/current` · `GET /sip-dates` (the day of the current and future months only for paid subscribers and admins — see §7a) |
-| Content | `GET /faqs` · `GET /insights` · `GET /public/activity` · `POST /assistant/messages` · `POST /support/tickets` |
+| Content | `GET /faqs` · `GET /insights` · `GET /insights/:id/cover` · `GET /public/activity` · `POST /assistant/messages` · `POST /support/tickets` |
 | Admin — reporting | `GET /admin/metrics?from&to&granularity` · `GET /admin/recent` · `GET /admin/data/summary` |
 | Admin — users & billing | `GET /admin/users` (+`format=csv`) · `GET/PATCH /admin/users/:id` · `POST /admin/kyc/:userId/decision` · `GET /admin/subscriptions` · `PUT /admin/plans/:id` · `POST /admin/payments/:id/refund` |
 | Admin — SIP dates | `POST /admin/sip-dates/validate` · `POST /admin/sip-dates/publish` |
@@ -174,6 +174,23 @@ GST e-invoicing (IRN / QR code through the GST portal) is only mandatory above �
 | Remove an admin | Change the role back to User, or Suspend the account (ends their sessions at once). |
 
 Every admin signs in with password + a code by email + a code by SMS. Stage uses its own demo admins; prod admins are real staff only.
+
+## 7d. Latest AI Insights: text cards and Instagram reels (v23.21)
+
+**Admin → Insights & Reels** (`#/admin/insights`, any admin) manages what users see in the dashboard tile **Latest AI Insights**.
+
+| | |
+|---|---|
+| Add a reel | Post it on Mod Alpha's **public** Instagram account (business/creator) → on Instagram ⋯ → *Copy link* → **Add Instagram reel** → paste, title, optional caption and cover (PNG/JPEG/WebP ≤ 600 KB) → tick *Published*. A live preview shows while you paste. |
+| Add text | **Add text insight**: title, text, icon. |
+| Manage | Edit, Pin / Unpin, Publish / Hide, Delete, Order (lower first). New items start as **Draft** unless *Published* is ticked. Every change is audited (`INSIGHT_CREATED / _UPDATED / _DELETED`, category Content). |
+| Tile | Pinned first, then order, then newest; 4 on the tile, all under **View All**. A reel shows its cover (or an Instagram-style card) with a play button and opens Instagram's own player (`…/reel/<id>/embed/`) in a dialog with **Open on Instagram** as a fallback. A disclaimer sits under the tile. |
+| Storage | Table `insights` (migration 007): `kind` text/instagram, `url` (normalised), `media_id`, `cover` (bytea), `pinned`, `sort`, `status` Draft/Published/Hidden. Only the link is stored — the video stays on Instagram. |
+| API | `GET /insights` (public, max 12) · `GET /insights/:id/cover` · `GET/POST /admin/insights` · `PUT/DELETE /admin/insights/:id`. Links accepted: `instagram.com/reel/…`, `/reels/…`, `/p/…`, `/tv/…` (with or without the account name or `?igsh=`). |
+
+No Instagram API key or Meta app is needed. If a reel is deleted, archived or the account turns private, the player is empty — hide or delete the item. Production website security headers must allow `frame-src https://www.instagram.com` (TODO §4).
+
+Demo mode keeps the list in the browser (localStorage).
 
 ## 8. Security notes
 

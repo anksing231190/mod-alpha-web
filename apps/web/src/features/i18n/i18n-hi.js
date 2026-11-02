@@ -459,3 +459,9 @@ Object.assign(window.MA_I18N_DICT, {
   'No Mod Alpha account uses this mobile number. Create an account first.': 'इस मोबाइल नंबर से कोई Mod Alpha खाता नहीं है। पहले खाता बनाएं।',
   'No Mod Alpha account uses this Google account. Create an account first.': 'इस Google खाते से कोई Mod Alpha खाता नहीं है। पहले खाता बनाएं।',
 });
+// v23.21: insights & reels
+Object.assign(window.MA_I18N_DICT, {
+  'Instagram reel': 'Instagram रील', 'Open on Instagram': 'Instagram पर खोलें', 'Play': 'चलाएं', 'No insights yet.': 'अभी कोई इनसाइट नहीं।',
+  'Insights and clips are for education only — not investment advice. Past performance does not guarantee future returns.': 'इनसाइट और क्लिप केवल जानकारी के लिए हैं — निवेश सलाह नहीं। पिछला प्रदर्शन भविष्य के रिटर्न की गारंटी नहीं देता।',
+  'For education only — not investment advice.': 'केवल जानकारी के लिए — निवेश सलाह नहीं।', 'Loading…': 'लोड हो रहा है…',
+});
