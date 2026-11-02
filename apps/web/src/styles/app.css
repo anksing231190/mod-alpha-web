@@ -2261,3 +2261,149 @@ html[data-theme="light"] .ma-reel-side small{color:#6b5641}
 .ma-sn-x:hover{opacity:1;background:rgba(0,0,0,.06)}
 @keyframes maSnIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.ma-signout-note{animation:none}}
+
+/* ==========================================================================
+   Phone layout (≤ 760 px) — features/mobile/mobile-shell.js
+   Drawer menu, compact sticky top bar, bottom tab bar, single-column cards.
+   ========================================================================== */
+.ma-m-lead,.ma-bottom-nav,.ma-drawer-scrim{display:none}
+@media (max-width:760px){
+  html body .app-shell{display:block!important;padding-bottom:calc(68px + env(safe-area-inset-bottom))}
+  html body .sidebar.v22-side{position:fixed!important;top:0!important;left:0!important;bottom:0!important;width:min(300px,84vw)!important;height:100dvh!important;min-height:0!important;max-height:none!important;padding:14px 12px!important;z-index:1300!important;transform:translateX(-104%);transition:transform .25s ease;overflow-y:auto!important;border-right:1px solid var(--v-border,rgba(255,255,255,.1))!important;border-bottom:0!important;box-shadow:none}
+  html.ma-drawer-open body .sidebar.v22-side{transform:none;box-shadow:12px 0 40px rgba(0,0,0,.25)}
+  .ma-drawer-scrim{display:block;position:fixed;inset:0;z-index:1250;background:rgba(15,10,5,.38);opacity:0;pointer-events:none;transition:opacity .25s}
+  html.ma-drawer-open .ma-drawer-scrim{opacity:1;pointer-events:auto}
+  html body .main-area{margin-left:0!important;padding:0 14px 16px!important}
+  html body .workspace-topbar{position:sticky!important;top:0;z-index:900;height:58px!important;margin:0 -14px 10px!important;padding:0 10px 0 6px!important;display:flex!important;align-items:center;justify-content:space-between;gap:8px;backdrop-filter:blur(10px)}
+  .ma-m-lead{display:flex;align-items:center;gap:4px;min-width:0}
+  .ma-m-menu{width:44px;height:44px;display:grid;place-items:center;border:0;background:transparent;color:inherit;border-radius:12px;cursor:pointer}
+  .ma-m-menu svg{width:24px;height:24px}
+  .ma-m-logo{display:flex;align-items:center;gap:7px;text-decoration:none;color:inherit;min-width:0}
+  .ma-m-logo b{font-size:16px;font-weight:800;white-space:nowrap}
+  .ma-m-logo svg{width:26px;height:26px;flex:none}
+  html body .workspace-topbar .workspace-actions{width:auto!important;gap:6px!important;margin:0!important;flex:none}
+  html body .workspace-topbar .v22-upgrade span,html body .workspace-topbar .v22-profile span:last-child,html body .workspace-topbar .profile-menu>span:not(.avatar),html body .workspace-topbar .profile-menu>b{display:none!important}
+  html body .workspace-topbar .v22-upgrade{padding:0 10px!important;min-width:0!important}
+  html body .workspace-topbar .ma-lang-toggle,html body .workspace-topbar .ma-theme-toggle{transform:scale(.92)}
+  .mobile-page-nav{display:none!important}
+  .ma-bottom-nav{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:1000;height:calc(64px + env(safe-area-inset-bottom));padding:6px 4px env(safe-area-inset-bottom);border-top:1px solid var(--v-border,rgba(255,255,255,.1));background:rgba(9,15,34,.96);backdrop-filter:blur(12px)}
+  .ma-bottom-nav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;color:#8ea0c4;font-size:11.5px;font-weight:600;border-radius:12px}
+  .ma-bottom-nav a svg{width:22px;height:22px}
+  .ma-bottom-nav a.on{color:#fff}
+  .ma-bottom-nav a.on svg{background:linear-gradient(135deg,#4f7cff,#8b5cf6);color:#fff;border-radius:14px;padding:4px 14px;width:52px;height:28px;box-sizing:border-box}
+  html body .chat-fab.v22-fab{bottom:calc(78px + env(safe-area-inset-bottom))!important;right:12px!important;transform:scale(.86);transform-origin:bottom right}
+  .workspace-footer{display:none!important}
+  /* dashboard SIP calendar: calendar on top, Best Date card below */
+  html body .v22-cal-wrap{display:grid!important;grid-template-columns:1fr!important;gap:14px!important}
+  html body .v22-cal-main,html body .v22-cal-side{width:auto!important;min-width:0!important;max-width:none!important}
+  html body .v22-cal-card .v22-card-head{flex-wrap:wrap;gap:10px}
+  /* billing history table scrolls sideways inside the pop-up */
+  .ma-inv-hist{overflow-x:auto}
+  .modal:has(.ma-inv-hist){width:calc(100vw - 20px)!important}
+}
+html[data-theme="light"] body .ma-bottom-nav{background:rgba(251,246,238,.97)!important;border-top-color:#e7d6bd!important}
+html[data-theme="light"] body .ma-bottom-nav a{color:#7a6248!important}
+html[data-theme="light"] body .ma-bottom-nav a.on{color:#3b2a14!important}
+html[data-theme="light"] body .ma-bottom-nav a.on svg{background:linear-gradient(135deg,#a8692f,#7a3f5e)!important;color:#fff!important}
+html[data-theme="light"] .ma-drawer-scrim{background:rgba(60,40,20,.32)}
+@media (max-width:760px){html[data-theme="light"] body .workspace-topbar{background:rgba(251,246,238,.92)!important}html[data-theme="light"] body .sidebar.v22-side{background:#fbf6ee!important}}
+
+/* Public pages on a phone (≤ 600 px): logo + actions on one row, menu links scroll underneath;
+   landing hero stacks the text above the phone illustration */
+@media (max-width:600px){
+  html body header.public-topbar{display:flex!important;flex-wrap:wrap!important;align-items:center!important;height:auto!important;min-height:0!important;padding:10px 14px 6px!important;gap:6px 8px!important}
+  html body header.public-topbar .brand{flex:none!important;width:auto!important;min-width:0!important;order:0}
+  html body header.public-topbar .brand .brand-symbol{height:30px!important;width:auto!important}
+  html body header.public-topbar .brand-wording small{display:none!important}
+  html body header.public-topbar .brand-wording strong{font-size:16px!important}
+  html body header.public-topbar .public-actions{order:1;margin-left:auto!important;gap:6px!important;flex:none!important;width:auto!important}
+  html body header.public-topbar .public-actions .ma-lang-toggle{display:none!important}
+  html body header.public-topbar .public-actions a,html body header.public-topbar .public-actions button{padding-left:12px!important;padding-right:12px!important;font-size:13.5px!important;height:38px!important}
+  html body header.public-topbar .public-actions .ma-theme-toggle{padding:0!important;width:38px!important}
+  html body header.public-topbar .public-nav{order:2;width:100%!important;display:flex!important;overflow-x:auto;gap:18px!important;padding:4px 2px 2px!important;scrollbar-width:none;justify-content:flex-start!important}
+  html body header.public-topbar .public-nav::-webkit-scrollbar{display:none}
+  html body header.public-topbar .public-nav a{white-space:nowrap;font-size:13.5px!important}
+  html body .v22-hero.hero-d{display:grid!important;grid-template-columns:1fr!important;gap:8px!important;padding-top:18px!important}
+  html body .v22-hero.hero-d .v22-hero-copy{width:auto!important;max-width:none!important}
+  html body .v22-hero.hero-d h1{font-size:40px!important;line-height:1.08!important}
+  html body .v22-hero.hero-d .v22-hero-art{width:100%!important;height:440px!important;min-height:0!important;margin:0!important}
+  html body .v22-hero.hero-d .hd-stage{--hds:.72}
+}
+@media (max-width:600px){
+  html body header.public-topbar .brand .brand-symbol{height:26px!important}
+  html body header.public-topbar .brand-wording strong{font-size:15px!important}
+  html body header.public-topbar .public-actions .ma-theme-toggle{width:34px!important;height:34px!important}
+  html body header.public-topbar .public-actions .login-outline,html body header.public-topbar .public-actions .top-cta{height:36px!important;padding:0 11px!important;font-size:13px!important;display:inline-flex!important;align-items:center!important;white-space:nowrap!important;min-width:0!important}
+  html body header.public-topbar .public-actions .top-cta svg{display:none}
+}
+@media (max-width:760px){
+  html body .v22-faq-grid{grid-template-columns:1fr!important;gap:18px!important}
+}
+@media (max-width:600px){
+  html body header.topbar.public-topbar .top-actions.public-actions a.top-cta,html body header.topbar.public-topbar .top-actions.public-actions .login-outline{font-size:13px!important;padding:0 12px!important;height:34px!important;line-height:34px!important;display:inline-flex!important;align-items:center!important;white-space:nowrap!important;min-width:0!important}
+  html body header.topbar.public-topbar .top-actions.public-actions a.top-cta svg{display:none!important}
+}
+
+/* ==========================================================================
+   Phone (≤ 600 px) = app-style screens with only the important content.
+   Landing becomes a welcome screen (headline, one-line pitch, illustration, Get started / Log in);
+   the long marketing sections, the menu links, the activity pop-up and the footer stay on the website only.
+   Login / sign-up / pricing pages drop the menu links and footer too.
+   ========================================================================== */
+@media (max-width:600px){
+  html body header.public-topbar .public-nav{display:none!important}
+  html body .public-footer{display:none!important}
+  html body .public-activity-toast{display:none!important}
+  html body main.v22-landing>section:not(.v22-hero),html body main.v22-landing>div:not(.public-activity-toast){display:none!important}
+  html body .v22-hero.hero-d{min-height:calc(100dvh - 60px)!important;align-content:start!important;padding-bottom:24px!important}
+  html body .v22-hero.hero-d .v22-hero-stats{display:none!important}
+  html body .v22-hero.hero-d .v22-hero-badge{font-size:12px!important;padding:5px 10px!important}
+  html body .v22-hero.hero-d h1{font-size:34px!important;margin:12px 0 10px!important}
+  html body .v22-hero.hero-d .v22-hero-copy>p{font-size:15px!important;line-height:1.5!important;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  html body .v22-hero.hero-d .v22-hero-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important;margin-top:16px!important}
+  html body .v22-hero.hero-d .v22-hero-actions>*{width:100%!important;justify-content:center!important;font-size:15px!important;padding:13px 10px!important;margin:0!important}
+  html body .v22-hero.hero-d .v22-hero-art{order:-1;height:330px!important;margin:-6px 0 -10px!important}
+  html body .v22-hero.hero-d .hd-stage{--hds:.6}
+}
+
+/* Phone: signed-in screens — compact, app-like (less chrome, smaller type, 2-up tiles) */
+@media (max-width:600px){
+  .ma-m-logo img{height:26px;width:auto}
+  /* dashboard */
+  html body .v22-welcome h1{font-size:22px!important}
+  html body .v22-welcome p{font-size:13.5px!important}
+  html body .v22-kpis{grid-template-columns:1fr 1fr!important;gap:10px!important;margin-top:14px!important}
+  html body .v22-kpis article{flex-direction:column!important;gap:8px!important;padding:12px!important;min-width:0}
+  html body .v22-kpis .v22-tile{width:34px!important;height:34px!important}
+  html body .v22-kpis .v22-tile svg{width:18px!important;height:18px!important}
+  html body .v22-kpis .v22-kpi-txt small{font-size:12px!important;line-height:1.3}
+  html body .v22-kpis .v22-kpi-txt small em{display:block}
+  html body .v22-kpis .v22-kpi-val{font-size:22px!important;display:block}
+  html body .v22-kpis .v22-kpi-val span{display:block;font-size:11.5px!important;margin:2px 0 0!important;white-space:normal}
+  html body .v22 .v22-card{padding:16px!important;border-radius:16px!important}
+  html body .v22 .v22-card-head h2,html body .v22 .v22-h2{font-size:17px!important}
+  html body .v22 .v22-card-head p,html body .v22 .v22-sub{font-size:13px!important}
+  html body .v22-phead h1,html body .v22 .v22-subhead h1{font-size:24px!important}
+  html body .v22-phead p{font-size:13.5px!important}
+  html body .v22-note{display:none}
+  /* settings: tabs across the top, no side card */
+  html body .v22-set-layout{display:block!important}
+  html body .v22-set-side{position:static!important;padding:0!important;border:0!important;background:none!important;box-shadow:none!important;margin-bottom:12px}
+  html body .v22-set-side .v22-set-who{display:none!important}
+  html body .v22-set-side nav{display:grid!important;grid-template-columns:1fr 1fr;gap:8px}
+  html body .v22-set-side nav button{padding:10px!important;border-radius:12px!important;justify-content:center}
+  html body .v22-set-side nav button small,html body .v22-set-side nav button .go,html body .v22-set-side nav button>svg:first-child,html body .v22-set-side nav button>.v22-cic,html body .v22-set-side nav button>span:first-child:not(:only-of-type)>svg{display:none!important}
+  html body .v22-prof{flex-wrap:wrap;gap:12px!important}
+  html body .v22-prof .v22-prof-av{width:52px!important;height:52px!important;font-size:22px!important}
+  html body .v22-prof .v22-sec-actions{width:100%;display:grid!important;grid-template-columns:1fr 1fr;gap:8px}
+  html body .v22-prof .v22-sec-actions button{font-size:12.5px!important;padding:9px 8px!important;justify-content:center}
+  html body .v22-prof-main span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;max-width:240px}
+  html body .v22-form-grid{grid-template-columns:1fr!important}
+  /* billing history: one card per invoice */
+  .ma-inv-hist table,.ma-inv-hist tbody,.ma-inv-hist tr,.ma-inv-hist td{display:block;width:100%}
+  .ma-inv-hist thead{display:none}
+  .ma-inv-hist tr{padding:12px 0;border-bottom:1px solid rgba(139,90,43,.15)}
+  .ma-inv-hist td{padding:2px 0!important;border:0!important;text-align:left!important;white-space:normal!important}
+  .ma-inv-hist td:first-child{font-weight:700}
+  .ma-inv-hist .ma-inv-acts{justify-content:flex-start;margin-top:8px}
+}
