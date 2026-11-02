@@ -1,76 +1,203 @@
-# 28 · Stage deployment (step by step)
+# 28 · Stage hosting — complete step-by-step guide
 
-Stage = **https://stage.modalpha.in** (website) + **https://api.stage.modalpha.in** (API), on one server in
-AWS Mumbai running Docker: PostgreSQL, API, jobs worker, website and Caddy (automatic HTTPS).
-Every push to `main` builds new images in GitHub Actions and rolls them out to the server.
-Files: `infra/stage/` (docker-compose.yml, Caddyfile, deploy.sh, backup.sh, env.stage.example).
+This is the exact path used to bring up **stage** for Mod Alpha, in order, including the problems hit on the way
+and how they were solved. Follow it top to bottom for a new stage server; each step says what you should see.
 
-## 0. What you need
-- GitHub access for this session/your machine (to push the code) and admin rights on the repository.
-- An AWS account (or any VPS provider with an Indian region).
-- DNS access for `modalpha.in`.
-- 30–45 minutes.
+**What stage is:** one Linux server running Docker with five containers — PostgreSQL (`db`), the API (`api`), the
+background-jobs worker (`jobs`), the website (`web`, nginx) and Caddy (`caddy`, automatic HTTPS).
+Files: `infra/stage/` — `docker-compose.yml`, `Caddyfile` (domain mode), `Caddyfile.temp` (temporary mode),
+`deploy.sh`, `backup.sh`, `env.stage.example`. Images are built by GitHub Actions on every push to `main`
+(`.github/workflows/deploy.yml`) and stored in GitHub Container Registry (`ghcr.io/anksing231190/mod-alpha-api`,
+`…/mod-alpha-web`).
 
-## 1. Server (AWS EC2, Mumbai)
-1. EC2 → Launch instance, region **ap-south-1 (Mumbai)**: Ubuntu 24.04 LTS, **t3.medium** (2 vCPU, 4 GB), 40 GB gp3 disk.
-2. Security group: inbound **22** (your office IP only), **80** and **443** (anywhere).
-3. Allocate an **Elastic IP** and attach it to the instance.
-4. SSH in and install Docker:
-   ```bash
-   curl -fsSL https://get.docker.com | sudo sh
-   sudo usermod -aG docker ubuntu && newgrp docker
-   ```
+**Current stage values**
 
-## 2. DNS
-Two **A records** → the Elastic IP: `stage.modalpha.in` and `api.stage.modalpha.in`. Wait until `dig +short stage.modalpha.in` shows the IP (Caddy needs this to get certificates).
+| Item | Value |
+|---|---|
+| Code repository | https://github.com/anksing231190/mod-alpha-web (`main`) — old prototype kept on branch `prototype-archive` |
+| AWS account / plan | "Ctrl Shift Create", project "Mod Alpha", **Free plan** ($100 credits, 6 months) |
+| Region | **Asia Pacific (Sydney) `ap-southeast-2`** — the Free plan locks the project to one region (see Step 1, problem A) |
+| Server | EC2 `modalpha-stage`, **t3.small** (2 vCPU, 2 GB), Ubuntu 24.04, 30 GB gp3 |
+| Elastic IP | **52.65.52.22** |
+| Address (temporary) | **https://52-65-52-22.sslip.io** (website) and **https://52-65-52-22.sslip.io/api/v1/…** (API) |
+| Address (final) | https://stage.modalpha.in and https://api.stage.modalpha.in — once the domain hold is lifted (Step 7) |
 
-## 3. GitHub
-1. Push the code and merge the work branch into `main` (stage deploys from `main`).
-2. Settings → Environments → **New environment: `stage`**:
-   - Variables: `WEB_API_BASE_URL` = `https://api.stage.modalpha.in`, `STAGE_SSH_HOST` = the Elastic IP, `STAGE_SSH_USER` = `ubuntu`
-   - Secret: `STAGE_SSH_KEY` = a private key whose public key is in the server's `~/.ssh/authorized_keys` (make a separate deploy key: `ssh-keygen -t ed25519 -f modalpha-deploy`)
-3. A **personal access token (classic)** with only `read:packages`, for the server to pull the images.
+---
 
-## 4. Prepare the server (once)
-```bash
-mkdir -p ~/modalpha-stage/seed && cd ~/modalpha-stage
-# copy infra/stage/* from the repo here (scp, or git clone and copy)
-cp env.stage.example .env.stage && chmod 600 .env.stage
-nano .env.stage          # fill POSTGRES_PASSWORD, JWT_SECRET, ADMIN_BOOTSTRAP_* (see the comments)
-echo <TOKEN> | docker login ghcr.io -u <github-user> --password-stdin
-# reference data workbook (funds, NAV, SIP dates — no users):
-#   copy apps/web/data/mod-alpha-test-data.xlsx to ~/modalpha-stage/seed/
+## Step 1 — AWS account and region
+1. Sign in at https://console.aws.amazon.com.
+2. Secure the account: account name (top right) → **Security credentials** → **Assign MFA device** (authenticator app).
+3. Cost guard: search **Budgets** → **Create budget** → *Monthly cost budget* → ₹5,000 with an email alert.
+4. Open EC2 directly in a region with a link (the Console Home and billing pages are global and show **no region
+   selector** — that is normal):
+   - Mumbai: `https://ap-south-1.console.aws.amazon.com/ec2/home?region=ap-south-1`
+   - Sydney: `https://ap-southeast-2.console.aws.amazon.com/ec2/home?region=ap-southeast-2`
+
+**Problem A — "Region Asia Pacific (Mumbai) unavailable".** On the AWS **Free plan** a project is locked to one
+region (ours was assigned Sydney). Options: (1) stay free and use Sydney for stage — chosen, stage holds only test
+data; (2) **Activate advanced features** (paid plan; credits still apply) to use Mumbai; (3) create a new project and
+see whether Mumbai is offered. **Production must run in Mumbai** (Indian data residency) — upgrade before prod.
+
+## Step 2 — Key pair (login key)
+EC2 → **Network & Security → Key Pairs → Create key pair**: name `modalpha-stage`, type **ED25519**, format **.pem**
+(Windows PowerShell / Mac / Linux) or **.ppk** (PuTTY). The file downloads once — store it safely.
+
+## Step 3 — Launch the server
+EC2 → **Instances → Launch instances**:
+
+| Field | Value |
+|---|---|
+| Name | `modalpha-stage` |
+| Image | **Ubuntu Server 24.04 LTS (HVM), SSD**, 64-bit (x86) — "Free tier eligible" (26.04 is offered first; 24.04 is the tested one) |
+| Instance type | **t3.small** (default is t3.micro, 1 GB — too small for db + api + jobs + web) |
+| Key pair | `modalpha-stage` |
+| Network settings → **Edit** | Auto-assign public IP **Enable**; **Create security group** `modalpha-stage-sg` |
+| Inbound rules | SSH 22 — Source **My IP**; HTTP 80 — **Anywhere**; HTTPS 443 — **Anywhere** |
+| Storage | **30 GiB gp3** (default 8; 30 is within the free tier) |
+
+**Launch instance** → **Instances** → wait for **Running** and **2/2 checks passed**.
+
+## Step 4 — Elastic IP (permanent address)
+The auto-assigned IP (was `13.239.86.49`) changes on stop/start. EC2 → **Network & Security → Elastic IPs →
+Allocate Elastic IP address → Allocate** → select it → **Actions → Associate Elastic IP address** → Instance
+`modalpha-stage` → **Associate**. Result: **52.65.52.22**. Use only this IP from now on.
+
+## Step 5 — Log in from Windows (PowerShell)
+```powershell
+cd $HOME\Downloads
+icacls .\modalpha-stage.pem /inheritance:r
+icacls .\modalpha-stage.pem /grant:r "$($env:USERNAME):(R)"
+ssh -i .\modalpha-stage.pem ubuntu@52.65.52.22
 ```
-Random values: `openssl rand -base64 32` (database password), `openssl rand -base64 48` (JWT secret).
+Answer `yes` to the fingerprint question; the prompt becomes `ubuntu@ip-172-31-43-102:~$`.
+*Connection timed out* → your internet IP changed: EC2 → Security Groups → `modalpha-stage-sg` → Edit inbound rules →
+SSH → Source **My IP** → Save.
 
-## 5. First deploy
-1. Push to `main` (or GitHub → Actions → **Deploy** → Run workflow → `stage`). The workflow builds `mod-alpha-api` and `mod-alpha-web`, pushes them to GHCR and runs `./deploy.sh <sha>` on the server over SSH.
-   Without the SSH settings, run it yourself on the server: `./deploy.sh`.
-2. Load the reference data once:
-   ```bash
-   docker compose --env-file .env.stage exec api node dist/cli/seed.js --workbook=/seed/mod-alpha-test-data.xlsx
-   ```
-3. Check: `https://api.stage.modalpha.in/health` → `{"ok":true,"env":"stage"}`, and open `https://stage.modalpha.in`.
-4. Sign in as the bootstrap admin. While email/SMS are mocked, the two sign-in codes are shown on screen.
-   Then change the password and remove `ADMIN_BOOTSTRAP_PASSWORD` from `.env.stage`; add more admins from Admin → Users → Add admin.
+## Step 6 — Docker and swap (on the server)
+```bash
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker ubuntu
+sudo fallocate -l 1G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile && echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+exit
+```
+Log in again (Step 5, last line), then `docker run --rm hello-world` → **"Hello from Docker!"**.
 
-## 6. Backups
+## Step 7 — Domain DNS (GoDaddy)
+GoDaddy → **My Products → modalpha.in → DNS → DNS Records → Add New Record**, twice:
+
+| Type | Name | Value | TTL |
+|---|---|---|---|
+| A | `stage` | 52.65.52.22 | 600 seconds |
+| A | `api.stage` | 52.65.52.22 | 600 seconds |
+
+Do not change the `@` (Parked), `www`, NS records, Forwarding or Nameservers. Check:
+`nslookup stage.modalpha.in 8.8.8.8` and `nslookup api.stage.modalpha.in 8.8.8.8` → 52.65.52.22.
+
+**Problem B — no "Add New Record" button; banner "This domain has been placed on a status hold".** The registrant
+(WHOIS) verification was not completed, so GoDaddy locked DNS and the domain stops resolving. Fix: complete the
+verification email (check spam) or call GoDaddy (040-49187600) to verify the registrant details
+(**Registration Settings → Contact information**); for `.in` domains they may ask for ID / company documents. After
+the hold is lifted the button appears. **Until then, stage runs on the temporary address (Step 9, temporary mode).**
+
+## Step 8 — GitHub
+1. **Code:** https://github.com/anksing231190/mod-alpha-web, branch `main` (CI and Deploy run on every push).
+2. **Environment:** repo → **Settings → Environments → New environment** `stage` → **Environment variables → Add variable**:
+   - `WEB_API_BASE_URL` = `https://52-65-52-22.sslip.io` (temporary) — later `https://api.stage.modalpha.in`.
+
+   The website image has this address built in, so after setting or changing it run **Actions → Deploy → Run
+   workflow → stage** and wait for the green tick.
+3. **Token for the server:** profile photo → **Settings → Developer settings → Personal access tokens → Tokens
+   (classic) → Generate new token (classic)**: note `modalpha-stage-server`, expiry 90 days, scopes **repo** and
+   **read:packages**. Copy the `ghp_…` token (shown once; never paste it in chat or commit it).
+4. *(Later, optional)* automatic roll-out on push: variables `STAGE_SSH_HOST`, `STAGE_SSH_USER` and secret
+   `STAGE_SSH_KEY` in the `stage` environment. This needs SSH reachable from GitHub's runners, so it is off for now;
+   deploys are run on the server with `./deploy.sh`.
+
+## Step 9 — Prepare the server
+```bash
+git clone --depth 1 https://<TOKEN>@github.com/anksing231190/mod-alpha-web.git ~/mod-alpha-web
+mkdir -p ~/modalpha-stage/seed && cp ~/mod-alpha-web/infra/stage/* ~/modalpha-stage/ \
+  && cp ~/mod-alpha-web/apps/web/data/mod-alpha-test-data.xlsx ~/modalpha-stage/seed/ && cd ~/modalpha-stage && ls
+cp env.stage.example .env.stage && chmod 600 .env.stage
+sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -hex 24)|; s|^JWT_SECRET=.*|JWT_SECRET=$(openssl rand -hex 48)|" .env.stage
+echo <TOKEN> | docker login ghcr.io -u anksing231190 --password-stdin     # → Login Succeeded
+nano .env.stage
+```
+In `.env.stage` set (Ctrl+O, Enter, Ctrl+X to save and exit):
+
+**Temporary mode (now — domain on hold):**
+```
+CADDYFILE=Caddyfile.temp
+STAGE_HOST=52-65-52-22.sslip.io
+PUBLIC_APP_URL=https://52-65-52-22.sslip.io
+API_PUBLIC_URL=https://52-65-52-22.sslip.io
+CORS_ORIGINS=https://52-65-52-22.sslip.io
+COOKIE_DOMAIN=
+ADMIN_BOOTSTRAP_EMAIL=<your email>
+ADMIN_BOOTSTRAP_PASSWORD=<strong password, 12+ characters>
+ADMIN_BOOTSTRAP_MOBILE=+91XXXXXXXXXX
+```
+**Domain mode (after Step 7 works):**
+```
+CADDYFILE=
+STAGE_HOST=
+PUBLIC_APP_URL=https://stage.modalpha.in
+API_PUBLIC_URL=https://api.stage.modalpha.in
+CORS_ORIGINS=https://stage.modalpha.in
+COOKIE_DOMAIN=.stage.modalpha.in
+```
+Rules for this file: one `KEY=value` per line, **no comments after a value** (Docker would keep them as part of the
+value), never commit it.
+
+## Step 10 — First deploy
+```bash
+cd ~/modalpha-stage
+./deploy.sh                       # pulls images, starts all containers, waits for the API → "✓ stage is up"
+docker compose --env-file .env.stage exec api node dist/cli/seed.js --workbook=/seed/mod-alpha-test-data.xlsx
+```
+The seed loads funds, 10 years of NAV, SIP dates and holidays — **no users or subscribers** (those come only from
+sign-ups or a backup restore, docs/27).
+
+Check:
+- `https://52-65-52-22.sslip.io/api/v1/plans` → JSON with the plans
+- `https://52-65-52-22.sslip.io` → the website (the first visit can take ~30 s while Caddy obtains the certificate)
+- **Login** with the bootstrap admin → enter the two codes shown on screen (email and SMS are mocked on stage) →
+  Admin console. Then change the password, delete `ADMIN_BOOTSTRAP_PASSWORD` from `.env.stage`, run `./deploy.sh`,
+  and add other admins in **Admin → Users → Add admin**.
+
+## Step 11 — Nightly backups
 ```bash
 crontab -e
-# 03:00 IST every night:
 30 21 * * * ~/modalpha-stage/backup.sh >> ~/modalpha-stage/backup.log 2>&1
 ```
-Keeps 14 days in `~/modalpha-stage/backups`; also uploads to S3 if `BACKUP_S3_URI` is set and the aws CLI is installed. Restore: docs/27.
+03:00 IST nightly, 14 days kept in `~/modalpha-stage/backups`; also copied to S3 when `BACKUP_S3_URI` is set and the
+aws CLI is installed. Restore: docs/27.
 
-## 7. Every next release
-- Merge to `main` → deployed automatically (about 5 minutes).
-- Roll back: on the server `./deploy.sh <older-git-sha>` (images are kept per commit in GHCR).
-- Logs: `docker compose --env-file .env.stage logs -f --tail=100 api` (or `jobs`, `web`, `caddy`).
+## Step 12 — Day-to-day
+| Task | How |
+|---|---|
+| Release | push / merge to `main` → wait for **Deploy** ✓ → on the server `cd ~/modalpha-stage && ./deploy.sh` |
+| Roll back | `./deploy.sh <older-git-sha>` (every commit's images are kept in GHCR) |
+| Logs | `docker compose --env-file .env.stage logs -f --tail=100 api` (or `jobs`, `web`, `caddy`, `db`) |
+| Status | `docker compose --env-file .env.stage ps` |
+| Change a setting | edit `.env.stage` → `./deploy.sh` |
+| Update stage files after they change in git | `cd ~/mod-alpha-web && git pull && cp infra/stage/{docker-compose.yml,Caddyfile,Caddyfile.temp,deploy.sh,backup.sh} ~/modalpha-stage/` |
+| Pause costs | EC2 → Instance state → **Stop** (disk + IP still billed; do not Terminate) |
 
-## 8. Smoke test after each deploy
-Sign up (email + mobile) · login-only rejects unknown numbers · KYC with a test PAN · mock payment → Pro → best date unlocks → GST invoice PDF · admin: publish a SIP date, add an Instagram reel, view audit log · inactivity sign-out notice · phone layout.
+## Step 13 — Switch from the temporary address to stage.modalpha.in
+1. Domain hold lifted and both A records resolve to 52.65.52.22 (Step 7).
+2. GitHub `stage` variable `WEB_API_BASE_URL` = `https://api.stage.modalpha.in` → **Run workflow** (Deploy, stage).
+3. `.env.stage` → the **domain mode** block (Step 9) → `./deploy.sh`. Caddy fetches certificates for both names.
+4. Everyone signs in again (cookies are per address).
+
+## Smoke test after each deploy
+Sign up (email and mobile) · Login rejects unknown numbers · KYC with a test PAN · mock payment → Pro → best SIP
+date unlocks → GST invoice PDF · Admin: publish a SIP date, add an Instagram reel, view the audit log · inactivity
+sign-out notice · phone layout.
 
 ## Notes
-- Stage keeps all providers on **mock** until vendor sandbox keys arrive (docs/23); switch one at a time in `.env.stage` and run `./deploy.sh`.
-- Run exactly **one** `jobs` container (reminders would otherwise be sent twice).
-- Prod will not use this single-server setup: it moves to RDS + ECS (or similar) per TODO §4.
+- All outside providers (payments, KYC, email, SMS, …) stay **mock** on stage until sandbox keys arrive (docs/23);
+  switch one at a time in `.env.stage` → `./deploy.sh`.
+- Run exactly **one** `jobs` container (two would send every reminder twice).
+- Production does **not** use this single-server setup: Mumbai region, managed database (RDS) and managed containers
+  (TODO §4).
