@@ -2202,10 +2202,10 @@ html[data-theme="light"] .ma-ins-disc,html[data-theme="light"] .ma-ins-main smal
 html[data-theme="light"] .ma-ins-row{border-color:rgba(139,90,43,.15)}
 html[data-theme="light"] .ma-ins-kind.text{background:rgba(168,105,47,.1);color:#8b5a2b}
 
-/* Reel player pop-up: 60% of the page wide × 60% high. Left: a square stage holding Instagram's player
+/* Reel player pop-up: 70% of the page wide × 60% high. Left: a square stage holding Instagram's player
    (sized from the stage height with container units; Instagram's like/comment bar below the video is cut off,
    its header with the account name stays). Right: caption, Open on Instagram, disclaimer. */
-.modal:has(.ma-reel-modal){width:calc(var(--vw100,100vw) * .6)!important;max-width:calc(var(--vw100,100vw) - 32px)!important;height:calc(var(--vh100,100vh) * .6);min-width:min(680px,calc(var(--vw100,100vw) - 32px));min-height:min(460px,calc(var(--vh100,100vh) - 40px))}
+.modal:has(.ma-reel-modal){width:calc(var(--vw100,100vw) * .7)!important;max-width:calc(var(--vw100,100vw) - 32px)!important;height:calc(var(--vh100,100vh) * .6);min-width:min(680px,calc(var(--vw100,100vw) - 32px));min-height:min(460px,calc(var(--vh100,100vh) - 40px))}
 .modal:has(.ma-reel-modal)>.modal-body{flex:1;overflow:hidden;display:flex}
 .ma-reel-modal{flex:1;min-height:0;display:grid!important;grid-template-columns:auto minmax(200px,1fr);gap:24px;align-items:stretch}
 .ma-reel-stage{height:100%;aspect-ratio:1/1;position:relative;overflow:hidden;border-radius:14px;background:#000;container-type:size}
@@ -2224,3 +2224,10 @@ html[data-theme="light"] .ma-ins-kind.text{background:rgba(168,105,47,.1);color:
   .ma-reel-stage{height:auto;width:100%}
 }
 html[data-theme="light"] .ma-reel-side small{color:#6b5641}
+
+/* "View All" insights pop-up: 60% of the page wide */
+.modal:has(.ma-ins-all){width:calc(var(--vw100,100vw) * .6)!important;max-width:calc(var(--vw100,100vw) - 32px)!important}
+@media (max-width:760px){.modal:has(.ma-ins-all){width:calc(100vw - 24px)!important}}
+.ma-ins-all .v22-ins-list{display:grid!important;grid-template-columns:1fr 1fr;gap:12px 14px;max-height:none!important;overflow:visible!important;padding-right:0;margin-right:0}
+.ma-ins-all .v22-ins{margin-top:0}
+@media (max-width:900px){.ma-ins-all .v22-ins-list{grid-template-columns:1fr}}
