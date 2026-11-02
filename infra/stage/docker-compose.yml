@@ -36,6 +36,8 @@ services:
     image: caddy:2.8-alpine
     restart: unless-stopped
     ports: ["80:80", "443:443"]
-    volumes: [./Caddyfile:/etc/caddy/Caddyfile:ro, caddy_data:/data, caddy_config:/config]
+    # CADDYFILE=Caddyfile (stage.modalpha.in + api.stage.modalpha.in) or Caddyfile.temp (one sslip.io host)
+    environment: { STAGE_HOST: "${STAGE_HOST:-}" }
+    volumes: ["./${CADDYFILE:-Caddyfile}:/etc/caddy/Caddyfile:ro", caddy_data:/data, caddy_config:/config]
     depends_on: [api, web]
 volumes: { pgdata: {}, caddy_data: {}, caddy_config: {} }

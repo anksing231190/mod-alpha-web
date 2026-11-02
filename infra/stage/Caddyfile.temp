@@ -1,0 +1,21 @@
+# TEMPORARY stage address while modalpha.in is not usable (e.g. domain on hold):
+#   https://<ip-with-dashes>.sslip.io   — free wildcard DNS that maps the name to the IP, with a real HTTPS certificate.
+# Website and API share ONE host (API under /api), so sign-in cookies stay first-party.
+# Use it by setting in .env.stage:   CADDYFILE=Caddyfile.temp   and   STAGE_HOST=52-65-52-22.sslip.io
+{
+	email ops@modalpha.in
+}
+
+{$STAGE_HOST} {
+	encode gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Robots-Tag "noindex, nofollow"
+	}
+	handle /api/* {
+		reverse_proxy api:8080
+	}
+	handle {
+		reverse_proxy web:80
+	}
+}
