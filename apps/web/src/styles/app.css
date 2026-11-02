@@ -2231,3 +2231,19 @@ html[data-theme="light"] .ma-reel-side small{color:#6b5641}
 .ma-ins-all .v22-ins-list{display:grid!important;grid-template-columns:1fr 1fr;gap:12px 14px;max-height:none!important;overflow:visible!important;padding-right:0;margin-right:0}
 .ma-ins-all .v22-ins{margin-top:0}
 @media (max-width:900px){.ma-ins-all .v22-ins-list{grid-template-columns:1fr}}
+/* View All pop-up: bigger cards to match the wider pop-up — larger square thumbnail / icon, roomier text,
+   equal-height cards in each row, long captions trimmed to 4 lines (full text in the reel player) */
+.ma-ins-all .v22-ins-list{align-items:stretch}
+.ma-ins-all .v22-ins{grid-template-columns:56px 1fr;gap:16px;padding:18px;border-radius:14px;height:100%;box-sizing:border-box}
+.ma-ins-all .v22-ins.ma-reel{grid-template-columns:104px 1fr}
+.ma-ins-all .ma-reel-thumb{width:104px;height:104px;border-radius:14px}
+.ma-ins-all .ma-reel-thumb .ma-ig-glyph{width:34px;height:34px}
+.ma-ins-all .ma-reel-play,.ma-ins-all .ma-reel-play svg{width:38px;height:38px}
+.ma-ins-all .v22-ins>.v22-tile{width:56px;height:56px;border-radius:14px}
+.ma-ins-all .v22-ins>.v22-tile svg{width:26px;height:26px}
+.ma-ins-all .v22-ins-top{align-items:flex-start}
+.ma-ins-all .v22-ins-top b{font-size:16px!important;line-height:1.35}
+.ma-ins-all .v22-ins p{font-size:14px!important;line-height:1.55;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.ma-ins-all .ma-reel-src{margin-top:10px;font-size:13px}
+@media (max-width:760px){.ma-ins-all .v22-ins.ma-reel{grid-template-columns:72px 1fr}.ma-ins-all .ma-reel-thumb{width:72px;height:72px}}
+.ma-ins-all .ma-ins-disc{margin-top:16px}

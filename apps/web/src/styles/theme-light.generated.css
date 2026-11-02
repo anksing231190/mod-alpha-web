@@ -7533,3 +7533,12 @@ html[data-theme="light"] .ma-reel-side small {
 html[data-theme="light"][data-theme="light"] .ma-reel-side small {
     color: #574433
 }
+html[data-theme="light"] .ma-ins-all .v22-ins {
+    border-radius: 14px
+}
+html[data-theme="light"] .ma-ins-all .ma-reel-thumb {
+    border-radius: 14px
+}
+html[data-theme="light"] .ma-ins-all .v22-ins>.v22-tile {
+    border-radius: 14px
+}
