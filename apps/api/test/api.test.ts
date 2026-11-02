@@ -666,3 +666,12 @@ describe('config: empty values', () => {
     expect(c.ADMIN_BOOTSTRAP_MOBILE).toBeUndefined(); expect(c.PORT).toBe(8080); expect(c.INVOICE_SELLER_GSTIN).toBe('');
   });
 });
+
+describe('cookie domain', () => {
+  it('is used only when it matches the API address', async () => {
+    const { cookieDomain } = await import('../src/modules/auth/session.js');
+    expect(cookieDomain({ COOKIE_DOMAIN: '.stage.modalpha.in', API_PUBLIC_URL: 'https://api.stage.modalpha.in' } as any)).toBe('.stage.modalpha.in');
+    expect(cookieDomain({ COOKIE_DOMAIN: '.stage.modalpha.in', API_PUBLIC_URL: 'https://52-65-52-22.sslip.io' } as any)).toBeUndefined();
+    expect(cookieDomain({ COOKIE_DOMAIN: '', API_PUBLIC_URL: 'https://x.io' } as any)).toBeUndefined();
+  });
+});

@@ -176,6 +176,12 @@ was built with the default API address (the GitHub variable did not reach the bu
 name). Fixed for good: the website container now reads **`WEB_API_BASE_URL` from `.env.stage` when it starts**
 (`infra/web-runtime-config.sh`), so no rebuild is needed to change the address. The GitHub variable is optional.
 
+**Problem E — signs in, then immediately "Your session has ended"; API log shows 401 on every call and on
+`/auth/refresh`.** `.env.stage` still had `COOKIE_DOMAIN=.stage.modalpha.in` while running on the sslip.io address,
+so the browser rejected the sign-in cookies. Fix: `sed -i 's|^COOKIE_DOMAIN=.*|COOKIE_DOMAIN=|' .env.stage && ./deploy.sh`.
+Since this release the API also ignores a `COOKIE_DOMAIN` that does not match `API_PUBLIC_URL` (with a warning in
+the log), so this cannot break sign-in again.
+
 Check:
 - `https://52-65-52-22.sslip.io/config/env.js` → `"API_BASE_URL":"https://52-65-52-22.sslip.io"`
 - `https://52-65-52-22.sslip.io/api/v1/plans` → JSON with the plans

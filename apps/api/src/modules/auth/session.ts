@@ -45,7 +45,16 @@ export function readAccess(cfg: Config, token: string): AuthUser | null {
   } catch { return null; }
 }
 /** Cookie flags shared by both session cookies (Secure only when the API is served over https). */
-const cookieBase = (cfg: Config) => ({ httpOnly: true, secure: cfg.APP_ENV !== 'test' && cfg.API_PUBLIC_URL.startsWith('https'), sameSite: 'lax' as const, path: '/', domain: cfg.COOKIE_DOMAIN || undefined });
+// COOKIE_DOMAIN only if it matches the API's own address: a cookie for another domain (e.g. ".stage.modalpha.in"
+// while the API runs on a temporary sslip.io address) would be rejected by the browser and sign-in would fail.
+export function cookieDomain(cfg: Pick<Config, 'COOKIE_DOMAIN' | 'API_PUBLIC_URL'>) {
+  const d = (cfg.COOKIE_DOMAIN || '').trim();
+  if (!d) return undefined;
+  let host = ''; try { host = new URL(cfg.API_PUBLIC_URL).hostname; } catch { return undefined; }
+  const bare = d.replace(/^\./, '');
+  return host === bare || host.endsWith('.' + bare) ? d : undefined;
+}
+const cookieBase = (cfg: Config) => ({ httpOnly: true, secure: cfg.APP_ENV !== 'test' && cfg.API_PUBLIC_URL.startsWith('https'), sameSite: 'lax' as const, path: '/', domain: cookieDomain(cfg) });
 
 /** Maximum length of one sign-in for this role, in hours. */
 export const maxSessionHours = (cfg: Config, role: Role) => (role === 'user' ? cfg.SESSION_MAX_HOURS_USER : cfg.SESSION_MAX_HOURS_ADMIN);
