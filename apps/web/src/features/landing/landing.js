@@ -160,6 +160,8 @@ function renderLanding(){renderLandingBase();
  v22FitFibers();
  // faint version of the login-page particle animation behind the whole landing page
  if(typeof v22AuthAnim==='function'&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const bg=document.createElement('div');bg.className='v22-land-bg';bg.setAttribute('aria-hidden','true');bg.innerHTML='<div><canvas></canvas></div>';app.prepend(bg);v22AuthAnim(bg.querySelector('canvas'))}
+ // the robot "Alpha": hero show, Beat-the-AI / timing sections and scroll guide (features/landing/robot/)
+ if(typeof maRobotInit==='function')maRobotInit();
  v22InitReveal();}
 
 /** Fade sections in as they scroll into view. */
@@ -221,7 +223,8 @@ function v22HeroArtD(){
  const SPARK=L('<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>');
  const CAL=L('<path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h5"/><path d="M17.5 17.5 16 16.3V14"/><circle cx="16" cy="16" r="6"/>');
  const PIE=L('<path d="M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z"/><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>');
- const ARC='M20 372 A270 316 0 0 1 560 372';
+ // orbit from the left icon over the top icon to the right icon (the icons sit on this ellipse); no tails below them
+ const ARC='M70 189 A270 316 0 0 1 510 189';
  const mark=typeof v22BrandMark==='function'?v22BrandMark(18):v22Mark(20,'hdM1');
  return `<div class="v22-hero-art hd hd-orbit-art" aria-hidden="true"><div class="hd-stage">
  <svg class="hd-orbit-svg" viewBox="0 0 580 560"><defs><radialGradient id="hdDotG"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient><path id="hdArc" d="${ARC}"/></defs>

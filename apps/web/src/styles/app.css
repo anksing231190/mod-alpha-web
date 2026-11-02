@@ -1969,7 +1969,7 @@ html[lang="hi"] :where(.v22-eyebrow,.v22-crumb,.side-label,th,.hd-best small){te
 .hd-globe ellipse{fill:none;stroke:rgba(120,150,230,.12);stroke-width:1}
 .hd-globe{animation:hdGlobe 14s ease-in-out infinite alternate;transform-origin:290px 372px}
 @keyframes hdGlobe{from{transform:scaleX(.92)}to{transform:scaleX(1.06)}}
-.hd-arc{fill:none;stroke:rgba(201,154,98,.55);stroke-width:1.4;stroke-dasharray:3 5;animation:hdDash 30s linear infinite}
+.hd-arc{fill:none;stroke:rgba(201,154,98,.55);stroke-width:1.4;stroke-dasharray:3 5;animation:hdDash 30s linear infinite} /* dotted, joins only the three icons */
 @keyframes hdDash{to{stroke-dashoffset:-400}}
 .hd-dash{fill:none;stroke:rgba(201,154,98,.5);stroke-width:1.2;stroke-dasharray:4 5}
 .hd-comet{fill:#ffd9a3;filter:drop-shadow(0 0 6px #ffb86b)}.hd-comet.b{fill:#c4b5fd;filter:drop-shadow(0 0 6px #a78bfa)}
@@ -1978,7 +1978,7 @@ html[lang="hi"] :where(.v22-eyebrow,.v22-crumb,.side-label,th,.hd-best small){te
 .hd-node:nth-child(4) span{animation-delay:1.2s}.hd-node:nth-child(5) span{animation-delay:2.4s}
 @keyframes hdNode{0%,100%{box-shadow:0 0 0 6px rgba(201,154,98,.08),0 10px 24px rgba(0,0,0,.35)}50%{box-shadow:0 0 0 14px rgba(201,154,98,.02),0 0 28px rgba(255,184,107,.45)}}
 .hd-node b{font-size:14.5px;font-weight:600;color:#e6ecfb;white-space:nowrap}
-.hd-node.top{flex-direction:column-reverse}.hd-node.top b{display:none}
+.hd-node.top{flex-direction:column-reverse}
 .hd-orbit-art .hd-phone{position:absolute!important;left:290px!important;right:auto!important;top:330px!important;transform:translate(-50%,-50%) scale(.72)!important;margin:0!important;z-index:2}
 .hd-orbit-art .hd-phone{animation:hdBuzzC 7s ease-in-out .85s infinite!important}
 @keyframes hdBuzzC{0%,14%,100%{rotate:0deg}2%{rotate:-3deg}4%{rotate:3deg}6%{rotate:-2.5deg}8%{rotate:2.5deg}10%{rotate:-1.5deg}12%{rotate:1deg}}
