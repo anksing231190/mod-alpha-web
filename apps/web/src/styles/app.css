@@ -2415,3 +2415,4 @@ html[data-theme="light"] .ma-drawer-scrim{background:rgba(60,40,20,.32)}
   html body .v22-prof-tags .v22-pill{max-width:none!important;overflow:visible!important;white-space:nowrap!important;text-overflow:clip!important}
   html body .v22-prof-main{min-width:0;flex:1 1 180px}
 }
+.ma-to-admin{text-decoration:none;color:inherit}

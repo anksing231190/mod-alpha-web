@@ -50,7 +50,10 @@
     try { S.ent = await API.get('/me/entitlements'); } catch (e) {}
     await MA_LIVE.refreshSip();   // the best SIP date is only sent to subscribers
     const next = sessionStorage.getItem('ma-next'); sessionStorage.removeItem('ma-next');
-    go(next && (!next.startsWith('admin') || user.role !== 'user') ? next : user.role !== 'user' ? 'admin/dashboard' : 'user/overview');
+    // admins always land in the admin console (unless they were heading to an admin page);
+    // users go back to the page they asked for, never to an admin page
+    const isAdm = user.role !== 'user';
+    go(isAdm ? (next && next.startsWith('admin') ? next : 'admin/dashboard') : (next && !next.startsWith('admin') ? next : 'user/overview'));
   };
   // Logout: the API revokes the session (refresh + access token) and clears the cookies; locally we drop all
   // user state, tell other open tabs, and replace history so Back does not return to signed-in pages.

@@ -7658,3 +7658,6 @@ html[data-theme="light"][data-theme="light"] .ma-drawer-scrim {
         border: 0 !important
     }
 }
+html[data-theme="light"] .ma-to-admin {
+    color: inherit
+}
