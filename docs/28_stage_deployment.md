@@ -149,6 +149,11 @@ COOKIE_DOMAIN=.stage.modalpha.in
 Rules for this file: one `KEY=value` per line, **no comments after a value** (Docker would keep them as part of the
 value), never commit it.
 
+**Security:** the `ghp_…` token gives read access to the code. Never show it in a screenshot or chat. If it is exposed,
+delete it (GitHub → Settings → Developer settings → Tokens (classic)), create a new one, run the `docker login` line
+again with it, and run `cd ~/mod-alpha-web && git remote set-url origin https://github.com/anksing231190/mod-alpha-web.git`
+so the old token is not kept in git's settings.
+
 ## Step 10 — First deploy
 ```bash
 cd ~/modalpha-stage
@@ -157,6 +162,11 @@ docker compose --env-file .env.stage exec api node dist/cli/seed.js --workbook=/
 ```
 The seed loads funds, 10 years of NAV, SIP dates and holidays — **no users or subscribers** (those come only from
 sign-ups or a backup restore, docs/27).
+
+**Problem C — `./.env.stage: line 43: Alpha: command not found`.** Older `deploy.sh` / `backup.sh` loaded
+`.env.stage` as a shell script, so a value with spaces (`INVOICE_SELLER_NAME=Mod Alpha Ventures LLP`) broke it.
+Fixed in git: the scripts now let Docker Compose read the file. On a server with the old scripts:
+`sed -i '/^set -a; \. \.\/\.env\.stage; set +a$/d' deploy.sh backup.sh` and run `./deploy.sh` again.
 
 Check:
 - `https://52-65-52-22.sslip.io/api/v1/plans` → JSON with the plans

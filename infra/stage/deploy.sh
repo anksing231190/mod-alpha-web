@@ -5,7 +5,8 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 export TAG="${1:-stage}"
-set -a; . ./.env.stage; set +a
+[ -f .env.stage ] || { echo "Missing .env.stage (see docs/28, step 9)"; exit 1; }
+# .env.stage is read by Docker Compose (--env-file), never by the shell: values may contain spaces.
 docker compose --env-file .env.stage pull api jobs web
 docker compose --env-file .env.stage up -d --remove-orphans
 docker image prune -f >/dev/null
