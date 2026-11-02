@@ -162,7 +162,7 @@ function renderLanding(){renderLandingBase();
  v22FitFibers();
  // faint version of the login-page particle animation behind the whole landing page
  if(typeof v22AuthAnim==='function'&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const bg=document.createElement('div');bg.className='v22-land-bg';bg.setAttribute('aria-hidden','true');bg.innerHTML='<div><canvas></canvas></div>';app.prepend(bg);v22AuthAnim(bg.querySelector('canvas'))}
- // the robot "Alpha": hero show, Beat-the-AI / timing sections and scroll guide (features/landing/robot/)
+ // the robot "Alpha": hero show, Beat-the-AI / timing sections (features/landing/robot/)
  if(typeof maRobotInit==='function')maRobotInit();
  v22InitReveal();}
 

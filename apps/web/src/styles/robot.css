@@ -206,12 +206,6 @@
 .mr-jl.ma b{color:var(--mr-cyan)}
 .mr-drop{position:absolute;z-index:5;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font:800 13px var(--v-font,Inter,sans-serif);color:#7c4a03;background:radial-gradient(circle at 35% 30%,#fff3b0,#facc15 55%,#ca8a04);transition:top .6s cubic-bezier(.5,0,1,1)}
 
-/* ---------- scroll guide ---------- */
-.mr-guide{position:fixed!important;left:auto!important;top:auto!important;right:22px;bottom:18px;z-index:40;transition:opacity .4s,transform .5s cubic-bezier(.3,1.4,.5,1)}
-.mr-guide.off{opacity:0;transform:translateY(60px)}
-.mr-guide-say{position:fixed!important;left:auto!important;top:auto!important;right:40px;bottom:132px;z-index:41}
-html.ma-app .mr-guide,html.ma-app .mr-guide-say{display:none!important}
-
 /* ---------- small screens ---------- */
 @media (max-width:900px){
   .mr-game{grid-template-columns:1fr}

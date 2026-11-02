@@ -533,11 +533,7 @@ Object.assign(window.MA_I18N_DICT, {
   "SEP": "सितंबर",
   "OCT": "अक्टूबर",
   "NOV": "नवंबर",
-  "DEC": "दिसंबर",
-  "Look what I can do": "देखिए मैं क्या कर सकता हूँ",
-  "Just 5 easy steps": "बस 5 आसान स्टेप",
-  "Pro is the favourite": "Pro सबका पसंदीदा है",
-  "Questions? Ask me!": "सवाल? मुझसे पूछें!"
+  "DEC": "दिसंबर"
 });
 
 /* ---------- landing: one-line activity notification ---------- */

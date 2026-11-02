@@ -3,7 +3,7 @@
    The robot drawing (SVG with poses, eyes and accessories), speech bubbles, Hindi-aware text and a
    small "session" helper so every animation stops cleanly when the landing page is re-rendered
    (language switch) or left. Entry point: maRobotInit(), called at the end of renderLanding().
-   Hero show: robot-hero.js · Page sections and scroll guide: robot-sections.js · Styles: styles/robot.css
+   Hero show: robot-hero.js · Page sections: robot-sections.js · Styles: styles/robot.css
    ========================================================================== */
 (function () {
   const STOP = Symbol('robot-stop');
@@ -98,7 +98,7 @@
   function init() {
     if (current) current.abort();
     // renderLanding() can run twice on the same page: remove what the previous run added so the new run owns it all
-    document.querySelectorAll('#beat-the-ai,#timing,.mr-guide,.mr-guide-say,.hd-phone .mr-bot,.hd-phone .mr-say,.mr-scr,.mr-sky,.mr-notif,.mr-radar,.mr-canvas,.mr-pulse,.mr-pt,.mr-zzz').forEach((n) => n.remove());
+    document.querySelectorAll('#beat-the-ai,#timing,.hd-phone .mr-bot,.hd-phone .mr-say,.mr-scr,.mr-sky,.mr-notif,.mr-radar,.mr-canvas,.mr-pulse,.mr-pt,.mr-zzz').forEach((n) => n.remove());
     document.querySelectorAll('.v22-hero.mr-on').forEach((h) => h.classList.remove('mr-on', 'mr-cards'));
     const sess = current = session();
     // stop when the landing page is gone (route change)
@@ -107,7 +107,6 @@
     sess.signal.addEventListener('abort', () => clearInterval(watch), { once: true });
     try { if (typeof window.maRobotSections === 'function') window.maRobotSections(sess); } catch (e) { console.error('robot sections', e); }
     try { if (typeof window.maRobotHero === 'function') window.maRobotHero(sess); } catch (e) { console.error('robot hero', e); }
-    try { if (typeof window.maRobotGuide === 'function') window.maRobotGuide(sess); } catch (e) { console.error('robot guide', e); }
   }
 
   window.MA_ROBOT = { STOP, session, make, pose, look, bubble, say, hush, type, T, isHi, reduced, canHover, el, inr };

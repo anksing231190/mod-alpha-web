@@ -1,10 +1,9 @@
 /* ==========================================================================
-   Feature: landing-page robot — page sections and scroll guide
+   Feature: landing-page robot — page sections
    • "Can you beat the AI?" (after the hero): the visitor picks a date, the robot reveals the best date
      and a bar comparison, then invites them to sign up.
    • "Same money, better timing" (just before How it works): the SIP race (fixed date vs Mod Alpha date) and
      the coin jars (units bought). Each plays when scrolled into view and again 15 s after it ends.
-   • Scroll guide: a small robot on the right that comments on each section (wide screens with a mouse).
    All figures are illustrative backtests and are labelled so.
    ========================================================================== */
 (function () {
@@ -162,38 +161,4 @@
     requestAnimationFrame(() => { const jr = jarsEl[1].getBoundingClientRect(), cr = card.getBoundingClientRect(); b.style.left = jr.x - cr.x + jr.width / 2 - 42 + 'px'; });
     autoLoop(card, sess, play);
   }
-
-  /* ---------- 7: scroll guide ---------- */
-  window.maRobotGuide = function (sess) {
-    const { make, pose, bubble, say, hush, canHover, reduced } = R();
-    const main = document.querySelector('main.v22-landing'); if (!main || main.querySelector('.mr-guide')) return;
-    if (!canHover() || reduced() || document.documentElement.classList.contains('ma-app')) return;
-    const host = document.getElementById('app') || main; // outside <main>, so it floats above the footer
-    const b = make(host, 0, 0, 0.62, 'mr-guide'); const sb = bubble(host, 0, 0, 'mr-guide-say mr-tail-r');
-    const steps = [
-      ['features', 'Look what I can do', ' 👀', ['point-l'], ''],
-      ['how-it-works', 'Just 5 easy steps', ' ✓', ['thumb', 'is-happy'], ''], // How it works has 5 steps
-      ['pricing-preview', 'Pro is the favourite', ' 😉', ['point-l'], 'glasses'],
-      ['faq-preview', 'Questions? Ask me!', '', ['think'], ''],
-    ];
-    const own = ['.v22-hero', '#beat-the-ai', '#timing'];
-    const footerShown = () => { const f = document.querySelector('.public-footer'); return !!f && f.getBoundingClientRect().top < innerHeight - 40; }; // never over the footer // sections with their own robot: the guide hides there (it sits bottom-right like a chat button)
-    let cur = -2;
-    const upd = () => {
-      if (innerWidth < 1100) { b.classList.add('off'); hush(sb); cur = -2; return; }
-      const mid = innerHeight * 0.5;
-      const busy = own.some((q) => { const n = main.querySelector(q) || document.querySelector(q); if (!n) return false; const r = n.getBoundingClientRect(); return r.top < innerHeight * 0.6 && r.bottom > innerHeight * 0.4; });
-      let idx = -1;
-      steps.forEach((st, i) => { const n = st[0][0] === '.' ? document.querySelector(st[0]) : document.getElementById(st[0]); if (n && n.getBoundingClientRect().top < mid) idx = i; });
-      const show = !busy && idx >= 0 && !footerShown();
-      b.classList.toggle('off', !show); if (!show) { hush(sb); cur = -1; return; }
-      if (idx === cur) return; cur = idx;
-      const [, txt, suf, p, acc] = steps[idx];
-      pose(b, ...p, 'jolt'); b.dataset.acc = acc;
-      hush(sb); setTimeout(() => { if (cur === idx) say(sb, txt, suf); }, 380);
-    };
-    b.classList.add('off');
-    addEventListener('scroll', upd, { passive: true, signal: sess.signal }); addEventListener('resize', upd, { signal: sess.signal });
-    upd();
-  };
 })();
