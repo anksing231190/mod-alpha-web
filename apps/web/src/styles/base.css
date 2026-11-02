@@ -820,7 +820,7 @@ footer.public-footer{
   display:block!important;
   width:100%!important;
   max-width:none!important;
-  margin:48px 0 0!important;
+  margin:0!important;   /* no gap: each page section ends with its own padding */
   padding:0!important;
   position:relative!important;
   inset:auto!important;
