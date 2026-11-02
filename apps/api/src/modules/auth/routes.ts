@@ -58,8 +58,11 @@ export default async function auth(app: FastifyInstance) {
 
   // POST /auth/otp/send — 6-digit code by SMS (10-minute expiry, max 5 per hour per number). On stage the mock
   // returns the code as devCode.
+  // `intent`: 'login' (the Login screen) only works for an existing account; 'signup' (Create account) may create one.
+  const NO_ACCOUNT = (what: string) => new HttpError(404, 'no_account', `No Mod Alpha account uses this ${what}. Create an account first.`);
   app.post('/auth/otp/send', strict, async (req) => {
-    const b = parse(z.object({ mobile, purpose: z.enum(['login', 'verify']).default('login') }), req.body);
+    const b = parse(z.object({ mobile, purpose: z.enum(['login', 'verify']).default('login'), intent: z.enum(['login', 'signup']).default('login') }), req.body);
+    if (b.purpose === 'login' && b.intent === 'login' && !(await db.query('SELECT 1 FROM users WHERE mobile=$1 AND deleted_at IS NULL', [b.mobile])).rows[0]) throw NO_ACCOUNT('mobile number');
     const recent = await db.query(`SELECT count(*)::int n FROM otp_codes WHERE target=$1 AND created_at > now() - interval '1 hour'`, [b.mobile]);
     if (recent.rows[0].n >= 5) throw tooMany('Too many OTP requests. Try again in an hour.');
     const code = String(crypto.randomInt(100000, 1000000));
@@ -78,11 +81,13 @@ export default async function auth(app: FastifyInstance) {
     await db.query('UPDATE otp_codes SET consumed_at=now() WHERE id=$1', [o.id]);
   }
 
-  // POST /auth/otp/verify — mobile sign-in. Creates the account on first use (name optional).
+  // POST /auth/otp/verify — mobile sign-in. With intent 'signup' it creates the account on first use (name
+  // optional); with intent 'login' (default) the account must already exist.
   app.post('/auth/otp/verify', strict, async (req, reply) => {
-    const b = parse(z.object({ mobile, code: z.string().regex(/^\d{6}$/), name: z.string().trim().min(2).max(80).optional(), remember: z.boolean().default(true) }), req.body);
-    await checkOtp(b.mobile, 'login', b.code);
+    const b = parse(z.object({ mobile, code: z.string().regex(/^\d{6}$/), name: z.string().trim().min(2).max(80).optional(), remember: z.boolean().default(true), intent: z.enum(['login', 'signup']).default('login') }), req.body);
     let u = (await db.query('SELECT * FROM users WHERE mobile=$1 AND deleted_at IS NULL', [b.mobile])).rows[0];
+    if (!u && b.intent === 'login') throw NO_ACCOUNT('mobile number');
+    await checkOtp(b.mobile, 'login', b.code);
     let created = false;
     if (!u) {
       u = (await db.query(`INSERT INTO users (mobile, full_name, mobile_verified_at) VALUES ($1,$2, now()) RETURNING *`, [b.mobile, b.name ?? 'Investor'])).rows[0];
@@ -98,9 +103,10 @@ export default async function auth(app: FastifyInstance) {
   // POST /auth/oauth/google — verify the Google ID token, then find the user by Google id or email (linking them),
   // or create one.
   app.post('/auth/oauth/google', strict, async (req, reply) => {
-    const b = parse(z.object({ idToken: z.string().min(5) }), req.body);
+    const b = parse(z.object({ idToken: z.string().min(5), intent: z.enum(['login', 'signup']).default('login') }), req.body);
     const g = await providers.google.verify(b.idToken);
     let u = (await db.query('SELECT * FROM users WHERE google_sub=$1 OR email=$2 ORDER BY google_sub NULLS LAST LIMIT 1', [g.sub, g.email])).rows[0];
+    if (!u && b.intent === 'login') throw NO_ACCOUNT('Google account');
     if (!u) u = (await db.query(`INSERT INTO users (email, full_name, google_sub, email_verified_at) VALUES ($1,$2,$3, CASE WHEN $4 THEN now() END) RETURNING *`, [g.email, g.name, g.sub, g.emailVerified])).rows[0];
     else if (!u.google_sub) u = (await db.query('UPDATE users SET google_sub=$2, email_verified_at=coalesce(email_verified_at, now()) WHERE id=$1 RETURNING *', [u.id, g.sub])).rows[0];
     active(u);
@@ -200,7 +206,8 @@ export default async function auth(app: FastifyInstance) {
     const r = await db.query('SELECT * FROM password_resets WHERE token_hash=$1', [sha256(b.token)]);
     const pr = r.rows[0];
     if (!pr || pr.used_at || new Date(pr.expires_at) < new Date()) throw badRequest('This reset link is invalid or has expired.');
-    await db.query('UPDATE users SET password_hash=$2, updated_at=now() WHERE id=$1', [pr.user_id, await bcrypt.hash(b.password, 11)]);
+    // the link was opened from the inbox, so the email address is confirmed too (admin invitations rely on this)
+    await db.query('UPDATE users SET password_hash=$2, email_verified_at=coalesce(email_verified_at, now()), updated_at=now() WHERE id=$1', [pr.user_id, await bcrypt.hash(b.password, 11)]);
     await db.query('UPDATE password_resets SET used_at=now() WHERE token_hash=$1', [pr.token_hash]);
     await db.query(`UPDATE sessions SET revoked_at=now(), end_reason='password_reset' WHERE user_id=$1 AND revoked_at IS NULL`, [pr.user_id]);
     await audit(db, req, { action: 'PASSWORD_RESET', category: 'Access', resource: pr.user_id, actorLabel: 'user' });

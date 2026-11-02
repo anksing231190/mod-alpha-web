@@ -124,6 +124,9 @@ window.V22_INTEGRATIONS=[
 
 /* Recent progress shown in Admin → System Settings → Build progress (newest first). */
 window.V22_PROGRESS_LOG=[
+ ['02 Nov 2026','v23.19','Login signs in existing accounts only (mobile OTP and Google); unknown ones are pointed to Create account'],
+ ['02 Nov 2026','v23.19','Super admins add admins (email invitation to set a password) and change roles from Admin → Users'],
+ ['02 Nov 2026','v23.19','Upgrade Plan hidden for subscribers; Billing history buttons aligned'],
  ['01 Nov 2026','v23.18','Best SIP date is a paid feature: the API sends the day only to Pro / Premium (and admins); others see a blurred card with See plans'],
  ['01 Nov 2026','v23.18','GST tax invoices as PDF: seller GSTIN, place of supply, CGST/SGST or IGST, SAC, numbered per financial year; billing details in Profile'],
  ['01 Nov 2026','v23.18','Privacy section removed from Settings (consents, home-page opt-in, data export, account deletion); APIs kept'],

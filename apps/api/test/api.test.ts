@@ -57,10 +57,14 @@ describe('auth', () => {
   });
   it('logs in with mobile OTP (mock SMS returns devCode)', async () => {
     const c = client(app);
-    const s = (await c.post('/auth/otp/send', { mobile: '98765 43210' })).json();
+    // Login screen: an unknown number is refused before any SMS is sent
+    const nope = await c.post('/auth/otp/send', { mobile: '98765 43210' });
+    expect(nope.statusCode).toBe(404); expect(nope.json().error.code).toBe('no_account');
+    const s = (await c.post('/auth/otp/send', { mobile: '98765 43210', intent: 'signup' })).json();
     expect(s.devCode).toMatch(/^\d{6}$/);
-    expect((await c.post('/auth/otp/verify', { mobile: '9876543210', code: '000000' })).statusCode).toBe(400);
-    const v = await c.post('/auth/otp/verify', { mobile: '9876543210', code: s.devCode, name: 'Mobile User' });
+    expect((await c.post('/auth/otp/verify', { mobile: '9876543210', code: s.devCode })).json().error.code).toBe('no_account');
+    expect((await c.post('/auth/otp/verify', { mobile: '9876543210', code: '000000', intent: 'signup' })).statusCode).toBe(400);
+    const v = await c.post('/auth/otp/verify', { mobile: '9876543210', code: s.devCode, name: 'Mobile User', intent: 'signup' });
     expect(v.statusCode).toBe(201);
     expect(v.json().user.mobile).toBe('+919876543210');
     const sms = await db.query(`SELECT body FROM mock_outbox WHERE channel='sms' ORDER BY id DESC LIMIT 1`);
@@ -77,7 +81,10 @@ describe('auth', () => {
   });
   it('signs in with Google (mock token on stage) and blocks Apple as not implemented', async () => {
     const c = client(app);
-    expect((await c.post('/auth/oauth/google', { idToken: 'mock:gina@example.com' })).json().user.email).toBe('gina@example.com');
+    expect((await c.post('/auth/oauth/google', { idToken: 'mock:gina@example.com' })).json().error.code).toBe('no_account');
+    expect((await c.post('/auth/oauth/google', { idToken: 'mock:gina@example.com', intent: 'signup' })).json().user.email).toBe('gina@example.com');
+    // afterwards the Login screen works for that Google account
+    expect((await client(app).post('/auth/oauth/google', { idToken: 'mock:gina@example.com' })).json().user.email).toBe('gina@example.com');
     expect((await c.post('/auth/oauth/apple', {})).statusCode).toBe(501);
   });
   it('protects admin routes', async () => {
@@ -579,5 +586,30 @@ describe('paid features: SIP date lock and GST invoices', () => {
     // billing details are validated
     expect((await inter.patch('/me', { billingGstin: 'NOT-A-GSTIN' })).statusCode).toBe(400);
     expect((await inter.patch('/me', { billingStateCode: '29', billingGstin: '27ABCDE1234F1Z5' })).statusCode).toBe(400);
+  });
+});
+
+describe('admin accounts', () => {
+  it('a super admin invites an admin, who sets a password from the email and then signs in with both codes', async () => {
+    const a = await adminClient(app);
+    const r = (await a.post('/admin/admins', { name: 'Ops Admin', email: 'ops@modalpha.in', mobile: '98200 11223', role: 'admin' })).json();
+    expect(r.ok).toBe(true); expect(r.devLink).toContain('#/reset-password?token=');
+    expect((await a.post('/admin/admins', { name: 'Ops Again', email: 'ops@modalpha.in', mobile: '98200 11224' })).statusCode).toBe(409);
+    const token = r.devLink.split('token=')[1];
+    expect((await client(app).post('/auth/password/reset', { token, password: 'ops-admin-pass-1' })).json().ok).toBe(true);
+    const login = (await client(app).post('/auth/login', { email: 'ops@modalpha.in', password: 'ops-admin-pass-1' })).json();
+    expect(login.mfaRequired).toBe(true); expect(login.user).toBeUndefined();   // admin → email + SMS codes first
+    const ops = client(app);
+    const ch = (await ops.post('/auth/login', { email: 'ops@modalpha.in', password: 'ops-admin-pass-1' })).json();
+    expect((await ops.post('/auth/login/verify', { challengeId: ch.challengeId, emailCode: ch.devCodes.email, smsCode: ch.devCodes.sms })).statusCode).toBe(200);
+    expect((await ops.get('/admin/users')).statusCode).toBe(200);
+    // only super admins add admins
+    expect((await ops.post('/admin/admins', { name: 'Another', email: 'another@modalpha.in', mobile: '9820011225' })).statusCode).toBe(403);
+  });
+  it('promoting a user to admin needs an email and a mobile on the account', async () => {
+    const a = await adminClient(app);
+    const c = client(app); await c.post('/auth/signup', { name: 'Email Only', email: 'emailonly@example.com', password: 'secret-pass-1' });
+    const id = (await db.query(`SELECT id FROM users WHERE email='emailonly@example.com'`)).rows[0].id;
+    expect((await a.patch(`/admin/users/${id}`, { role: 'admin', reason: 'new ops hire' })).statusCode).toBe(400);
   });
 });

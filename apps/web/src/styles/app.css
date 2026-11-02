@@ -2132,3 +2132,8 @@ html[data-theme="light"] .ma-data-acts .v22-act{border-color:rgba(139,90,43,.2)}
 .ma-inv-hist .v22-row-btn{display:inline-flex;align-items:center;gap:6px}
 .v22-set-who>div{min-width:0}
 .v22-set-who small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ma-auth-link{font-weight:700;text-decoration:underline;color:inherit}
+/* Billing history: View and PDF side by side, same size */
+.ma-inv-acts{display:flex;justify-content:flex-end;align-items:center;gap:8px}
+.ma-inv-hist .ma-inv-acts .v22-row-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:34px;min-width:84px;padding:0 14px;margin:0;line-height:1;font-size:13px;font-weight:600;vertical-align:middle;box-sizing:border-box}
+.ma-inv-hist .ma-inv-acts .v22-row-btn svg{width:15px;height:15px;flex:none}

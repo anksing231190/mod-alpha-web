@@ -10,7 +10,8 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { parse, isoDate } from '../../shared/validate.js';
 import { badRequest, notFound } from '../../shared/errors.js';
-import { requireAdmin } from '../auth/session.js';
+import { randomToken, requireAdmin, sha256 } from '../auth/session.js';
+import { conflict } from '../../shared/errors.js';
 import { audit } from '../../shared/audit.js';
 import { addDays, daysBetween, today } from '../../shared/dates.js';
 import { providerStatus } from '../../providers/index.js';
@@ -89,6 +90,28 @@ export default async function admin(app: FastifyInstance) {
     await audit(db, req, { action: 'USER_RECORD_VIEWED', category: 'Access', resource: u.id });
     return { user: u, subscriptions: (await db.query('SELECT id, plan_id, billing_cycle, amount_inr, status, start_date, renewal_date FROM subscriptions WHERE user_id=$1 ORDER BY start_date DESC', [u.id])).rows, kyc: (await db.query('SELECT provider, status, reason, method, pan_masked, kra_ref, name_match, dob_match, updated_at FROM kyc_sessions WHERE user_id=$1 ORDER BY created_at DESC LIMIT 5', [u.id])).rows };
   });
+  // POST /admin/admins — super admins add an admin (or super admin). The new account has no password: an
+  // invitation email carries a 3-day link to set one (the reset-password page), which also confirms the email.
+  // Admins sign in with password + email code + SMS code, so the mobile number is required.
+  app.post('/admin/admins', async (req) => {
+    requireAdmin(req, true);
+    const b = parse(z.object({
+      name: z.string().trim().min(2).max(80),
+      email: z.string().trim().toLowerCase().email(),
+      mobile: z.string().trim().transform((m) => m.replace(/[^\d+]/g, '')).transform((m) => (m.startsWith('+') ? m : `+91${m}`)).refine((m) => /^\+\d{12,13}$/.test(m), 'Enter a valid mobile number'),
+      role: z.enum(['admin', 'superadmin']).default('admin'),
+    }), req.body);
+    const taken = (await db.query('SELECT id, role, email, mobile FROM users WHERE (email=$1 OR mobile=$2) AND deleted_at IS NULL', [b.email, b.mobile])).rows[0];
+    if (taken) throw conflict(taken.role === 'user' ? 'This email or mobile already has a user account. Open it under Users and change its role instead.' : 'This person is already an admin.');
+    const u = (await db.query(`INSERT INTO users (email, mobile, full_name, role, kyc_status) VALUES ($1,$2,$3,$4,'Verified') RETURNING id`, [b.email, b.mobile, b.name, b.role])).rows[0];
+    const token = randomToken();
+    await db.query(`INSERT INTO password_resets (token_hash, user_id, expires_at) VALUES ($1,$2, now() + interval '3 days')`, [sha256(token), u.id]);
+    const link = `${app.deps.cfg.PUBLIC_APP_URL}/#/reset-password?token=${token}`;
+    await app.deps.providers.email.send({ to: b.email, subject: 'You have been added as a Mod Alpha admin', text: `Hi ${b.name},\n\nYou have been added to the Mod Alpha admin console. Set your password with this link (valid for 3 days):\n${link}\n\nAt every sign-in you will also enter a code sent to this email and a code sent by SMS to ${b.mobile}.` });
+    await audit(db, req, { action: 'ADMIN_INVITED', category: 'Access', resource: u.id, meta: { email: b.email, role: b.role } });
+    return { ok: true, id: u.id, ...(app.deps.providers.email.name === 'mock' && app.deps.cfg.APP_ENV !== 'prod' ? { devLink: link } : {}) };
+  });
+
   // Change account status or role. Suspending ends the user's sessions immediately. Audited.
   app.patch('/admin/users/:id', async (req) => {
     const admin = requireAdmin(req);
@@ -96,6 +119,11 @@ export default async function admin(app: FastifyInstance) {
     if (b.role && admin.role !== 'superadmin') throw badRequest('Only a super admin can change roles');
     const id = (req.params as any).id;
     if (id === admin.id && b.accountStatus && b.accountStatus !== 'Active') throw badRequest('You cannot suspend your own account');
+    if (b.role && id === admin.id) throw badRequest('You cannot change your own role');
+    if (b.role && b.role !== 'user') {
+      const t = (await db.query('SELECT email, mobile FROM users WHERE id=$1', [id])).rows[0];
+      if (t && (!t.email || !t.mobile)) throw badRequest('Admins sign in with an email code and an SMS code — this account needs both an email address and a mobile number first.');
+    }
     const r = await db.query('UPDATE users SET account_status=coalesce($2, account_status), role=coalesce($3, role), updated_at=now() WHERE id=$1 RETURNING id', [id, b.accountStatus ?? null, b.role ?? null]);
     if (!r.rows[0]) throw notFound();
     if (b.accountStatus && b.accountStatus !== 'Active') await db.query(`UPDATE sessions SET revoked_at=now(), end_reason='suspended' WHERE user_id=$1 AND revoked_at IS NULL`, [id]);

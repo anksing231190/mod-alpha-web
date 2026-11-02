@@ -160,6 +160,21 @@ Everything printed is stored on the invoice row when it is issued (`seller`, `bu
 
 GST e-invoicing (IRN / QR code through the GST portal) is only mandatory above ₹5 crore annual turnover; when needed, the invoice data can be sent to a GSP such as ClearTax or Zoho Books.
 
+## 7c. Accounts: login vs create account, and admin accounts (v23.19)
+
+**Login only signs in existing accounts.** The Login screen sends `intent: 'login'` with `POST /auth/otp/send`, `/auth/otp/verify` and `/auth/oauth/google`. An unknown mobile number or Google account gets **404 `no_account`** ("No Mod Alpha account uses this … Create an account first.") and the screen links to Create account. No SMS is sent for an unknown number. **Create account** sends `intent: 'signup'`, which creates the account (a mobile number or Google account that already has one simply signs in).
+
+**Admin accounts.**
+
+| Step | How |
+|---|---|
+| First super admin (each environment) | Set `ADMIN_BOOTSTRAP_EMAIL`, `ADMIN_BOOTSTRAP_PASSWORD` and `ADMIN_BOOTSTRAP_MOBILE` in the environment's secrets. On start the API creates the super admin (or fills in its mobile number). Change the password after the first sign-in, then remove `ADMIN_BOOTSTRAP_PASSWORD` from the secrets. |
+| More admins | A super admin opens **Admin → Users → Add admin** (name, work email, mobile, role). `POST /admin/admins` creates the account without a password and emails a 3-day link to set one; opening it also confirms the email. On stage without real email, the screen shows the link to pass on. |
+| Existing user → admin | **Admin → Users → open the user → Role** (super admins only, reason required, audited). The account needs both an email and a mobile number. You cannot change your own role. |
+| Remove an admin | Change the role back to User, or Suspend the account (ends their sessions at once). |
+
+Every admin signs in with password + a code by email + a code by SMS. Stage uses its own demo admins; prod admins are real staff only.
+
 ## 8. Security notes
 
 - **Passwords:** bcrypt (cost 11).

@@ -453,3 +453,9 @@ Object.assign(window.MA_I18N_DICT, {
   'Renewals, invoices and payment status.': 'रिन्यूअल, इनवॉइस और भुगतान की स्थिति।',
   'Figures are based on historical data and are not investment advice.': 'आंकड़े ऐतिहासिक डेटा पर आधारित हैं और निवेश सलाह नहीं हैं।',
 });
+// v23.19
+Object.assign(window.MA_I18N_DICT, {
+  'Create an account': 'खाता बनाएं',
+  'No Mod Alpha account uses this mobile number. Create an account first.': 'इस मोबाइल नंबर से कोई Mod Alpha खाता नहीं है। पहले खाता बनाएं।',
+  'No Mod Alpha account uses this Google account. Create an account first.': 'इस Google खाते से कोई Mod Alpha खाता नहीं है। पहले खाता बनाएं।',
+});

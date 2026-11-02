@@ -7431,3 +7431,6 @@ html[data-theme="light"][data-theme="light"] .v22-fl .v22-opt {
 html[data-theme="light"][data-theme="light"] .ma-data-acts .v22-act {
     border-color: rgba(126,92,52,0.23)
 }
+html[data-theme="light"] .ma-auth-link {
+    color: inherit
+}

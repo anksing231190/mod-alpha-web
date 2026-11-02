@@ -108,7 +108,7 @@
         if (mobile) {
           const codeInput = form.querySelector('input[name=otp]');
           if (!codeInput) {
-            const r = await API.post('/auth/otp/send', { mobile: id });
+            const r = await API.post('/auth/otp/send', { mobile: id, intent: signup ? 'signup' : 'login' });   // Login: existing accounts only
             done();
             btn.insertAdjacentHTML('beforebegin', `<label class="v22-auth-in">${ic('lock')}<input name="otp" inputmode="numeric" maxlength="6" placeholder="6-digit OTP" required autocomplete="one-time-code"></label>${signup ? '' : ''}`);
             btn.innerHTML = `Verify & continue ${ic('arrowR')}`;
@@ -117,7 +117,7 @@
             form.querySelector('input[name=otp]').focus();
             return;
           }
-          const r = await API.post('/auth/otp/verify', { mobile: id, code: codeInput.value.trim(), name: String(fd.get('name') || '') || undefined });
+          const r = await API.post('/auth/otp/verify', { mobile: id, code: codeInput.value.trim(), name: String(fd.get('name') || '') || undefined, intent: signup ? 'signup' : 'login' });
           await loginResult(r); return;
         }
         if (signup) {
@@ -130,7 +130,12 @@
         try { remember ? localStorage.setItem('ma-remember-email', id) : localStorage.removeItem('ma-remember-email'); } catch (e2) {}
         const r = await API.post('/auth/login', { email: id, password: String(fd.get('password') || ''), remember });
         await loginResult(r);
-      } catch (ex) { done(); err.style.color = ''; err.textContent = ex.details?.[0]?.message || errMsg(ex); }
+      } catch (ex) {
+        done(); err.style.color = '';
+        // Login with a number / Google account that has no account yet → point to Create account
+        if (ex.code === 'no_account') { err.innerHTML = `${esc(errMsg(ex))} <a href="#/signup" class="ma-auth-link">Create an account</a>`; return; }
+        err.textContent = ex.details?.[0]?.message || errMsg(ex);
+      }
     };
   };
   on('.v22-auth [data-action="forgot"]', async () => {
@@ -148,8 +153,12 @@
         if (API.env === 'prod') { notify('Google sign-in is not configured yet.'); return; }
         const email = prompt('Stage test: Google sign-in is mocked. Enter an email to sign in as:'); if (!email) return; token = `mock:${email.trim()}`;
       }
-      const r = await API.post('/auth/oauth/google', { idToken: token }); await loginResult(r);
-    } catch (e) { fail(e); }
+      const r = await API.post('/auth/oauth/google', { idToken: token, intent: authMode === 'signup' ? 'signup' : 'login' }); await loginResult(r);
+    } catch (e) {
+      const er = document.getElementById('form-error');
+      if (e.code === 'no_account' && er) { er.style.color = ''; er.innerHTML = `${esc(errMsg(e))} <a href="#/signup" class="ma-auth-link">Create an account</a>`; return; }
+      fail(e);
+    }
   });
   // Simple card page (reset password, verify email).
   function authShell(title, inner) { app.innerHTML = `${topbar(true)}<main class="v22 v22-auth"><section class="v22-auth-card"><div class="v22-auth-brand">${v22Mark(36)}<b>Mod Alpha</b></div><h1>${title}</h1>${inner}</section></main>${publicFooter()}`; }
