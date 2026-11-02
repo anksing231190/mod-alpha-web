@@ -540,3 +540,9 @@ Object.assign(window.MA_I18N_DICT, {
   "Questions? Ask me!": "सवाल? मुझसे पूछें!",
   "See you inside!": "अंदर मिलते हैं!"
 });
+
+/* ---------- landing: one-line activity notification ---------- */
+Object.assign(window.MA_I18N_DICT, {
+  "A new member": "एक नए सदस्य", "joined Mod Alpha": "Mod Alpha से जुड़े", "subscribed to Pro": "ने Pro लिया", "subscribed to Premium": "ने Premium लिया",
+  "just now": "अभी", "{n} min ago": "{n} मिनट पहले", "{n} hr ago": "{n} घंटे पहले", "recently": "हाल ही में"
+});

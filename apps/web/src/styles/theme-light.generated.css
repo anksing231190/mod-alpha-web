@@ -7340,7 +7340,7 @@ html[data-theme="light"] .ma-prog-key .s-Mock {
     background: #a77319
 }
 html[data-theme="light"] .public-activity-toast.ma-act {
-    border-radius: 16px;
+    border-radius: 999px;
     background: #fdf8f0;
     border: 1px solid rgba(126,92,52,0.383);
     box-shadow: 0 18px 50px rgba(94,64,32,0.189)
@@ -7353,14 +7353,11 @@ html[data-theme="light"] .ma-act .activity-toast-avatar {
 html[data-theme="light"] .ma-act .activity-toast-title {
     color: #382d22
 }
+html[data-theme="light"] .ma-act .activity-toast-title small {
+    color: #785f49
+}
 html[data-theme="light"] .ma-act .activity-toast-title b {
     color: #292119
-}
-html[data-theme="light"] .ma-act .activity-toast-line {
-    color: #493a2d
-}
-html[data-theme="light"] .ma-act .activity-toast-time {
-    color: #785f49
 }
 html[data-theme="light"] .ma-act .activity-toast-check {
     color: #4c6a37

@@ -2,7 +2,7 @@
    Feature: landing-page robot — page sections and scroll guide
    • "Can you beat the AI?" (after the hero): the visitor picks a date, the robot reveals the best date
      and a bar comparison, then invites them to sign up.
-   • "Same money, better timing" (after How it works): the SIP race (fixed date vs Mod Alpha date) and
+   • "Same money, better timing" (just before How it works): the SIP race (fixed date vs Mod Alpha date) and
      the coin jars (units bought). Each plays when scrolled into view and again 15 s after it ends.
    • Scroll guide: a small robot on the right that comments on each section (wide screens with a mouse).
    All figures are illustrative backtests and are labelled so.
@@ -47,7 +47,7 @@
         <div class="mr-slot"><a class="mr-cta" href="#/signup">Get Started →</a></div></div>`;
     hero.after(beat);
     // 10 + 11 — race and jars
-    const how = document.getElementById('how-it-works') || document.getElementById('features');
+    const how = document.getElementById('how-it-works');
     const tm = el('section', 'v22 mr-sec mr-timing'); tm.id = 'timing';
     tm.innerHTML = `<div class="v22-sec-head"><span class="v22-eyebrow">TIMING MATTERS</span><h2>Same money, <span class="g-blue">better timing</span></h2><p>₹10,000 a month since 2021, same fund, different dates.</p></div>
       <div class="mr-two"><div class="mr-card mr-race-card"><h3>The SIP race 🏁</h3><div class="mr-race">
@@ -60,7 +60,7 @@
         <div><div class="mr-jar"><div class="mr-fill"></div></div><div class="mr-jl ma">Mod Alpha date ✦<b class="j1">0 units</b></div></div></div>
         <div class="mr-card-foot"><span class="mr-more">+2.8% more units ✦</span></div></div></div>
       <p class="mr-note mr-center">Illustrative backtest. Past performance does not guarantee future returns.</p>`;
-    how.after(tm);
+    if (how) how.before(tm); else (document.getElementById('features') || beat).after(tm); // just before "How Mod Alpha Works"
 
     beatGame(beat, sess); race(tm, sess); jars(tm, sess);
   };
@@ -168,7 +168,8 @@
     const { make, pose, bubble, say, hush, canHover, reduced } = R();
     const main = document.querySelector('main.v22-landing'); if (!main || main.querySelector('.mr-guide')) return;
     if (!canHover() || reduced() || document.documentElement.classList.contains('ma-app')) return;
-    const b = make(main, 0, 0, 0.62, 'mr-guide'); const sb = bubble(main, 0, 0, 'mr-guide-say mr-tail-r');
+    const host = document.getElementById('app') || main; // outside <main>, so it floats above the footer
+    const b = make(host, 0, 0, 0.62, 'mr-guide'); const sb = bubble(host, 0, 0, 'mr-guide-say mr-tail-r');
     const steps = [
       ['features', 'Look what I can do', ' 👀', ['point-l'], ''],
       ['how-it-works', 'Just 5 easy steps', ' ✓', ['thumb', 'is-happy'], ''], // How it works has 5 steps

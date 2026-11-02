@@ -25,16 +25,16 @@ function initPublicActivityToast(){
    const t=Date.parse(x.createdAt||'');return Number.isFinite(t)&&t<=now&&now-t<48*60*60*1000;
   }).sort((a,b)=>Date.parse(b.createdAt)-Date.parse(a.createdAt)).slice(0,8);
  };
- // one notification card: avatar · "<name> joined" / "the Mod Alpha community" / "<city> · 2 min ago" · ✓
+ // one-line notification: avatar · "<name> joined Mod Alpha · 2 min ago" · ✓
+ // (outside <main>, so it floats above the footer; text kept short and trimmed with … if needed)
  const show=()=>{
   if(!events.length||document.hidden)return;
   const ev=events[index%events.length];index++;
   const name=ev.name?short(ev.name):'A new member',sub=ev.type==='subscription_activated';
   toast.querySelector('.activity-toast-avatar').innerHTML=ev.name?esc(initials(ev.name.replace('.',''))):'<img src="assets/brand/mod-alpha-mark.png" alt="">';
   toast.querySelector('.activity-toast-avatar').style.setProperty('--h',String((name.length*47)%360));
-  toast.querySelector('.activity-toast-title').innerHTML=`<b>${esc(name)}</b> ${sub?'subscribed':'joined'}`;
-  toast.querySelector('.activity-toast-line').textContent=sub?`to Mod Alpha ${ev.plan||'Pro'}`:'the Mod Alpha community';
-  toast.querySelector('.activity-toast-time').textContent=[ev.city,ago(ev.createdAt)].filter(Boolean).join(' · ');
+  toast.querySelector('.activity-toast-title').innerHTML=`<b>${esc(name)}</b> <span>${sub?esc(`subscribed to ${ev.plan||'Pro'}`):'joined Mod Alpha'}</span> · <small>${esc(ago(ev.createdAt))}</small>`;
+  toast.title=[ev.city,ago(ev.createdAt)].filter(Boolean).join(' · ');
   toast.hidden=false;requestAnimationFrame(()=>toast.classList.add('is-visible'));
   clearTimeout(hideTimer);hideTimer=setTimeout(hide,5600);
  };
@@ -129,13 +129,12 @@ function initFlowAnimation(){
 /** Landing page sections. */
 function renderLandingBase(){
  app.innerHTML=`${topbar(true)}<main class="public-page v22-landing">
-<div id="public-activity-toast" class="public-activity-toast ma-act" aria-live="polite" aria-atomic="true" hidden><span class="activity-toast-avatar"></span><div class="activity-toast-copy"><span class="activity-toast-title"></span><span class="activity-toast-line"></span><small class="activity-toast-time"></small></div><span class="activity-toast-check" aria-hidden="true">✓</span><button type="button" class="activity-toast-close" aria-label="Dismiss notification">×</button></div>
 ${v22Hero()}
 <section class="public-features" id="features"><div class="section-center"><div class="eyebrow">THE MOD ALPHA EXPERIENCE</div><h2>Everything you need to understand your mutual funds.</h2><p>Explore funds, review historical performance and understand the monthly SIP date insight.</p></div><div class="feature-grid v22-feature-grid">${[['grid','Explore Mutual Funds','Search and compare mutual fund schemes, categories and historical performance.'],['trend','What If Calculator','Explore hypothetical investment outcomes using historical NAV data.'],['calendar','MOD Alpha SIP','Compare a fixed-date SIP with the platform date-selection approach.'],['spark','AI Insights','Understand fund data and historical patterns in clear language.']].map(x=>`<article class="feature-card"><span>${ic(x[0])}</span><h3>${x[1]}</h3><p>${x[2]}</p></article>`).join('')}</div></section>
 ${flowLarge()}
 <div id="pricing-preview">${pricingSection(true)}</div>
 <section class="public-faq" id="faq-preview"><div class="section-center"><div class="eyebrow">NEED TO KNOW MORE?</div><h2>Frequently asked questions</h2></div><div class="faq-preview-grid"><article><h3>Does Mod Alpha place SIP orders?</h3><p>No. Mod Alpha provides insights and reminders. You make investment decisions through your own provider.</p></article><article><h3>Is the recommended date guaranteed?</h3><p>No. Historical analysis does not predict or guarantee future performance.</p></article><article><h3>When is KYC required?</h3><p>Before activating a user's first paid subscription, through an approved verification flow.</p></article></div><div class="center-link"><a href="#/faq">Read all FAQs →</a></div></section>
-</main>${publicFooter()}`;
+</main>${publicFooter()}<div id="public-activity-toast" class="public-activity-toast ma-act" aria-live="polite" aria-atomic="true" hidden><span class="activity-toast-avatar"></span><div class="activity-toast-copy"><span class="activity-toast-title"></span><span class="activity-toast-line"></span><small class="activity-toast-time"></small></div><span class="activity-toast-check" aria-hidden="true">✓</span><button type="button" class="activity-toast-close" aria-label="Dismiss notification">×</button></div>`;
  initFlowAnimation();initPublicActivityToast();
 }
 
