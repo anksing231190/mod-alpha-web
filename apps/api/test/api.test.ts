@@ -659,3 +659,10 @@ describe('insights & Instagram reels', () => {
     expect(JSON.stringify(log)).toContain('INSIGHT_DELETED');
   });
 });
+
+describe('config: empty values', () => {
+  it('treats KEY= (empty) as not set, so optional settings do not fail', () => {
+    const c = loadConfig({ APP_ENV: 'stage', DATABASE_URL: 'postgres://x', JWT_SECRET: 'p'.repeat(40), ADMIN_BOOTSTRAP_EMAIL: '', ADMIN_BOOTSTRAP_PASSWORD: '', ADMIN_BOOTSTRAP_MOBILE: '', COOKIE_DOMAIN: '', INVOICE_SELLER_GSTIN: '', PORT: '' } as any);
+    expect(c.ADMIN_BOOTSTRAP_MOBILE).toBeUndefined(); expect(c.PORT).toBe(8080); expect(c.INVOICE_SELLER_GSTIN).toBe('');
+  });
+});

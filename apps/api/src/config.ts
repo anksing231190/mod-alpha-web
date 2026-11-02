@@ -99,7 +99,10 @@ export const PROD_CRITICAL = ['email', 'sms', 'payments', 'kyc'];
 
 // Parse and check all environment variables once at startup. Throws a readable list of every problem.
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
-  const parsed = Env.safeParse(env);
+  // An empty value (KEY= in an env file) means "not set", so optional settings fall back to their defaults
+  // instead of failing validation (e.g. ADMIN_BOOTSTRAP_MOBILE= on stage).
+  const cleaned = Object.fromEntries(Object.entries(env).filter(([, v]) => v !== undefined && String(v).trim() !== ''));
+  const parsed = Env.safeParse(cleaned);
   if (!parsed.success) {
     const msg = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('\n');
     throw new Error(`Invalid configuration:\n${msg}`);
