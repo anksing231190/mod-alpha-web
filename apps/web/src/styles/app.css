@@ -1764,7 +1764,7 @@ html[lang="hi"] :where(.v22-eyebrow,.v22-crumb,.side-label,th,.hd-best small){te
  .v22-dash-bottom>.v22-insights{grid-column:auto!important;display:flex!important;flex-direction:column;height:0;min-height:100%;overflow:hidden}
 }
 .v22-ins-list{display:flex;flex-direction:column;gap:10px;flex:1;min-height:0;overflow-y:auto;padding-right:6px;margin-right:-6px;scrollbar-width:thin}
-.v22-ins-list::-webkit-scrollbar{width:6px}.v22-ins-list::-webkit-scrollbar-thumb{background:rgba(110,140,230,.35);border-radius:6px}
+/* scrollbar: see the app-wide rule in styles/ai.css */
 @media (max-width:1560px){
  .v22-dash-bottom>.v22-insights{display:flex!important;flex-direction:column}
  .v22-ins-list{display:grid!important;grid-template-columns:1fr 1fr;gap:10px 14px;max-height:300px}
