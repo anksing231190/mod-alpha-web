@@ -1,0 +1,152 @@
+/* ==========================================================================
+   "AI feel" for the signed-in app — styles for features/ai/ai-ui.js and the dashboard, insights, chat,
+   fund and What-if touches. Light ("Sand") overrides at the end (this file is not colour-mapped).
+   ========================================================================== */
+@property --ma-a { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+:root{--ma-v:#a855f7;--ma-c:#2ed3f5;--ma-g:#3ee089;--ma-ai:linear-gradient(110deg,#a855f7,#2ed3f5);
+  --ma-surf:rgba(12,22,54,.96);--ma-surf2:rgba(20,32,74,.6);--ma-bd:rgba(92,128,220,.36);--ma-tx:#eef3ff;--ma-sub:#a7b3cf;--ma-mut:#7d8bab;
+  --ma-skel:#13204a;--ma-skel2:#22336e;--ma-sel:rgba(46,211,245,.24);--ma-glow:rgba(46,211,245,.35)}
+html[data-theme="light"]{--ma-v:#7c3aed;--ma-c:#0e7490;--ma-g:#15803d;--ma-ai:linear-gradient(110deg,#7c3aed,#0891b2);
+  --ma-surf:#fffaf1;--ma-surf2:#fbf3e4;--ma-bd:rgba(120,90,40,.24);--ma-tx:#2a2216;--ma-sub:#5b5142;--ma-mut:#8a7d68;
+  --ma-skel:#efe5d2;--ma-skel2:#faf4e8;--ma-sel:rgba(8,145,178,.16);--ma-glow:rgba(124,58,237,.2)}
+@keyframes maSpin{to{--ma-a:360deg}}
+@keyframes maShim{from{background-position:200% 0}to{background-position:-200% 0}}
+@keyframes maTw{0%,100%{transform:scale(1) rotate(0)}40%{transform:scale(1.35) rotate(90deg)}60%{transform:scale(.9) rotate(120deg)}}
+@keyframes maBlink{50%{opacity:0}}
+@keyframes maRot{to{transform:rotate(360deg)}}
+
+/* 6 — ✦ AI badge */
+.ma-ai-badge{display:inline-flex;align-items:center;gap:4px;font:600 10.5px/1 var(--v-font,Inter,sans-serif);letter-spacing:.03em;color:#fff;background:var(--ma-ai);padding:4px 8px;border-radius:999px;vertical-align:middle;white-space:nowrap;flex:none}
+.ma-ai-badge i{font-style:normal;display:inline-block;animation:maTw 2.4s ease-in-out infinite}
+/* 1 — typing caret */
+.ma-typing::after{content:"";display:inline-block;width:2px;height:1em;margin-left:2px;vertical-align:-2px;background:var(--ma-c);animation:maBlink 1s steps(1) infinite}
+
+/* 3 — loading: the pulsing AI orb (also restyles the app's .v22-spin spinner everywhere) */
+.ma-orb,.v22-spin{display:inline-block;width:34px;height:34px;border-radius:50%;flex:none;position:relative;border:0!important;background:conic-gradient(from var(--ma-a),var(--ma-v),var(--ma-c),#3b82f6,var(--ma-v))!important;box-shadow:0 0 22px var(--ma-glow);animation:maSpin 1.4s linear infinite,maOrbPulse 1.4s ease-in-out infinite!important}
+.ma-orb::after,.v22-spin::after{content:"";position:absolute;inset:18%;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.85),rgba(255,255,255,0) 60%)}
+@keyframes maOrbPulse{50%{transform:scale(.82);box-shadow:0 0 8px var(--ma-glow)}}
+.ma-orb-load{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:18px;color:var(--ma-sub);font-size:12.5px}
+.v22-bubble .ma-orb-load{flex-direction:row;padding:2px 0;gap:10px}
+.v22-bubble .ma-orb{width:20px;height:20px}
+.v22-bubble.typing{display:block}
+
+
+/* 8 — live ticker */
+.ma-ticker{display:flex;align-items:center;gap:14px;margin:4px 0 18px;padding:7px 8px 7px 14px;border:1px solid var(--ma-bd);border-radius:999px;background:var(--ma-surf2);font-size:12.5px;color:var(--ma-sub);overflow:hidden;min-width:0}
+.ma-live{display:flex;align-items:center;gap:7px;white-space:nowrap;color:var(--ma-tx);font-weight:600}
+.ma-live i{width:8px;height:8px;border-radius:50%;background:#22c55e;animation:maPing 1.8s infinite}
+@keyframes maPing{0%{box-shadow:0 0 0 0 rgba(34,197,94,.55)}100%{box-shadow:0 0 0 9px rgba(34,197,94,0)}}
+.ma-tk-wrap{flex:1;min-width:0;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
+.ma-tk{display:flex;align-items:center;gap:30px;width:max-content;animation:maMarq 40s linear infinite;white-space:nowrap}
+.ma-tk:hover{animation-play-state:paused}
+.ma-tk b{color:var(--ma-tx)}.ma-tk em{font-style:normal;font-weight:700}.ma-tk .up{color:var(--ma-g)}.ma-tk .down{color:#f87171}
+.ma-tk-gap{width:0}
+@keyframes maMarq{to{transform:translateX(calc(-50% - 15px))}}
+
+/* 7 — glowing border (locked best date, KPI tile) */
+.ma-glow{position:relative;isolation:isolate}
+.ma-glow::before{content:"";position:absolute;inset:-1.5px;border-radius:inherit;padding:1.5px;background:conic-gradient(from var(--ma-a),transparent 0 55%,var(--ma-c) 75%,var(--ma-v) 90%,transparent);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:maSpin 3.4s linear infinite;pointer-events:none;z-index:2}
+.ma-glow::after{content:"";position:absolute;inset:-1px;border-radius:inherit;background:conic-gradient(from var(--ma-a),transparent 0 55%,var(--ma-c) 75%,var(--ma-v) 90%,transparent);filter:blur(16px);opacity:.35;animation:maSpin 3.4s linear infinite;z-index:-1;pointer-events:none}
+html[data-theme="light"] .ma-glow::after{opacity:.14}
+
+/* 2 — "Analysing…" overlay on the best-date card */
+.v22-best{position:relative}
+.ma-anal{position:absolute;inset:0;z-index:6;border-radius:inherit;background:var(--ma-surf);display:grid;align-content:center;gap:12px;padding:18px;animation:maAnalOut .45s ease 2.35s forwards}
+.ma-anal b{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ma-tx);flex-wrap:wrap}
+.ma-anal>span{display:flex;gap:9px;align-items:center;color:var(--ma-mut);font-size:12.5px;opacity:.5;animation:maStepOn .01s linear var(--d) forwards}
+.ma-anal>span>i{width:16px;height:16px;border-radius:50%;flex:none;border:2px solid var(--ma-c);border-top-color:transparent;animation:maRot .7s linear infinite,maStepDone .01s linear calc(var(--d) + .55s) forwards}
+@keyframes maStepOn{to{opacity:1;color:var(--ma-tx)}}
+@keyframes maStepDone{to{border-color:var(--ma-g);background:var(--ma-g);transform:none}}
+@keyframes maAnalOut{to{opacity:0;visibility:hidden}}
+
+/* 14 — confidence meter · 15 — why this date */
+.ma-conf{display:grid;gap:6px;margin-top:12px}
+.ma-conf-r{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--ma-sub)}
+.ma-conf-r b{color:var(--ma-g);font-size:12px}
+.ma-meter{height:8px;border-radius:6px;background:var(--ma-skel);overflow:hidden}
+.ma-meter i{display:block;height:100%;width:var(--w);border-radius:6px;background:linear-gradient(90deg,var(--ma-c),var(--ma-g));animation:maFill 1.4s cubic-bezier(.2,.8,.2,1);-webkit-mask-image:repeating-linear-gradient(90deg,#000 0 9px,transparent 9px 11px);mask-image:repeating-linear-gradient(90deg,#000 0 9px,transparent 9px 11px)}
+@keyframes maFill{from{width:0}}
+.ma-conf small{font-size:11px;color:var(--ma-mut)}
+.ma-why{margin-top:10px;border-top:1px solid var(--ma-bd);padding-top:8px}
+.ma-why summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;font-weight:600;font-size:12.5px;color:var(--ma-c)}
+.ma-why summary::-webkit-details-marker{display:none}
+.ma-why summary::after{content:"▾";margin-left:2px;transition:transform .25s}
+.ma-why[open] summary::after{transform:rotate(180deg)}
+.ma-why summary i{font-style:normal}
+.ma-why ul{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+.ma-why li{font-size:12px;line-height:1.45;color:var(--ma-sub);display:flex;gap:7px;animation:maIn .35s ease both}
+.ma-why li:nth-child(2){animation-delay:.08s}.ma-why li:nth-child(3){animation-delay:.16s}.ma-why li:nth-child(4){animation-delay:.24s}
+.ma-why li::before{content:"✦";color:var(--ma-c);font-size:10px;line-height:1.7}
+@keyframes maIn{from{opacity:0;transform:translateX(-6px)}}
+.v22-best-top{display:flex;align-items:center;gap:8px;justify-content:space-between}
+
+/* 16 — blurred AI preview (locked) */
+.ma-sip-locked .ma-lock-over.ma-bp{display:grid;gap:8px;text-align:left;justify-items:start;padding:14px;position:relative;overflow:hidden}
+.ma-bp p{margin:0;font-size:12.5px;line-height:1.5;color:var(--ma-tx)}
+.ma-bp p.fog{color:var(--ma-sub);filter:blur(4.5px);user-select:none}
+.ma-bp .veil{position:absolute;left:0;right:0;bottom:0;height:55%;background:linear-gradient(transparent,var(--ma-surf) 75%);pointer-events:none}
+.ma-shine{position:relative;overflow:hidden}
+.ma-shine::after{content:"";position:absolute;top:0;bottom:0;width:40%;left:-60%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.5),transparent);animation:maShine 2.8s ease-in-out infinite;pointer-events:none}
+@keyframes maShine{0%,40%{left:-60%}80%,100%{left:130%}}
+
+/* 5 — gradient accent on AI cards (first insight) */
+.v22-ins.ma-ai-card{border:1.5px solid transparent!important;background:linear-gradient(var(--ma-surf),var(--ma-surf)) padding-box,conic-gradient(from var(--ma-a),var(--ma-v),var(--ma-c),var(--ma-v)) border-box!important;animation:maSpin 8s linear infinite}
+.v22-ins .ma-ai-badge{margin-left:6px}
+.ma-ai-kpi small .ma-ai-badge{margin-left:6px;vertical-align:1px}
+
+/* 10 — question chips */
+.ma-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.ma-chip{display:inline-flex;align-items:center;gap:6px;font:500 12.5px var(--v-font,Inter,sans-serif);border:1px solid var(--ma-bd);border-radius:999px;padding:7px 13px;color:var(--ma-sub);background:var(--ma-surf2);cursor:pointer;transition:.2s}
+.ma-chip i{font-style:normal;background:var(--ma-ai);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:700}
+.ma-chip:hover,.ma-chip:focus-visible{border-color:var(--ma-c);color:var(--ma-tx);box-shadow:0 0 0 3px var(--ma-sel);outline:none}
+.ma-chips-note{margin:8px 0 0;font-size:11.5px;color:var(--ma-mut)}
+.ma-spark{background:var(--ma-ai);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:700}
+
+/* 12 — glossary terms + "Explained" card */
+.ma-term{border-bottom:1.5px dotted var(--ma-c);cursor:help;outline:none}
+.ma-term:focus-visible{box-shadow:0 0 0 3px var(--ma-sel);border-radius:3px}
+.ma-explain{position:fixed;z-index:200;display:grid;gap:6px;padding:12px 13px;border-radius:12px;background:var(--ma-surf);border:1px solid var(--ma-bd);color:var(--ma-tx);box-shadow:0 16px 40px rgba(0,0,0,.35);font-size:12.5px;line-height:1.5;opacity:0;transform:translateY(-4px);transition:opacity .18s,transform .18s;pointer-events:none}
+.ma-explain.show{opacity:1;transform:none}
+.ma-explain b{display:flex;align-items:center;gap:8px;font-size:13px}
+.ma-explain p{margin:0;color:var(--ma-sub)}
+.ma-explain-pill{position:fixed;z-index:201;font:600 12px var(--v-font,Inter,sans-serif);color:#fff;background:var(--ma-ai);border:0;border-radius:9px;padding:7px 12px;box-shadow:0 8px 22px rgba(0,0,0,.3);cursor:pointer}
+.ma-explain-pill i{font-style:normal}
+
+/* 9 — command bar */
+.workspace-topbar .ma-cmd{position:relative;flex:1;max-width:520px;margin-right:auto;display:flex;align-items:center;gap:10px;padding:0 12px;height:44px;border-radius:12px;border:1px solid var(--ma-bd);background:var(--ma-surf2)}
+.ma-cmd.open,.ma-cmd:focus-within{border-color:var(--ma-c);box-shadow:0 0 0 3px var(--ma-sel)}
+.ma-cmd-ic{font-weight:700;background:var(--ma-ai);-webkit-background-clip:text;background-clip:text;color:transparent}
+.ma-cmd input{flex:1;min-width:0;height:100%;border:0!important;background:transparent!important;color:var(--ma-tx);font:500 14px var(--v-font,Inter,sans-serif);outline:none;box-shadow:none!important;padding:0!important}
+.ma-cmd input::placeholder{color:var(--ma-mut)}
+.ma-cmd input::-webkit-search-cancel-button{display:none}
+.ma-cmd kbd{font:500 11px ui-monospace,monospace;color:var(--ma-mut);border:1px solid var(--ma-bd);border-radius:6px;padding:2px 6px;background:transparent}
+.ma-cmd-list{position:absolute;left:0;right:0;top:calc(100% + 8px);z-index:70;background:var(--ma-surf);border:1px solid var(--ma-bd);border-radius:12px;padding:6px;display:grid;gap:2px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.ma-cmd-list[hidden]{display:none}
+.ma-cmd-it{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:var(--ma-sub);font-size:13px;cursor:pointer}
+.ma-cmd-it .v22-ic{width:15px;height:15px}
+.ma-cmd-it i.ai{font-style:normal;font-weight:700;background:var(--ma-ai);-webkit-background-clip:text;background-clip:text;color:transparent}
+.ma-cmd-it span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ma-cmd-it small{color:var(--ma-mut);font-size:11px;white-space:nowrap}
+.ma-cmd-it.hl{background:var(--ma-sel);color:var(--ma-tx)}
+.ma-cmd-empty{margin:0;padding:10px;color:var(--ma-mut);font-size:13px}
+@media (max-width:900px){.workspace-topbar .ma-cmd{display:none}}
+
+/* 4 + 11 — assistant: orb ring on the button, side panel */
+.v22-fab .v22-fab-bot{position:relative;overflow:visible}
+.v22-fab .v22-fab-bot::before{content:"";position:absolute;inset:-6px;border-radius:50%;background:conic-gradient(from var(--ma-a),var(--ma-v),var(--ma-c),#3b82f6,var(--ma-v));-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px));animation:maSpin 3s linear infinite,maBreathe 3s ease-in-out infinite;pointer-events:none}
+.v22-fab.ma-thinking .v22-fab-bot::before{animation-duration:.8s,.8s}
+@keyframes maBreathe{50%{opacity:.6;transform:scale(1.06)}}
+.chat-drawer.v22-chat.ma-side{top:0;bottom:0;right:0;left:auto;height:auto;width:min(440px,100vw);border-radius:20px 0 0 20px;z-index:90}
+.chat-drawer.v22-chat.ma-side.open{animation:maSlide .38s cubic-bezier(.2,.8,.2,1)}
+@keyframes maSlide{from{transform:translateX(105%)}}
+.chat-drawer.ma-side .v22-chat-head b .ma-ai-badge{font-size:10px;margin-left:4px}
+.chat-drawer.ma-side.ma-thinking .v22-chat-av{box-shadow:0 0 0 3px var(--ma-sel),0 0 22px var(--ma-glow)}
+.ma-quota{color:var(--ma-c);font-weight:600}
+.v22-bubble.bot .ma-ai-badge{margin-bottom:6px}
+@media (max-width:760px){.chat-drawer.v22-chat.ma-side{left:0;width:100vw;border-radius:0}}
+
+@media (prefers-reduced-motion: reduce){
+  .ma-ai-badge i,.ma-glow::before,.ma-glow::after,.ma-tk,.ma-meter i,.ma-shine::after,.v22-ins.ma-ai-card,.v22-fab .v22-fab-bot::before,.ma-why li{animation:none!important}
+  .ma-anal{display:none}
+  .ma-orb,.v22-spin{animation:maOrbPulse 2.4s ease-in-out infinite!important}
+}

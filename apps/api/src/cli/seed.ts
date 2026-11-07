@@ -17,9 +17,9 @@ import { today } from '../shared/dates.js';
 /** Reference data needed in every environment (idempotent). */
 export async function seedReference(db: Db) {
   const plans = [
-    ['Free', 'Free', 'Basic features to get started', { Monthly: 0, Quarterly: 0, Yearly: 0 }, ['Access to 50+ funds', 'Basic charts', '1 AI query per day'], { ai_queries_per_day: 1 }, 0],
-    ['Pro', 'Pro', 'For serious investors', { Monthly: 299, Quarterly: 897, Yearly: 2868 }, ['Access to 250+ funds', 'Advanced analytics', 'Unlimited AI queries', 'Historical SIP comparisons', 'Email support'], { ai_queries_per_day: -1 }, 1],
-    ['Premium', 'Premium', 'For power users', { Monthly: 499, Quarterly: 1497, Yearly: 4788 }, ['Everything in Pro', 'Custom analytics reports', 'Priority support', 'Early access to new features'], { ai_queries_per_day: -1 }, 2],
+    ['Free', 'Free', 'Basic features to get started', { Monthly: 0, Quarterly: 0, Yearly: 0 }, ['Access to 50+ funds', 'Basic charts', '1 AI query per day'], { ai_queries_per_day: 1, ai_queries_per_month: 20 }, 0],
+    ['Pro', 'Pro', 'For serious investors', { Monthly: 299, Quarterly: 897, Yearly: 2868 }, ['Access to 250+ funds', 'Advanced analytics', '10 AI questions a day (200 a month)', 'Historical SIP comparisons', 'Email support'], { ai_queries_per_day: 10, ai_queries_per_month: 200 }, 1],
+    ['Premium', 'Premium', 'For power users', { Monthly: 499, Quarterly: 1497, Yearly: 4788 }, ['Everything in Pro', '25 AI questions a day (500 a month)', 'Custom analytics reports', 'Priority support', 'Early access to new features'], { ai_queries_per_day: 25, ai_queries_per_month: 500 }, 2],
   ];
   for (const p of plans) await db.query(`INSERT INTO plans (id, name, tagline, prices, features, limits, sort) VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT (id) DO NOTHING`, [p[0], p[1], p[2], JSON.stringify(p[3]), JSON.stringify(p[4]), JSON.stringify(p[5]), p[6]]);
   const tpls = [

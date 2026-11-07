@@ -37,21 +37,26 @@ function v22ReminderCard(SP,MN){
  const y=v22CalMonth.y,pick=v22PickDay&&v22PickDay!==SP.day?v22PickDay:null,alt=pick&&SP.alts.find(a=>a[0]===pick),st=v22ReminderState();
  const day=pick||SP.day,wd=new Date(y,v22CalMonth.m,day).toLocaleDateString('en-GB',{weekday:'long'});
  const now=`<p class="v22-rem-now">${ic('bell')}<span>Reminder: <b>${st.mode==='custom'&&st.day?`day ${st.day} of every month`:'Mod Alpha date'}</b></span></p>`;
- const tag=pick?'<em class="mine">Your date</em>':'<em>Best Date</em>';
+ const AI=typeof MA_AI!=='undefined',key=`${y}-${v22CalMonth.m}`;
+ const tag=pick?'<em class="mine">Your date</em>':`<em>Best Date</em>${AI?MA_AI.badge():''}`;
  const gain=pick?(alt?`<strong class="v22-best-gain">+${alt[1]}%<small>vs. fixed date SIP</small></strong>`:`<p class="v22-best-sub">Not a Mod Alpha recommended date</p>`):`<strong class="v22-best-gain">+${SP.uplift}%<small>vs. fixed date SIP</small></strong>`;
  return `<div class="v22-best ${pick?'is-custom':''}"><div class="v22-best-info"><div class="v22-best-top">${tag}</div>
-  <div class="v22-best-day"><b>${day}</b><div><span>${MN} ${y}</span><small>${wd}</small></div></div>${gain}</div>
-  <div class="v22-best-act"><button type="button" class="v22-grad-btn" data-action="set-reminder"${pick?` data-day="${pick}"`:''}>Set Reminder</button>${now}${pick?`<button type="button" class="v22-link-btn" data-v22-pick-reset>Use Mod Alpha date (${SP.day} ${MN})</button>`:''}</div></div>`;
+  <div class="v22-best-day"><b>${day}</b><div><span>${MN} ${y}</span><small>${wd}</small></div></div>${gain}${AI&&!pick?MA_AI.confidence(SP)+MA_AI.why(SP,MN):''}</div>
+  <div class="v22-best-act"><button type="button" class="v22-grad-btn" data-action="set-reminder"${pick?` data-day="${pick}"`:''}>Set Reminder</button>${now}${pick?`<button type="button" class="v22-link-btn" data-v22-pick-reset>Use Mod Alpha date (${SP.day} ${MN})</button>`:''}</div>${AI&&!pick?MA_AI.analysing(key):''}</div>`;
 }
 
 /** Best Date card for people without a paid plan: the day is blurred (a placeholder — the real day is never
     sent to them) with a button to the plans. */
 function v22LockedCard(SP,MN){
- return `<div class="v22-best ma-sip-locked"><div class="v22-best-info"><div class="v22-best-top"><em>Best Date</em></div>
+ const AI=typeof MA_AI!=='undefined';
+ // AI touches: glowing border, a blurred "AI analysis" preview (no real day in it) and a shining unlock button
+ const over=AI?`<div class="ma-lock-over ma-bp">${MA_AI.badge('AI analysis')}<p>This month’s best date beat a fixed-date SIP by <b>+${SP.uplift}%</b>.</p><p class="fog" aria-hidden="true">The best day and two backup dates, with a confidence score and the reasons behind them, ready for your reminder.</p><span class="veil"></span></div>`
+  :`<div class="ma-lock-over">${cic('lock',34)}<b>Unlock this month’s best date</b><small>Available with Pro and Premium, with a reminder before the date.</small></div>`;
+ return `<div class="v22-best ma-sip-locked${AI?' ma-glow':''}"><div class="v22-best-info"><div class="v22-best-top"><em>Best Date</em>${AI?MA_AI.badge():''}</div>
   <div class="v22-best-day" aria-hidden="true"><b class="ma-blur">18</b><div><span>${MN} ${v22CalMonth.y}</span><small class="ma-blur">Wednesday</small></div></div>
   <strong class="v22-best-gain">+${SP.uplift}%<small>vs. fixed date SIP</small></strong></div>
-  <div class="ma-lock-over">${cic('lock',34)}<b>Unlock this month’s best date</b><small>Available with Pro and Premium, with a reminder before the date.</small></div>
-  <div class="v22-best-act"><a class="v22-grad-btn" href="#/user/subscription">${ic('crown')} See plans</a></div></div>`;
+  ${over}
+  <div class="v22-best-act"><a class="v22-grad-btn${AI?' ma-shine':''}" href="#/user/subscription">${AI?'✦ Unlock full analysis':`${ic('crown')} See plans`}</a></div></div>`;
 }
 
 /** Calendar legend and alternative good days. */
@@ -75,9 +80,11 @@ function userOverview(){
  const lp=v22Lump(100000,new Date(2021,0,15)),sp=v22Sip(10000,new Date(2021,0,1),new Date(2026,0,1));
  const monthName=new Date(v22CalMonth.y,v22CalMonth.m,1).toLocaleString('en-GB',{month:'long',year:'numeric'});
  const K=v22UserKpis(),SP=v22SipFor(v22CalMonth.y,v22CalMonth.m),MN=V22_MON[v22CalMonth.m];
+ const AI=typeof MA_AI!=='undefined'; // AI touches (features/ai/ai-ui.js): greeting, ticker, ✦ badges, glow
  return `<div class="v22 v22-dash">
- <section class="v22-welcome"><div><h1>Welcome back, ${esc(currentUser.name)} 👋</h1><p>Get AI-powered insights to make smarter SIP investment decisions.</p></div></section>
- <section class="v22-kpis">${K.map(k=>`<article><span class="v22-tile ${k[1]}">${ic(k[0])}</span><div class="v22-kpi-txt"><small>${k[2]} <em>${k[3]}</em></small><b class="v22-kpi-val">${k[4]}<span>${k[5]}</span></b></div></article>`).join('')}</section>
+ <section class="v22-welcome"><div>${AI?MA_AI.greeting(currentUser.name):`<h1>Welcome back, ${esc(currentUser.name)} 👋</h1><p>Get AI-powered insights to make smarter SIP investment decisions.</p>`}</div></section>
+ ${AI?MA_AI.ticker(SP,MN):''}
+ <section class="v22-kpis">${K.map((k,i)=>`<article class="${AI&&i===1?'ma-ai-kpi'+(SP&&SP.locked?' ma-glow':''):''}"><span class="v22-tile ${k[1]}">${ic(k[0])}</span><div class="v22-kpi-txt"><small>${k[2]} <em>${k[3]}</em>${AI&&i===1?MA_AI.badge():''}</small><b class="v22-kpi-val">${k[4]}<span>${k[5]}</span></b></div></article>`).join('')}</section>
  <section class="v22-dash-top">
   <article class="v22-card v22-perf-card"><div class="v22-card-head"><div><h2>Top Performing Mutual Funds</h2><p>Compare historical returns and find the best performing funds</p></div>${v22Pills(['1Y','3Y','5Y','10Y'],v22DashPeriod,'data-v22-dash')}</div><div id="v22-dash-chart">${v22DashChart(v22DashPeriod)}</div></article>
   <article class="v22-card v22-cal-card"><div class="v22-card-head"><h2>AI Recommended SIP Dates <span class="v22-i" title="Common reminder date published for all mutual funds">${ic('info')}</span></h2><div class="v22-month"><button type="button" data-v22-month="-1" aria-label="Previous month">${ic('chevL')}</button><b>${monthName}</b><button type="button" data-v22-month="1" aria-label="Next month">${ic('chevR')}</button></div></div>

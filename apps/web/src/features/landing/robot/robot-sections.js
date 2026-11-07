@@ -4,6 +4,8 @@
      and a bar comparison, then invites them to sign up.
    • "Same money, better timing" (just before How it works): the SIP race (fixed date vs Mod Alpha date) and
      the coin jars (units bought). Each plays when scrolled into view and again 15 s after it ends.
+   • "Meet Alpha, your AI assistant" (just before the FAQ): what Mod Alpha AI does, questions per plan, and a chat card
+     that plays an example question and answer (again 15 s after it ends).
    All figures are illustrative backtests and are labelled so.
    ========================================================================== */
 (function () {
@@ -61,7 +63,21 @@
       <p class="mr-note mr-center">Illustrative backtest. Past performance does not guarantee future returns.</p>`;
     if (how) how.before(tm); else (document.getElementById('features') || beat).after(tm); // just before "How Mod Alpha Works"
 
-    beatGame(beat, sess); race(tm, sess); jars(tm, sess);
+    // Mod Alpha AI — before the FAQ
+    const ai = el('section', 'v22 mr-sec mr-ai'); ai.id = 'ai-assistant';
+    const per = (name, d) => { const p = (typeof D !== 'undefined' && D.plans || []).find((x) => (x.id || x.name) === name); const n = p && p.limits && p.limits.ai_queries_per_day; return n != null && n >= 0 ? n : d; };
+    const feats = [['chat', 'Ask in plain language', 'Funds, returns, SIP dates — type it the way you would ask a friend.'], ['db', 'Answers from real data', 'Grounded in NAV history, fund returns and the published SIP date. No guessing.'], ['brain', 'Explains every term', 'CAGR, Sharpe ratio, expense ratio… one tap for a simple explanation.'], ['globe', 'English and हिन्दी', 'Switch the language and Alpha answers in it.'], ['shield', 'Safe by design', 'It explains, it never tells you what to buy. Not investment advice.']];
+    ai.innerHTML = `<div class="v22-sec-head"><span class="v22-eyebrow">MOD ALPHA AI</span><h2>Meet Alpha, your <span class="g-blue">AI assistant</span></h2><p>Ask anything about mutual funds and SIP dates — answers come from Mod Alpha’s own fund data.</p></div>
+      <div class="mr-ai-grid"><div class="mr-ai-feats">${feats.map((f) => `<div class="mr-ai-feat"><span class="mr-ai-ic">${typeof cic === 'function' ? cic(f[0], 26) : ''}</span><div><b>${f[1]}</b><p>${f[2]}</p></div></div>`).join('')}
+        <div class="mr-ai-plans"><span>Questions a day</span><b>Free ${per('Free', 1)}</b><b>Pro ${per('Pro', 10)}</b><b>Premium ${per('Premium', 25)}</b></div>
+        <a class="v22-grad-btn mr-ai-cta" href="#/signup">Try Mod Alpha AI →</a></div>
+      <div class="mr-card mr-ai-chat" aria-label="Example conversation"><header><img src="assets/brand/modalpha-bot.svg" alt="" width="44" height="44"><div><b>Mod Alpha AI</b><small><i></i>Answers from Mod Alpha data</small></div><span class="mr-ai-ex">Example</span></header>
+        <div class="mr-ai-body"><div class="mr-ai-b me"></div><div class="mr-ai-b bot"></div></div>
+        <div class="mr-ai-chips"><span>✦ What is CAGR?</span><span>✦ Best SIP date this month?</span><span>✦ Explain in Hindi</span></div></div></div>`;
+    const faq = document.getElementById('faq-preview'); // just before the FAQ
+    if (faq) faq.before(ai); else (document.getElementById('features') || beat).after(ai);
+
+    beatGame(beat, sess); race(tm, sess); jars(tm, sess); aiChat(ai, sess);
   };
 
   /* ---------- 9: Beat the AI ---------- */
@@ -94,6 +110,23 @@
         await s.wait(AGAIN_MS); reset();
       } catch (e) { /* another pick or page left */ }
     }, { signal: sess.signal }));
+  }
+
+  /* ---------- Mod Alpha AI: example conversation ---------- */
+  function aiChat(sec, sess) {
+    const { T, type, reduced } = R();
+    const me = sec.querySelector('.mr-ai-b.me'), bot = sec.querySelector('.mr-ai-b.bot');
+    const Q = 'Is a flexi cap fund riskier than a large cap fund?';
+    const A = 'Usually a little. Flexi cap funds can move between large, mid and small companies, so their returns swing more. Large cap funds stick to the biggest companies and tend to be steadier. Check each fund’s volatility and Sharpe ratio on its page. ✦';
+    const play = async () => {
+      const s = sess;
+      me.textContent = T(Q); me.classList.remove('show'); bot.classList.remove('show'); bot.innerHTML = '';
+      if (reduced()) { me.classList.add('show'); bot.textContent = T(A); bot.classList.add('show'); return; }
+      await s.wait(400); me.classList.add('show'); await s.wait(800);
+      bot.innerHTML = '<span class="mr-dots"><i></i><i></i><i></i></span>'; bot.classList.add('show'); await s.wait(1300);
+      bot.textContent = ''; await type(bot, A, s, 16); await s.wait(4000);
+    };
+    autoLoop(sec.querySelector('.mr-ai-chat'), sess, play);
   }
 
   /* ---------- 10: SIP race ---------- */

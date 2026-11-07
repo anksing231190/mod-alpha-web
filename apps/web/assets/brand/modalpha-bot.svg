@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"><defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1e2a6b"/><stop offset=".55" stop-color="#101a45"/><stop offset="1" stop-color="#0a0f2a"/></linearGradient>
+  <radialGradient id="glow" cx=".5" cy=".42" r=".55"><stop offset="0" stop-color="#7c5cff" stop-opacity=".55"/><stop offset=".6" stop-color="#2ed3f5" stop-opacity=".12"/><stop offset="1" stop-color="#2ed3f5" stop-opacity="0"/></radialGradient>
+  <linearGradient id="shell" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#d6e4ff"/><stop offset="1" stop-color="#8ea6f2"/></linearGradient>
+  <linearGradient id="visor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#15204a"/><stop offset="1" stop-color="#070c22"/></linearGradient>
+  <radialGradient id="eye"><stop offset="0" stop-color="#e8fdff"/><stop offset=".45" stop-color="#2ed3f5"/><stop offset="1" stop-color="#0ea5c6"/></radialGradient>
+  <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a855f7"/><stop offset="1" stop-color="#2ed3f5"/></linearGradient>
+  <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6d58e"/><stop offset=".5" stop-color="#d9a441"/><stop offset="1" stop-color="#a8741f"/></linearGradient>
+  <clipPath id="tile"><rect width="512" height="512" rx="112"/></clipPath>
+ </defs>
+ <g clip-path="url(#tile)"><rect width="512" height="512" fill="url(#bg)"/><rect width="512" height="512" fill="url(#glow)"/>
+ <circle cx="256" cy="230" r="196" fill="none" stroke="#2ed3f5" stroke-opacity=".14" stroke-width="2"/></g>
+ <g transform="translate(256 262) scale(.86) translate(-256 -262)">
+ <g id="robot">
+  <!-- antenna -->
+  <line x1="256" y1="96" x2="256" y2="64" stroke="#9fb4ea" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="256" cy="56" r="16" fill="url(#eye)"/><circle cx="256" cy="56" r="26" fill="#2ed3f5" opacity=".22"/>
+  <!-- ears -->
+  <rect x="104" y="170" width="30" height="64" rx="14" fill="#9fb4ea"/><rect x="378" y="170" width="30" height="64" rx="14" fill="#9fb4ea"/>
+  <!-- head -->
+  <rect x="124" y="96" width="264" height="206" rx="88" fill="url(#shell)"/>
+  <rect x="152" y="136" width="208" height="124" rx="60" fill="url(#visor)"/>
+  <rect x="164" y="146" width="96" height="16" rx="8" fill="#fff" opacity=".10"/>
+  <!-- eyes + smile -->
+  <ellipse cx="214" cy="194" rx="21" ry="26" fill="url(#eye)"/><ellipse cx="298" cy="194" rx="21" ry="26" fill="url(#eye)"/>
+  <ellipse cx="214" cy="194" rx="34" ry="38" fill="#2ed3f5" opacity=".16"/><ellipse cx="298" cy="194" rx="34" ry="38" fill="#2ed3f5" opacity=".16"/>
+  <circle cx="221" cy="184" r="6" fill="#fff"/><circle cx="305" cy="184" r="6" fill="#fff"/>
+  <path d="M232 232 q24 16 48 0" fill="none" stroke="#2ed3f5" stroke-width="8" stroke-linecap="round"/>
+  <!-- neck + chest -->
+  <rect x="226" y="298" width="60" height="30" rx="10" fill="#8aa0d8"/>
+  <path d="M146 452 q0-128 110-128 q110 0 110 128 z" fill="url(#shell)"/>
+  <!-- chest core with the gold alpha -->
+  <circle cx="256" cy="398" r="44" fill="#0b1430"/>
+  <circle cx="256" cy="398" r="44" fill="none" stroke="url(#ring)" stroke-width="5"/>
+  <text x="256" y="414" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="54" fill="url(#gold)">α</text>
+ </g></g></svg>

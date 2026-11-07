@@ -8,7 +8,7 @@
 let v22Billing='monthly';
 
 /** Plan icons and highlights. */
-const V22_PLAN_META={Free:{ic:'sprout',no:['Advanced analytics','Unlimited AI queries'],cta:'Get Started'},Pro:{ic:'rocket',no:[],cta:'Start Pro Plan'},Premium:{ic:'crown',no:[],cta:'Start Premium Plan'}};
+const V22_PLAN_META={Free:{ic:'sprout',no:['Advanced analytics','More AI questions'],cta:'Get Started'},Pro:{ic:'rocket',no:[],cta:'Start Pro Plan'},Premium:{ic:'crown',no:[],cta:'Start Premium Plan'}};
 
 /** Pricing cards for Free / Pro / Premium. */
 function pricingSection(){

@@ -36,10 +36,12 @@ function fundDetail(id){
  const f=D.funds.find(x=>x.id===id)||D.funds[0];selectedFund=f.id;
  // One metric tile.
  const metric=(v,l,c='')=>`<article><b class="${c}">${v}</b><small>${l}</small></article>`;
+ // glossary term with an "✦ Explained" card (features/ai/ai-ui.js); plain text without it
+ const tm=(l,k)=>window.MA_AI?MA_AI.term(l,k):l;
  return `<div class="v22 v22-detail">
  <header class="v22-detail-head"><div class="v22-detail-id">${v22FundLogo(f,'lg')}<div><h1>${esc(f.name)}</h1>${v22Tags(f)}</div></div><button type="button" class="v22-watch" data-action="watchlist">${ic('star')}<span>Add to Watchlist</span></button></header>
- <div class="v22-tabs" role="tablist">${[['overview','Overview'],['performance','Performance'],['nav','NAV History'],['ai','AI Insights'],['info','Fund Info']].map((t,i)=>`<button type="button" role="tab" data-tab="${t[0]}" class="${i===0?'active':''}">${t[1]}</button>`).join('')}</div>
- <section class="v22-metrics">${metric(f.returns[5].toFixed(1)+'%','5Y CAGR','pos')}${metric(f.returns[3].toFixed(1)+'%','3Y CAGR','pos')}${metric(f.returns[1].toFixed(1)+'%','1Y Returns','pos')}${metric((f.sharpe||1.5).toFixed(1),'Sharpe Ratio','pos-soft')}${metric(esc(f.riskLabel||'Moderate'),'Risk Level','pos')}</section>
+ <div class="v22-tabs" role="tablist">${[['overview','Overview'],['performance','Performance'],['nav','NAV History'],['ai','AI Insights'],['info','Fund Info']].map((t,i)=>`<button type="button" role="tab" data-tab="${t[0]}" class="${i===0?'active':''}">${t[0]==='ai'&&window.MA_AI?'<span class="ma-spark" aria-hidden="true">✦</span> ':''}${t[1]}</button>`).join('')}</div>
+ <section class="v22-metrics">${metric(f.returns[5].toFixed(1)+'%',tm('5Y CAGR','cagr'),'pos')}${metric(f.returns[3].toFixed(1)+'%',tm('3Y CAGR','cagr'),'pos')}${metric(f.returns[1].toFixed(1)+'%','1Y Returns','pos')}${metric((f.sharpe||1.5).toFixed(1),tm('Sharpe Ratio','sharpe'),'pos-soft')}${metric(esc(f.riskLabel||'Moderate'),tm('Risk Level','risk'),'pos')}</section>
  <section id="fund-tab-content">${fundTab(f,'overview')}</section></div>`;
 }
 
@@ -58,7 +60,8 @@ function v22DetailChartSample(f,period){
 function fundTab(f,tab){
  if(tab==='overview'||tab==='performance'){
   const invested=10000,cur=Math.round(invested*v22Since(f)/10)*10,tot=(cur/invested-1)*100;
-  return `<section class="v22-card v22-perf"><div class="v22-card-head"><h2>Returns Performance</h2>${v22Pills(['1M','3M','6M','1Y','3Y','5Y'],v22DetailPeriod,'data-v22-dperiod')}</div><div id="v22-detail-chart">${v22DetailChart(f,v22DetailPeriod)}</div></section>
+  const sn=f.short||f.name,qs=[`Why did ${sn} rise or fall recently?`,`Is ${sn} risky for a 5-year SIP?`,`How does ${sn} compare with its category?`];
+  return `<section class="v22-card v22-perf"><div class="v22-card-head"><h2>Returns Performance</h2>${v22Pills(['1M','3M','6M','1Y','3Y','5Y'],v22DetailPeriod,'data-v22-dperiod')}</div><div id="v22-detail-chart">${v22DetailChart(f,v22DetailPeriod)}</div>${window.MA_AI?MA_AI.chips(qs):''}</section>
   <section class="v22-summary"><article><b class="lav">${inr(invested)}</b><small>Invested on 01 Jan 2021</small></article><article><b class="vio">${inr(cur)}</b><small class="ul">Current Value</small></article><article><b class="pos">+${tot.toFixed(1)}%</b><small>Total Returns</small></article><article><b class="pos">${f.returns[5].toFixed(1)}%</b><small>CAGR</small></article><article><b class="sky">5.7 years</b><small>Time Period</small></article></section>`;
  }
  if(tab==='nav')return `<section class="v22-card"><div class="v22-card-head"><h2>NAV History</h2><span class="v22-muted">Daily NAV</span></div><div class="table-scroll"><table class="v22-table"><thead><tr><th>Date</th><th>NAV</th><th>Change</th><th>Source</th></tr></thead><tbody>${v22DetailSeries(f,'1Y').slice(-12).reverse().map((v,i,a)=>`<tr><td>${String(30-i*2).padStart(2,'0')} Sep 2026</td><td>₹${v.toFixed(2)}</td><td class="${a[i+1]&&v<a[i+1]?'neg':'pos'}">${a[i+1]?((v/a[i+1]-1)*100).toFixed(2)+'%':'—'}</td><td>AMFI</td></tr>`).join('')}</tbody></table></div></section>`;

@@ -116,7 +116,6 @@
 .hd-node.mr-lit b{color:var(--mr-cyan)}
 .hd-info.mr-bounce{animation:mrBounce .6s cubic-bezier(.3,1.6,.5,1)}
 @keyframes mrBounce{40%{transform:translateY(-14px) scale(1.06)}}
-.v22-stat-tile.mr-pop{animation:mrBounce .6s cubic-bezier(.3,1.7,.5,1)}
 .mr-sky{position:absolute;inset:0;z-index:1;border-radius:inherit;opacity:0;transition:opacity 1s;pointer-events:none;overflow:hidden}
 .mr-sky.on{opacity:1}
 .mr-sky.am{background:linear-gradient(180deg,rgba(251,191,36,.35),transparent 70%)}
@@ -245,3 +244,30 @@ html[data-theme="light"] .mr-blip span{color:#5b5142}
 html[data-theme="light"] .mr-blip.best span{color:#2a2216}
 html[data-theme="light"] .mr-radar .rings{background:repeating-radial-gradient(circle,transparent 0 58px,rgba(8,145,178,.18) 59px 61px)}
 html[data-theme="light"] .mr-radar .sweep{background:conic-gradient(from 0deg,transparent 0 78%,rgba(8,145,178,.2) 100%)}
+
+/* ---------- Mod Alpha AI section (landing) ---------- */
+.mr-ai-grid{width:min(1180px,100%);display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:28px;align-items:center}
+.mr-ai-feats{display:grid;gap:14px}
+.mr-ai-feat{display:flex;gap:14px;align-items:flex-start}
+.mr-ai-ic{flex:none;width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:var(--mr-track);border:1px solid var(--mr-border)}
+.mr-ai-feat b{display:block;font-size:16px;margin-bottom:2px}
+.mr-ai-feat p{margin:0;color:var(--mr-sub);font-size:14px;line-height:1.5}
+.mr-ai-plans{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:4px;font-size:13px;color:var(--mr-sub)}
+.mr-ai-plans span{margin-right:4px}
+.mr-ai-plans b{padding:5px 12px;border-radius:999px;border:1px solid var(--mr-border);background:var(--mr-track);color:var(--mr-text);font-weight:600}
+.mr-ai-cta{justify-self:start;margin-top:6px}
+.mr-ai-chat{padding:0;overflow:hidden;display:flex;flex-direction:column;min-height:420px}
+.mr-ai-chat header{display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--mr-border)}
+.mr-ai-chat header img{border-radius:12px}
+.mr-ai-chat header b{display:block;font-size:15px}
+.mr-ai-chat header small{display:flex;align-items:center;gap:6px;color:var(--mr-sub);font-size:12px}
+.mr-ai-chat header small i{width:7px;height:7px;border-radius:50%;background:#22c55e}
+.mr-ai-ex{margin-left:auto;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mr-muted);border:1px solid var(--mr-border);border-radius:999px;padding:3px 9px}
+.mr-ai-body{flex:1;display:flex;flex-direction:column;gap:12px;padding:18px;justify-content:flex-start}
+.mr-ai-b{max-width:88%;padding:11px 14px;border-radius:16px;font-size:14.5px;line-height:1.5;opacity:0;transform:translateY(8px);transition:.35s}
+.mr-ai-b.show{opacity:1;transform:none}
+.mr-ai-b.me{align-self:flex-end;background:#3b82f6;color:#fff;border-bottom-right-radius:4px}
+.mr-ai-b.bot{align-self:flex-start;background:var(--mr-track);border:1px solid var(--mr-border);border-bottom-left-radius:4px;color:var(--mr-text);min-height:44px}
+.mr-ai-chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 18px 18px}
+.mr-ai-chips span{font-size:12.5px;border:1px solid var(--mr-border);border-radius:999px;padding:6px 12px;color:var(--mr-sub)}
+@media (max-width:900px){.mr-ai-grid{grid-template-columns:1fr}.mr-ai-chat{min-height:380px}}

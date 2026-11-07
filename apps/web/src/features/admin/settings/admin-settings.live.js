@@ -32,7 +32,7 @@
   v22AdminProfile = window.v22AdminProfile;
   // charts wait for NAV instead of crashing / showing synthetic data
   const baseDash = v22DashChart;
-  v22DashChart = function (p) { const top = D.funds.filter((f) => f.returns[5] != null).slice(0, 3); return top.some((f) => !S.navCache[f.id]) ? '<div class="v22-loading inline"><span class="v22-spin"></span><b>Loading NAV…</b></div>' : baseDash(p); };
+  v22DashChart = function (p) { const top = D.funds.filter((f) => f.returns[5] != null).slice(0, 3); return top.some((f) => !S.navCache[f.id]) ? (window.MA_AI ? MA_AI.skelBlock(300) : '<div class="v22-loading inline"><span class="v22-spin"></span><b>Loading NAV…</b></div>') : baseDash(p); };
   const baseDetail = v22DetailChart;
-  v22DetailChart = function (f, p) { return S.navCache[f.id] ? baseDetail(f, p) : '<div class="v22-loading inline"><span class="v22-spin"></span><b>Loading NAV…</b></div>'; };
+  v22DetailChart = function (f, p) { return S.navCache[f.id] ? baseDetail(f, p) : (window.MA_AI ? MA_AI.skelBlock(300) : '<div class="v22-loading inline"><span class="v22-spin"></span><b>Loading NAV…</b></div>'); };
 })();

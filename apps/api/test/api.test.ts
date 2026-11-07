@@ -162,7 +162,32 @@ describe('assistant quotas', () => {
     await c.post('/auth/signup', { name: 'Ai User', email: 'ai@example.com', password: 'secret-pass-1' });
     const a = await c.post('/assistant/messages', { messages: [{ role: 'user', content: 'What is the best SIP date this month?' }] });
     expect(a.statusCode).toBe(200); expect(a.json().reply).toMatch(/Pro and Premium/);   // the day is a paid feature
-    expect((await c.post('/assistant/messages', { messages: [{ role: 'user', content: 'and CAGR?' }] })).statusCode).toBe(429);
+    expect(a.json().usage).toMatchObject({ today: 1, month: 1, limit: 1, monthLimit: 20, remainingToday: 0, remainingMonth: 19 });
+    const blocked = await c.post('/assistant/messages', { messages: [{ role: 'user', content: 'and CAGR?' }] });
+    expect(blocked.statusCode).toBe(429); expect(blocked.json().error.message).toMatch(/1 AI question a day/);
+    expect((await c.get('/me/entitlements')).json().usage).toMatchObject({ aiQueriesToday: 1, aiQueriesMonth: 1 });
+  });
+  it('plans carry daily and monthly AI caps (no unlimited AI)', async () => {
+    const plans = (await client(app).get('/plans')).json().plans;
+    const by = Object.fromEntries(plans.map((p: any) => [p.id, p]));
+    expect(by.Free.limits).toMatchObject({ ai_queries_per_day: 1, ai_queries_per_month: 20 });
+    expect(by.Pro.limits).toMatchObject({ ai_queries_per_day: 10, ai_queries_per_month: 200 });
+    expect(by.Premium.limits).toMatchObject({ ai_queries_per_day: 25, ai_queries_per_month: 500 });
+    expect(JSON.stringify(plans)).not.toMatch(/Unlimited AI/);
+  });
+  it('the monthly cap stops questions even when the daily cap has room', async () => {
+    const adm = await adminClient(app);
+    const free = (await client(app).get('/plans')).json().plans.find((p: any) => p.id === 'Free');
+    expect((await adm.put('/admin/plans/Free', { limits: { ai_queries_per_day: 5, ai_queries_per_month: 2 } })).statusCode).toBe(200);
+    try {
+      const c = client(app);
+      await c.post('/auth/signup', { name: 'Ai Monthly', email: 'ai-month@example.com', password: 'secret-pass-1' });
+      const ask = () => c.post('/assistant/messages', { messages: [{ role: 'user', content: 'What is CAGR?' }] });
+      expect((await ask()).statusCode).toBe(200);
+      expect((await ask()).json().usage.remainingMonth).toBe(0);
+      const third = await ask();
+      expect(third.statusCode).toBe(429); expect(third.json().error.message).toMatch(/all 2 AI questions .* this month/);
+    } finally { await adm.put('/admin/plans/Free', { limits: free.limits }); }
   });
 });
 

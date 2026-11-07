@@ -98,7 +98,7 @@
   function init() {
     if (current) current.abort();
     // renderLanding() can run twice on the same page: remove what the previous run added so the new run owns it all
-    document.querySelectorAll('#beat-the-ai,#timing,.hd-phone .mr-bot,.hd-phone .mr-say,.mr-scr,.mr-sky,.mr-notif,.mr-radar,.mr-canvas,.mr-pulse,.mr-pt,.mr-zzz').forEach((n) => n.remove());
+    document.querySelectorAll('#beat-the-ai,#timing,#ai-assistant,.hd-phone .mr-bot,.hd-phone .mr-say,.mr-scr,.mr-sky,.mr-notif,.mr-radar,.mr-canvas,.mr-pulse,.mr-pt,.mr-zzz').forEach((n) => n.remove());
     document.querySelectorAll('.v22-hero.mr-on').forEach((h) => h.classList.remove('mr-on', 'mr-cards'));
     const sess = current = session();
     // stop when the landing page is gone (route change)

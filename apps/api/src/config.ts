@@ -60,8 +60,12 @@ const Env = z.object({
   DIGIO_BASE_URL: z.string().default('https://ext.digio.in:444'),
   KYC_WEBHOOK_SECRET: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
-  ANTHROPIC_MODEL: z.string().default('claude-sonnet-5-5'),
+  // Haiku: fast and low-cost for short, data-grounded answers (≈ ₹0.05 a question). Override per environment if needed.
+  ANTHROPIC_MODEL: z.string().default('claude-haiku-5-5'),
+  // Whole-app AI spend cap per calendar month (₹, estimated from token counts). 0 = no cap. When reached, the
+  // assistant answers with the free rule-based answers until the next month.
   AI_MONTHLY_BUDGET_INR: z.coerce.number().default(0),
+  AI_USD_INR: z.coerce.number().default(88),
   AMFI_NAV_URL: z.string().default('https://www.amfiindia.com/spages/NAVAll.txt'),
   GOOGLE_CLIENT_ID: z.string().optional(),
   FRESHDESK_DOMAIN: z.string().optional(),

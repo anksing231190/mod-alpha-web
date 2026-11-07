@@ -1,7 +1,8 @@
 /**
  * Content module — public content and help.
  *   GET /faqs · GET /public/activity (anonymous counts for the landing page)
- *   POST /assistant/messages (AI assistant; daily limit per plan) · POST /support/tickets
+ *   POST /assistant/messages (AI assistant; daily + monthly question caps per plan, app-wide monthly budget)
+ *   POST /support/tickets
  */
 import type { FastifyInstance } from 'fastify';
 import crypto from 'node:crypto';
@@ -10,6 +11,8 @@ import { parse } from '../../shared/validate.js';
 import { tooMany } from '../../shared/errors.js';
 import { requireUser } from '../auth/session.js';
 import { entitlements } from '../billing/routes.js';
+import { aiPricePerMTok } from '../../providers/ai.js';
+import { mockAnswer } from '../../providers/mock-ai.js';
 
 // Instructions for the AI assistant: explain data, never give personal advice or place orders.
 const SYSTEM = `You are the Mod Alpha assistant for Indian mutual fund investors. Explain fund data, returns (CAGR, volatility, Sharpe) and SIP concepts in plain language.
@@ -32,25 +35,46 @@ export default async function content(app: FastifyInstance) {
     return { events: r.rows };
   });
 
-  // POST /assistant/messages — check the plan's daily question limit (Free = 1), answer with the AI provider using
-  // live fund data as context, and count usage.
+  // POST /assistant/messages — answer a question with the AI provider, grounded in live fund data.
+  // Caps (from the plan's limits, editable by admins): ai_queries_per_day and ai_queries_per_month (-1 = no cap).
+  // App-wide guard: when this month's estimated spend reaches AI_MONTHLY_BUDGET_INR, answers come from the free
+  // rule-based assistant until the month ends (no AI cost). Only the last 6 messages are sent, to keep cost down.
   app.post('/assistant/messages', { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } }, async (req) => {
     const u = requireUser(req);
     const b = parse(z.object({ messages: z.array(z.object({ role: z.enum(['user', 'assistant']), content: z.string().min(1).max(2000) })).min(1).max(20) }), req.body);
     const ent = await entitlements(db, u.id);
-    const limit = Number(ent.limits?.ai_queries_per_day ?? 1);
-    const used = (await db.query('SELECT queries FROM assistant_usage WHERE user_id=$1 AND day=CURRENT_DATE', [u.id])).rows[0]?.queries ?? 0;
-    if (limit >= 0 && used >= limit) throw tooMany(`Your ${ent.plan} plan includes ${limit} AI ${limit === 1 ? 'query' : 'queries'} per day. Upgrade for more.`);
+    const usage = await aiUsage(u.id, ent.limits);
+    if (usage.monthLimit >= 0 && usage.month >= usage.monthLimit) throw tooMany(`You have used all ${usage.monthLimit} AI questions in your ${ent.plan} plan this month. They reset on the 1st.${ent.plan === 'Premium' ? '' : ' Upgrade for more.'}`);
+    if (usage.limit >= 0 && usage.today >= usage.limit) throw tooMany(`Your ${ent.plan} plan includes ${usage.limit} AI ${usage.limit === 1 ? 'question' : 'questions'} a day. Ask again tomorrow${ent.plan === 'Premium' ? '' : ' or upgrade for more'}.`);
     // ground the model in current data
     const top = (await db.query(`SELECT f.scheme_name, f.category, m.r1, m.r3, m.r5, m.vol3, m.sharpe3 FROM fund_metrics m JOIN funds f USING (fund_id) WHERE f.is_active ORDER BY m.r5 DESC NULLS LAST LIMIT 15`)).rows;
     // the recommended day is a paid feature: the assistant only knows it for subscribers
     const paid = ent.plan !== 'Free' && ent.subscription?.status === 'Active';
     const sip = paid ? (await db.query(`SELECT month, recommended_day, uplift_pct FROM sip_dates WHERE status='Published' ORDER BY month DESC LIMIT 1`)).rows[0] : null;
     const context = `Fund data (returns are CAGR %):\n${top.map((f) => `- ${f.scheme_name} [${f.category}] 1Y ${f.r1} 3Y ${f.r3} 5Y ${f.r5} vol ${f.vol3} sharpe ${f.sharpe3}`).join('\n')}\nCurrent SIP date: ${sip ? `${sip.month} day ${sip.recommended_day} (+${sip.uplift_pct}% historical uplift)` : paid ? 'not published' : 'shown to Pro and Premium subscribers only — do not guess it; say it is on the dashboard after subscribing'}`;
-    const out = await providers.ai.complete({ system: `${SYSTEM}\n\n${context}`, messages: b.messages });
+    const messages = b.messages.slice(-6);
+    if (messages[0].role !== 'user') messages.shift();
+    let out: { text: string; tokensIn: number; tokensOut: number }, provider = providers.ai.name;
+    if (providers.ai.name !== 'mock' && cfg.AI_MONTHLY_BUDGET_INR > 0 && (await monthSpendInr()) >= cfg.AI_MONTHLY_BUDGET_INR) {
+      out = { text: await mockAnswer(db, messages.at(-1)!.content, paid), tokensIn: 0, tokensOut: 0 }; provider = 'mock (monthly AI budget reached)';
+    } else out = await providers.ai.complete({ system: `${SYSTEM}\n\n${context}`, messages });
     await db.query(`INSERT INTO assistant_usage (user_id, day, queries, tokens_in, tokens_out) VALUES ($1, CURRENT_DATE, 1, $2, $3) ON CONFLICT (user_id, day) DO UPDATE SET queries=assistant_usage.queries+1, tokens_in=assistant_usage.tokens_in+$2, tokens_out=assistant_usage.tokens_out+$3`, [u.id, out.tokensIn, out.tokensOut]);
-    return { reply: out.text, provider: providers.ai.name, usage: { today: used + 1, limit }, disclaimer: 'Not investment advice. Past performance does not guarantee future returns.' };
+    const after = { ...usage, today: usage.today + 1, month: usage.month + 1 };
+    return { reply: out.text, provider, usage: { ...after, remainingToday: left(after.limit, after.today), remainingMonth: left(after.monthLimit, after.month) }, disclaimer: 'Not investment advice. Past performance does not guarantee future returns.' };
   });
+  // questions left under a cap (-1 = no cap → null)
+  const left = (cap: number, used: number) => (cap < 0 ? null : Math.max(0, cap - used));
+  // today's and this month's questions for a user, with the plan's caps
+  async function aiUsage(userId: string, limits: any) {
+    const r = (await db.query(`SELECT coalesce(sum(queries) FILTER (WHERE day = CURRENT_DATE), 0)::int AS today, coalesce(sum(queries), 0)::int AS month FROM assistant_usage WHERE user_id=$1 AND day >= date_trunc('month', CURRENT_DATE)::date`, [userId])).rows[0];
+    return { today: r.today, month: r.month, limit: Number(limits?.ai_queries_per_day ?? 1), monthLimit: Number(limits?.ai_queries_per_month ?? -1) };
+  }
+  // estimated AI spend of the whole app this month (₹), from token counts and the model's price
+  async function monthSpendInr() {
+    const t = (await db.query(`SELECT coalesce(sum(tokens_in),0)::float AS i, coalesce(sum(tokens_out),0)::float AS o FROM assistant_usage WHERE day >= date_trunc('month', CURRENT_DATE)::date`)).rows[0];
+    const [pi, po] = aiPricePerMTok(cfg.ANTHROPIC_MODEL);
+    return ((t.i * pi + t.o * po) / 1e6) * cfg.AI_USD_INR;
+  }
 
   // POST /support/tickets — store the ticket and pass it to the helpdesk provider (5 per 10 minutes per IP).
   app.post('/support/tickets', { config: { rateLimit: { max: cfg.APP_ENV === 'test' ? 100 : 5, timeWindow: '10 minutes' } } }, async (req) => {

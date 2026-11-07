@@ -96,6 +96,8 @@ function shell(role,active,content){shellWithIcons(role,active,content);
  document.querySelector('.workspace-search')?.remove();
  document.querySelector('.workspace-topbar')?.classList.add('v22-nosearch');
  const pm=document.querySelector('.profile-menu');if(pm){pm.querySelector(':scope>b')?.remove();const c=pm.cloneNode(true);c.removeAttribute('data-action');c.setAttribute('data-v22-profile',role);c.title=role==='admin'?'Open admin profile':'Open your profile';pm.replaceWith(c)}
+ // AI touches: command bar, chat side panel, glossary, typing text (features/ai/ai-ui.js)
+ if(typeof maAiShell==='function')maAiShell(role);
 }
 
 /** Admin profile side panel. */

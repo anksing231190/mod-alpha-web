@@ -76,8 +76,9 @@ export default async function billing(app: FastifyInstance) {
   app.get('/me/entitlements', async (req) => {
     const u = requireUser(req);
     const e = await entitlements(db, u.id);
-    const used = (await db.query('SELECT queries FROM assistant_usage WHERE user_id=$1 AND day=CURRENT_DATE', [u.id])).rows[0]?.queries ?? 0;
-    return { ...e, usage: { aiQueriesToday: used } };
+    const r = (await db.query(`SELECT coalesce(sum(queries) FILTER (WHERE day = CURRENT_DATE), 0)::int AS today, coalesce(sum(queries), 0)::int AS month FROM assistant_usage WHERE user_id=$1 AND day >= date_trunc('month', CURRENT_DATE)::date`, [u.id])).rows[0];
+    // AI questions used today / this month, next to the plan's caps (limits.ai_queries_per_day / _per_month)
+    return { ...e, usage: { aiQueriesToday: r.today, aiQueriesMonth: r.month } };
   });
 
   // POST /billing/checkout — create a gateway order for a plan + billing cycle. Blocks until KYC is verified.

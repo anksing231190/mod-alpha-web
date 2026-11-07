@@ -1,6 +1,6 @@
 /* ==========================================================================
    Feature: landing-page robot — hero show (hero variant "hero-d", the phone with orbiting icons)
-   • Greeting that fits the visitor's time of day (and Hindi)            • Stats count up; the robot reacts
+   • Greeting that fits the visitor's time of day (and Hindi). The hero stats stay fixed (no count-up).
    • Scenes on a loop: the phone's lock-screen cards · finds the best date · chat + reminder · connects the orbiting icons · data → chart
    • Eyes follow the mouse; star eyes and "Let's start!" over Get Started
    • Reacts to the theme (sunglasses / night cap) and language (नमस्ते!) toggles
@@ -120,22 +120,6 @@
       await s.wait(60); sky.classList.add('on'); pose(b, 'wave'); say(sayIn, lang() === 'hi' && txt !== 'Working late?' ? 'Namaste!' : txt);
       await s.wait(2800); hush(sayIn); sky.classList.remove('on'); pose(b, 'is-happy'); await s.wait(500);
     }
-    async function stats(s) {
-      const row = hero.querySelector('.v22-hero-stats'); if (!row || !row.offsetParent) return;
-      const tiles = [...row.querySelectorAll('.v22-stat-tile')], cols = ['#3b82f6', '#14b8a6', '#a855f7', '#f59e0b'];
-      const vals = tiles.map((t) => t.querySelector('b')); const orig = vals.map((v) => v.textContent);
-      try {
-        vals.forEach((v) => (v.textContent = '0'));
-        for (let i = 0; i < tiles.length; i++) {
-          const tgt = orig[i], num = parseFloat(tgt.replace(/,/g, '')), dec = /\.\d/.test(tgt), suf = tgt.replace(/[\d.,]/g, '');
-          pose(b, 'point-l'); look(b, -5, 2); followUntil = Date.now() + 900;
-          for (let k = 0; k <= 18; k++) { const v = (num * k) / 18; vals[i].textContent = (dec ? v.toFixed(1) : Math.round(v).toLocaleString('en-IN')) + suf; await s.wait(32); }
-          vals[i].textContent = tgt; b.querySelector('.core-c').setAttribute('fill', cols[i]); pose(b, 'flash', 'is-happy');
-          tiles[i].classList.remove('mr-pop'); void tiles[i].offsetWidth; tiles[i].classList.add('mr-pop'); await s.wait(520);
-        }
-        pose(b, 'spin', 'is-happy', 'thumb'); confetti(b, cols); await s.wait(1600);
-      } finally { vals.forEach((v, i) => (v.textContent = orig[i])); }
-    }
     // the phone's own lock-screen cards (notification + "November best date"), with the robot tucked in the corner
     async function cards(s) {
       place('tuck'); pose(b, 'is-happy', 'point-l'); look(b, -4, -3);
@@ -203,7 +187,7 @@
       try {
         await sess.until(canRun);
         scene = R().session(sess);
-        try { if (!reacted) await greet(scene); await stats(scene); } catch (e) { if (e !== STOP) throw e; }
+        try { if (!reacted) await greet(scene); } catch (e) { if (e !== STOP) throw e; }
         clearScreen();
         for (let i = 0; sess.alive(); ) {
           await sess.until(canRun);
@@ -225,13 +209,7 @@
     scr.appendChild(badge); if (done) scr.classList.add('lit');
     return { cells: [...scr.querySelectorAll('.mr-grid span:not(.dow)')], badge };
   }
-  function confetti(b, cols) {
-    for (let i = 0; i < 22; i++) {
-      const c = document.createElement('i'); c.className = 'mr-conf'; c.style.background = cols[i % cols.length];
-      c.style.setProperty('--dx', Math.random() * 200 - 100 + 'px'); c.style.setProperty('--dy', -Math.random() * 140 - 20 + 'px');
-      b.appendChild(c); setTimeout(() => c.remove(), 1200);
-    }
-  }
+
   /** Radar sweep behind the phone; date blips light up as the sweep passes, the best date pings. */
   function radar(stage, phone, still) {
     const S = 560, rd = document.createElement('div'); rd.className = 'mr-radar' + (still ? ' still' : ''); rd.setAttribute('aria-hidden', 'true');

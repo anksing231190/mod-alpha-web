@@ -73,18 +73,22 @@
   async function remove(id) { if (live) return API.del(`/admin/insights/${id}`); demoSave(demoAll().filter((x) => x.id !== id)); }
 
   /* ---------- dashboard tile ---------- */
-  function cardHtml(it) {
+  function cardHtml(it, first) {
     if (it.kind === 'instagram') {
       const cv = coverSrc(it);
       return `<button type="button" class="v22-ins ma-reel" data-ma-reel="${it.id}" aria-label="${esc(T('Play'))}: ${esc(it.title)}">
         <span class="ma-reel-thumb${cv ? ' has-img' : ''}">${cv ? `<img src="${esc(cv)}" alt="" loading="lazy">` : igGlyph}<i class="ma-reel-play">${ic('play')}</i></span>
         <div><div class="v22-ins-top"><b>${esc(it.title)}</b><small>${ago(it.publishedAt)}</small></div>${it.body ? `<p>${esc(it.body)}</p>` : ''}<span class="ma-reel-src">${igGlyph} ${T('Instagram reel')}</span></div></button>`;
     }
-    return `<div class="v22-ins"><span class="v22-tile ${TONE[it.icon] || 'blue'}">${ic(it.icon || 'trend')}</span><div><div class="v22-ins-top"><b>${esc(it.title)}</b><small>${ago(it.publishedAt)}</small></div><p>${esc(it.body || '')}</p></div></div>`;
+    // AI touches: ✦ badge on every text insight; the first one gets the gradient border and types itself once
+    const AI = window.MA_AI, lead = AI && first;
+    return `<div class="v22-ins${lead ? ' ma-ai-card' : ''}"><span class="v22-tile ${TONE[it.icon] || 'blue'}">${ic(it.icon || 'trend')}</span><div><div class="v22-ins-top"><b>${esc(it.title)}${AI ? AI.badge('AI Insight') : ''}</b><small>${ago(it.publishedAt)}</small></div><p${lead ? ` data-ma-type="ins-${it.id}"` : ''}>${esc(it.body || '')}</p></div></div>`;
   }
   function tileHtml() {
-    if (!items) { load(); return `<div class="v22-ins-list" id="ma-ins-list"><p class="v22-muted">${T('Loading…')}</p></div>`; }
-    return `<div class="v22-ins-list" id="ma-ins-list">${items.length ? items.slice(0, 4).map(cardHtml).join('') : `<p class="v22-muted">${T('No insights yet.')}</p>`}</div>
+    if (!items) load(); // demo data loads at once; live data paints the tile when it arrives
+    if (!items) { return `<div class="v22-ins-list" id="ma-ins-list">${window.MA_AI ? MA_AI.skel(3) : `<p class="v22-muted">${T('Loading…')}</p>`}</div>`; }
+    const firstText = items.slice(0, 4).find((x) => x.kind !== 'instagram');
+    return `<div class="v22-ins-list" id="ma-ins-list">${items.length ? items.slice(0, 4).map((x) => cardHtml(x, x === firstText)).join('') : `<p class="v22-muted">${T('No insights yet.')}</p>`}</div>
       <p class="ma-ins-disc">${T('Insights and clips are for education only — not investment advice. Past performance does not guarantee future returns.')}</p>`;
   }
   function paintTile() {
@@ -92,6 +96,7 @@
     const wrap = document.createElement('div'); wrap.innerHTML = tileHtml();
     el.replaceWith(wrap.firstElementChild);
     const disc = document.querySelector('.v22-insights .ma-ins-disc'); if (!disc && wrap.lastElementChild) document.getElementById('ma-ins-list').after(wrap.lastElementChild);
+    if (window.MA_AI) MA_AI.animate(document.getElementById('ma-ins-list'));
   }
   // Instagram's own player in a dialog (no API key). If Instagram blocks the embed, the link still works.
   function openReel(it) {
