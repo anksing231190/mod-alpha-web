@@ -146,3 +146,8 @@ html[data-theme="light"] .ma-cmd-list{background:#fffaf1}
 /* empty states */
 .ma-empty-bot.ma-am{width:84px;height:84px}
 .ma-empty.sm .ma-empty-bot.ma-am{width:46px;height:46px}
+
+/* ---------- tile icons (core/icons.js cic(): Lucide on a tinted square) — deeper strokes on the light theme ---------- */
+html[data-theme="light"] .ma-tint-blue g{stroke:#1d4ed8}html[data-theme="light"] .ma-tint-violet g{stroke:#6d28d9}
+html[data-theme="light"] .ma-tint-green g{stroke:#047857}html[data-theme="light"] .ma-tint-amber g{stroke:#b45309}
+html[data-theme="light"] .ma-tint-rose g{stroke:#be123c}html[data-theme="light"] .ma-tint-cyan g{stroke:#0e7490}
