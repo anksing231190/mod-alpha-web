@@ -151,3 +151,6 @@ html[data-theme="light"] .ma-cmd-list{background:#fffaf1}
 html[data-theme="light"] .ma-tint-blue g{stroke:#1d4ed8}html[data-theme="light"] .ma-tint-violet g{stroke:#6d28d9}
 html[data-theme="light"] .ma-tint-green g{stroke:#047857}html[data-theme="light"] .ma-tint-amber g{stroke:#b45309}
 html[data-theme="light"] .ma-tint-rose g{stroke:#be123c}html[data-theme="light"] .ma-tint-cyan g{stroke:#0e7490}
+/* chat button: label sits below the circle (no overlap); on the light theme the circle stays dark so the α reads */
+.v22-fab-label{margin-top:8px!important}
+html[data-theme="light"] .v22-fab-bot,html[data-theme="light"] .v22-chat-av{background:radial-gradient(circle at 50% 40%,#232a6b,#0b1022 72%)!important;border:2px solid #c99a62!important}

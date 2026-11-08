@@ -2,7 +2,7 @@
    Feature: Latest AI Insights — text cards and Instagram reels
    --------------------------------------------------------------------------
    • Dashboard tile (#/user/overview): published items, pinned first. A reel shows its cover (or an
-     Instagram-style card) with a play button; clicking opens Instagram's own player in a dialog, with an
+     Instagram-style card, no play badge over the logo); clicking opens Instagram's own player in a dialog, with an
      "Open on Instagram" link as a fallback. A disclaimer sits under the tile.
    • Admin → Insights & Reels (#/admin/insights): add an Instagram reel (paste its link) or a text insight,
      edit, publish / hide, pin, order, delete. Live mode: /admin/insights API (audited).
@@ -77,7 +77,7 @@
     if (it.kind === 'instagram') {
       const cv = coverSrc(it);
       return `<button type="button" class="v22-ins ma-reel" data-ma-reel="${it.id}" aria-label="${esc(T('Play'))}: ${esc(it.title)}">
-        <span class="ma-reel-thumb${cv ? ' has-img' : ''}">${cv ? `<img src="${esc(cv)}" alt="" loading="lazy">` : igGlyph}<i class="ma-reel-play">${ic('play')}</i></span>
+        <span class="ma-reel-thumb${cv ? ' has-img' : ''}">${cv ? `<img src="${esc(cv)}" alt="" loading="lazy">` : igGlyph}</span>
         <div><div class="v22-ins-top"><b>${esc(it.title)}</b><small>${ago(it.publishedAt)}</small></div>${it.body ? `<p>${esc(it.body)}</p>` : ''}<span class="ma-reel-src">${igGlyph} ${T('Instagram reel')}</span></div></button>`;
     }
     // AI touches: ✦ badge on every text insight; the first one gets the gradient border and types itself once
