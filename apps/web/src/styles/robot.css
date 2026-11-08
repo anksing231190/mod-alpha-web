@@ -143,13 +143,13 @@
 .mr-radar.still .sweep{display:none}.mr-radar.still .mr-blip{animation:none;opacity:.6}
 
 /* ---------- sections ---------- */
-.mr-sec{position:relative;padding:72px max(16px,env(safe-area-inset-left,0px)) 64px;display:grid;justify-items:center;gap:26px;color:var(--mr-text)}
+.mr-sec{position:relative;padding:72px max(16px,3.5%) 64px;display:grid;justify-items:center;gap:26px;color:var(--mr-text)}
 .mr-sec .v22-sec-head{text-align:center}
 .mr-card{position:relative;background:var(--mr-card);border:1px solid var(--mr-border);border-radius:22px;padding:24px;box-shadow:0 30px 70px rgba(0,0,0,.3);min-width:0}
 .mr-card h3{margin:0 0 16px;font-size:18px;font-weight:700}
 .mr-note{margin:22px 0 0;color:var(--mr-sub);font-size:13.5px;line-height:1.5}
 .mr-center{text-align:center;margin:0}
-.mr-game{width:min(940px,100%);display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:26px;align-items:center}
+.mr-game{width:min(1120px,100%);display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:26px;align-items:center}
 .mr-month{font:700 13px var(--v-font,Inter,sans-serif);letter-spacing:.1em;color:var(--mr-sub);margin-bottom:10px}
 .mr-days{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
 .mr-days button{height:46px;border-radius:12px;border:1px solid var(--mr-border);background:var(--mr-btn);color:var(--mr-text);font:600 16px var(--v-font,Inter,sans-serif);cursor:pointer;transition:.25s}
@@ -172,7 +172,7 @@
 .mr-cta.show{opacity:1;pointer-events:auto}
 .mr-cta.show{animation:mrPulse 1.4s ease-in-out infinite}
 @keyframes mrPulse{0%{box-shadow:0 0 0 0 rgba(168,85,247,.6)}70%,100%{box-shadow:0 0 0 12px rgba(168,85,247,0)}}
-.mr-two{width:min(1180px,100%);display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:20px}
+.mr-two{width:100%;display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:20px}
 .mr-race-card{display:flex;flex-direction:column}
 .mr-race{flex:1;display:grid;gap:20px;align-content:center;padding-top:96px} /* room above the tracks for the robot */
 .mr-lane{display:grid;grid-template-columns:140px minmax(0,1fr) 104px;gap:12px;align-items:center}
@@ -246,7 +246,10 @@ html[data-theme="light"] .mr-radar .rings{background:repeating-radial-gradient(c
 html[data-theme="light"] .mr-radar .sweep{background:conic-gradient(from 0deg,transparent 0 78%,rgba(8,145,178,.2) 100%)}
 
 /* ---------- Mod Alpha AI section (landing) ---------- */
-.mr-ai-grid{width:min(1180px,100%);display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:28px;align-items:center}
+.mr-ai-grid{width:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:48px;align-items:center} /* full width like Features (3.5% side margins) */
+.mr-ai-feats{grid-template-columns:1fr 1fr;column-gap:28px;row-gap:22px}
+.mr-ai-feats .mr-ai-plans,.mr-ai-feats .mr-ai-cta,.mr-ai-feat:nth-child(5){grid-column:1/-1} /* the 5th card spans both columns: no gap */
+.mr-ai-feat{padding:16px;border-radius:16px;border:1px solid var(--mr-border);background:var(--mr-card)}
 .mr-ai-feats{display:grid;gap:14px}
 .mr-ai-feat{display:flex;gap:14px;align-items:flex-start}
 .mr-ai-ic{flex:none;width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:var(--mr-track);border:1px solid var(--mr-border)}
@@ -256,7 +259,7 @@ html[data-theme="light"] .mr-radar .sweep{background:conic-gradient(from 0deg,tr
 .mr-ai-plans span{margin-right:4px}
 .mr-ai-plans b{padding:5px 12px;border-radius:999px;border:1px solid var(--mr-border);background:var(--mr-track);color:var(--mr-text);font-weight:600}
 .mr-ai-cta{justify-self:start;margin-top:6px}
-.mr-ai-chat{padding:0;overflow:hidden;display:flex;flex-direction:column;min-height:420px}
+.mr-ai-chat{padding:0;overflow:hidden;display:flex;flex-direction:column;min-height:460px}
 .mr-ai-chat header{display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--mr-border)}
 .mr-ai-chat header img{border-radius:12px}
 .mr-ai-chat header b{display:block;font-size:15px}
@@ -270,4 +273,5 @@ html[data-theme="light"] .mr-radar .sweep{background:conic-gradient(from 0deg,tr
 .mr-ai-b.bot{align-self:flex-start;background:var(--mr-track);border:1px solid var(--mr-border);border-bottom-left-radius:4px;color:var(--mr-text);min-height:44px}
 .mr-ai-chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 18px 18px}
 .mr-ai-chips span{font-size:12.5px;border:1px solid var(--mr-border);border-radius:999px;padding:6px 12px;color:var(--mr-sub)}
+@media (max-width:1100px){.mr-ai-feats{grid-template-columns:1fr}}
 @media (max-width:900px){.mr-ai-grid{grid-template-columns:1fr}.mr-ai-chat{min-height:380px}}
