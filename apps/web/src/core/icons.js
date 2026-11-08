@@ -61,7 +61,7 @@ const V22_ICONS={
 };
 
 /** Outline icon by name: Lucide (core/icons-lucide.js) first, the old hand-drawn path only as a fallback. */
-function ic(name,cls='',size){const L=typeof MA_LUCIDE!=='undefined'?MA_LUCIDE[MA_ICON_OUTLINE[name]||name]:null;return `<svg class="v22-ic ${cls}" viewBox="0 0 24 24" ${size?`width="${size}" height="${size}"`:''} fill="none" stroke="currentColor" stroke-width="${L?1.75:1.8}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${L||V22_ICONS[name]||''}</svg>`}
+function ic(name,cls='',size){const L=typeof MA_LUCIDE!=='undefined'?MA_LUCIDE[MA_ICON_OUTLINE[name]||(MA_ICON_TILE[name]||[])[0]||name]:null;return `<svg class="v22-ic ${cls}" viewBox="0 0 24 24" ${size?`width="${size}" height="${size}"`:''} fill="none" stroke="currentColor" stroke-width="${L?1.75:1.8}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${L||V22_ICONS[name]||''}</svg>`}
 
 /** The Mod Alpha α mark as inline SVG. */
 /* Brand "M" glyph used in the reference login card, engine chip and phone notification */
@@ -72,7 +72,7 @@ const MA_TINT={blue:['#3b82f6','#60a5fa'],violet:['#8b5cf6','#a78bfa'],green:['#
 
 /** Tile icon: a Lucide icon on a softly tinted rounded square (replaces the old multi-colour drawings). */
 function cic(name,size=28){
- const m=(typeof MA_ICON_TILE!=='undefined'&&MA_ICON_TILE[name])||[name,'blue'],L=typeof MA_LUCIDE!=='undefined'?MA_LUCIDE[m[0]]:'',c=MA_TINT[m[1]]||MA_TINT.blue;
+ const m=(typeof MA_ICON_TILE!=='undefined'&&(MA_ICON_TILE[name]||(MA_ICON_OUTLINE[name]&&[MA_ICON_OUTLINE[name],'blue'])))||[name,'blue'],L=typeof MA_LUCIDE!=='undefined'?MA_LUCIDE[m[0]]:'',c=MA_TINT[m[1]]||MA_TINT.blue;
  return `<svg class="v22-cic ma-tint-${m[1]}" width="${size}" height="${size}" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x=".75" y=".75" width="30.5" height="30.5" rx="9" fill="${c[0]}" fill-opacity=".14" stroke="${c[1]}" stroke-opacity=".35" stroke-width="1"/><g transform="translate(7 7) scale(.75)" stroke="${c[1]}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${L||''}</g></svg>`;
 }
 
