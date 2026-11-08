@@ -183,7 +183,7 @@
     top.insertBefore(box, top.querySelector('.workspace-actions'));
     const input = box.querySelector('input'), list = box.querySelector('.ma-cmd-list'); let rows = [], hl = 0;
     // grouped results: Funds · Ask Alpha · Pages · Actions (↑↓ move, ↵ open, Esc close)
-    const PAGES = [['user/overview', 'Overview', 'dash'], ['user/funds', 'Explore Funds', 'grid'], ['user/whatif', 'What If Calculator', 'trend'], ['user/sip', 'MOD Alpha SIP', 'calendar'], ['user/subscription', 'Subscription', 'crown'], ['user/settings', 'Settings', 'gear'], ['user/help', 'Help & FAQ', 'help']];
+    const PAGES = [['user/overview', 'Overview', 'chart'], ['user/funds', 'Explore Funds', 'search'], ['user/whatif', 'What If Calculator', 'rupee'], ['user/sip', 'MOD Alpha SIP', 'calendar'], ['user/subscription', 'Subscription', 'crown'], ['user/settings', 'Settings', 'sliders'], ['user/help', 'Help & FAQ', 'help']];
     const mark = (s, ql) => { const e = esc(s); if (!ql) return e; const i = s.toLowerCase().indexOf(ql); return i < 0 ? e : esc(s.slice(0, i)) + '<mark>' + esc(s.slice(i, i + ql.length)) + '</mark>' + esc(s.slice(i + ql.length)); };
     const draw = () => {
       const q = input.value.trim(), ql = q.toLowerCase(), F = allFunds(), hit = (s) => !ql || T(s).toLowerCase().includes(ql) || s.toLowerCase().includes(ql);
@@ -195,15 +195,15 @@
       PAGES.filter((p) => hit(p[1])).slice(0, q ? 4 : 7).forEach((p) => rows.push({ g: 'Pages', k: 'go', to: p[0], icon: p[2], label: T(p[1]), tag: T('Page') }));
       const light = document.documentElement.dataset.theme === 'light', hi = document.documentElement.dataset.lang === 'hi';
       const acts = [
-        { k: 'act', a: 'theme', icon: 'bulb', label: light ? T('Switch to dark theme') : T('Switch to light theme'), words: 'theme dark light mode night day' },
-        { k: 'act', a: 'lang', icon: 'swap', label: hi ? 'Switch to English' : 'हिन्दी में बदलें (Hindi)', words: 'language hindi english हिन्दी' },
-        { k: 'act', a: 'chat', icon: 'msg', label: T('Open chat with Alpha'), words: 'chat alpha assistant ai help' },
+        { k: 'act', a: 'theme', icon: 'palette', label: light ? T('Switch to dark theme') : T('Switch to light theme'), words: 'theme dark light mode night day' },
+        { k: 'act', a: 'lang', icon: 'globe', label: hi ? 'Switch to English' : 'हिन्दी में बदलें (Hindi)', words: 'language hindi english हिन्दी' },
+        { k: 'act', a: 'chat', icon: 'chat', label: T('Open chat with Alpha'), words: 'chat alpha assistant ai help' },
       ];
-      if (funds[0] && window.MA_FUNDX) acts.unshift({ k: 'act', a: 'compare', id: funds[0].id, icon: 'layers', label: `${T('Compare')} ${funds[0].short || funds[0].name} ${T('with…')}`, words: '' });
+      if (funds[0] && window.MA_FUNDX) acts.unshift({ k: 'act', a: 'compare', id: funds[0].id, icon: 'brain', label: `${T('Compare')} ${funds[0].short || funds[0].name} ${T('with…')}`, words: '' });
       acts.filter((a) => !ql || a.a === 'compare' || (a.label + ' ' + a.words).toLowerCase().includes(ql)).forEach((a) => rows.push(Object.assign({ g: 'Actions', tag: T('Action') }, a)));
       hl = 0;
       let g0 = '';
-      const icon = (r) => r.k === 'ask' ? '<i class="ai" aria-hidden="true">✦</i>' : r.k === 'fund' ? (typeof v22FundIcon === 'function' ? `<span class="ma-cmd-logo">${v22FundIcon(r.f)}</span>` : ic('search')) : `<span class="ma-cmd-gi">${ic(r.icon || 'arrowR')}</span>`;
+      const icon = (r) => r.k === 'ask' ? '<i class="ai" aria-hidden="true">✦</i>' : r.k === 'fund' ? (typeof v22FundIcon === 'function' ? `<span class="ma-cmd-logo">${v22FundIcon(r.f)}</span>` : ic('search')) : `<span class="ma-cmd-gi">${typeof cic === 'function' ? cic(r.icon || 'search', 24) : ic('arrowR')}</span>`;
       list.innerHTML = rows.length ? rows.map((r, i) => { const head = r.g !== g0 ? `<p class="ma-cmd-g" role="presentation">${esc(T(r.g))}</p>` : ''; g0 = r.g; return `${head}<div role="option" id="ma-cmd-o${i}" class="ma-cmd-it${i === hl ? ' hl' : ''}" data-i="${i}">${icon(r)}<span>${r.k === 'fund' || r.k === 'go' ? mark(r.label, ql) : esc(r.label)}</span><small>${esc(r.tag)}</small></div>`; }).join('') + `<p class="ma-cmd-keys" role="presentation"><kbd>↑</kbd><kbd>↓</kbd> ${esc(T('move'))} · <kbd>↵</kbd> ${esc(T('open'))} · <kbd>Esc</kbd> ${esc(T('close'))}</p>` : `<p class="ma-cmd-empty">${esc(T('No matching funds'))}</p>`;
       list.hidden = false; input.setAttribute('aria-expanded', 'true'); box.classList.add('open');
     };

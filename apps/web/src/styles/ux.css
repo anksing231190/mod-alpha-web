@@ -114,9 +114,12 @@ html.ma-theme-slow body,html.ma-theme-slow body *{transition:background-color 1.
 @media (prefers-reduced-motion:reduce){.ma-empty-bot{animation:none}.ma-cmp-tray,.ma-cmp-sheet,.ma-cmp-modal{animation:none;transition:none}}
 .v22-theme-cards{grid-template-columns:repeat(3,minmax(0,220px))}
 @media (max-width:760px){.v22-theme-cards{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.v22-theme{padding:8px}.v22-theme-prev{height:64px}.v22-theme small{font-size:11px}}
-.ma-cmd-gi svg{width:14px!important;height:14px!important}
+
 .ma-cmd-list{background:#0c1636;backdrop-filter:blur(14px)}
 html[data-theme="light"] .ma-cmd-list{background:#fffaf1}
 .ma-cmd-it .ma-cmd-gi,.ma-cmd-it .ma-cmd-logo{flex:none;width:24px;overflow:visible}
 /* icon tiles stay small squares (the row's generic "span{flex:1}" must not stretch them) */
 .ma-cmd-list .ma-cmd-it>.ma-cmd-gi,.ma-cmd-list .ma-cmd-it>.ma-cmd-logo{flex:0 0 24px!important;width:24px!important;max-width:24px!important;min-width:0!important;overflow:hidden}
+/* coloured icons (cic) in Ctrl+K: no tile behind them */
+.ma-cmd-list .ma-cmd-it>.ma-cmd-gi{background:none;border-radius:0}
+.ma-cmd-gi svg{width:24px!important;height:24px!important}
