@@ -88,7 +88,7 @@
     if (!items) load(); // demo data loads at once; live data paints the tile when it arrives
     if (!items) { return `<div class="v22-ins-list" id="ma-ins-list">${window.MA_AI ? MA_AI.skel(3) : `<p class="v22-muted">${T('Loading…')}</p>`}</div>`; }
     const firstText = items.slice(0, 4).find((x) => x.kind !== 'instagram');
-    return `<div class="v22-ins-list" id="ma-ins-list">${items.length ? items.slice(0, 4).map((x) => cardHtml(x, x === firstText)).join('') : `<p class="v22-muted">${T('No insights yet.')}</p>`}</div>
+    return `<div class="v22-ins-list" id="ma-ins-list">${items.length ? items.slice(0, 4).map((x) => cardHtml(x, x === firstText)).join('') : (window.MA_EMPTY?MA_EMPTY.html({title:'No insights yet',text:'New AI insights about your funds and SIP dates will appear here.',mood:'sleep',small:true}):`<p class="v22-muted">${T('No insights yet.')}</p>`)}</div>
       <p class="ma-ins-disc">${T('Insights and clips are for education only — not investment advice. Past performance does not guarantee future returns.')}</p>`;
   }
   function paintTile() {
@@ -108,7 +108,7 @@
         <small class="ma-reel-disc">${T('For education only — not investment advice.')}</small></div></div>`);
   }
   function openAll() {
-    showModal(T('Latest AI Insights'), `<div class="v22 ma-ins-all"><div class="v22-ins-list">${(items || []).map(cardHtml).join('') || `<p class="v22-muted">${T('No insights yet.')}</p>`}</div><p class="ma-ins-disc">${T('Insights and clips are for education only — not investment advice. Past performance does not guarantee future returns.')}</p></div>`);
+    showModal(T('Latest AI Insights'), `<div class="v22 ma-ins-all"><div class="v22-ins-list">${(items || []).map(cardHtml).join('') || (window.MA_EMPTY?MA_EMPTY.html({title:'No insights yet',text:'New AI insights about your funds and SIP dates will appear here.',mood:'sleep'}):`<p class="v22-muted">${T('No insights yet.')}</p>`)}</div><p class="ma-ins-disc">${T('Insights and clips are for education only — not investment advice. Past performance does not guarantee future returns.')}</p></div>`);
   }
   document.addEventListener('click', (e) => {
     const r = e.target.closest('[data-ma-reel]');

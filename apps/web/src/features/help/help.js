@@ -10,7 +10,7 @@ const V22_HELP=[['start','What is Mod Alpha?','Mod Alpha is a mutual fund analyt
 let v22HelpCat='all',v22HelpQ='';
 
 /** Filtered help list. */
-function v22HelpList(){const q=v22HelpQ.toLowerCase();const list=V22_HELP.filter(x=>(v22HelpCat==='all'||x[0]===v22HelpCat)&&(!q||(x[1]+' '+x[2]).toLowerCase().includes(q)));return list.length?list.map((x,i)=>`<div class="v22-acc-item ${i===0?'open':''}"><button type="button" class="v22-acc-q" data-v22-acc aria-expanded="${i===0}">${cic({start:'help',sip:'calendar',data:'db',billing:'idcard'}[x[0]],24)}<span>${x[1]}</span><i class="v22-acc-plus"></i></button><div class="v22-acc-a"><div><p>${x[2]}</p></div></div></div>`).join(''):`<div class="v22-empty">No answers match “${esc(v22HelpQ)}”. Try another word, or send us a request.</div>`}
+function v22HelpList(){const q=v22HelpQ.toLowerCase();const list=V22_HELP.filter(x=>(v22HelpCat==='all'||x[0]===v22HelpCat)&&(!q||(x[1]+' '+x[2]).toLowerCase().includes(q)));return list.length?list.map((x,i)=>`<div class="v22-acc-item ${i===0?'open':''}"><button type="button" class="v22-acc-q" data-v22-acc aria-expanded="${i===0}">${cic({start:'help',sip:'calendar',data:'db',billing:'idcard'}[x[0]],24)}<span>${x[1]}</span><i class="v22-acc-plus"></i></button><div class="v22-acc-a"><div><p>${x[2]}</p></div></div></div>`).join(''):(window.MA_EMPTY?MA_EMPTY.html({title:'No answers found',text:'Try another word, or ask Alpha or our support team below.',mood:'think'}):`<div class="v22-empty">No answers match “${esc(v22HelpQ)}”. Try another word, or send us a request.</div>`)}
 
 /** Help & FAQ screen with the support form. */
 function helpPage(){

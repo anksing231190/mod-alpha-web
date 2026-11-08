@@ -182,24 +182,46 @@
     box.innerHTML = `<span class="ma-cmd-ic" aria-hidden="true">✦</span><input id="ma-cmd-input" type="search" autocomplete="off" placeholder="${esc(T('Search funds or ask Mod Alpha…'))}" aria-label="${esc(T('Search funds or ask Mod Alpha'))}" aria-controls="ma-cmd-list" aria-expanded="false"><kbd>${/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'} K</kbd><div class="ma-cmd-list" id="ma-cmd-list" role="listbox" hidden></div>`;
     top.insertBefore(box, top.querySelector('.workspace-actions'));
     const input = box.querySelector('input'), list = box.querySelector('.ma-cmd-list'); let rows = [], hl = 0;
+    // grouped results: Funds · Ask Alpha · Pages · Actions (↑↓ move, ↵ open, Esc close)
+    const PAGES = [['user/overview', 'Overview', 'dash'], ['user/funds', 'Explore Funds', 'grid'], ['user/whatif', 'What If Calculator', 'trend'], ['user/sip', 'MOD Alpha SIP', 'calendar'], ['user/subscription', 'Subscription', 'crown'], ['user/settings', 'Settings', 'gear'], ['user/help', 'Help & FAQ', 'help']];
+    const mark = (s, ql) => { const e = esc(s); if (!ql) return e; const i = s.toLowerCase().indexOf(ql); return i < 0 ? e : esc(s.slice(0, i)) + '<mark>' + esc(s.slice(i, i + ql.length)) + '</mark>' + esc(s.slice(i + ql.length)); };
     const draw = () => {
-      const q = input.value.trim(), ql = q.toLowerCase(), F = allFunds();
+      const q = input.value.trim(), ql = q.toLowerCase(), F = allFunds(), hit = (s) => !ql || T(s).toLowerCase().includes(ql) || s.toLowerCase().includes(ql);
       rows = [];
-      if (q) rows.push({ k: 'ask', q, label: `${T('Ask Mod Alpha')}: “${q}”`, tag: T('Ask AI') });
       const funds = q ? F.filter((f) => (f.name + ' ' + (f.short || '') + ' ' + (f.amc || '') + ' ' + (f.category || '')).toLowerCase().includes(ql)).slice(0, 5) : [];
-      funds.forEach((f) => rows.push({ k: 'fund', id: f.id, label: f.short || f.name, tag: `${f.category || T('Fund')}${f.returns && f.returns[5] != null ? ` · ${f.returns[5].toFixed(1)}% 5Y` : ''}` }));
-      if (!q) CMD_Q.forEach((x) => rows.push({ k: 'ask', q: x, label: T(x), tag: T('Ask AI') }));
-      if (!q || 'what if calculator'.includes(ql)) rows.push({ k: 'go', to: 'user/whatif', label: T('What If Calculator'), tag: T('Page') });
-      if (!q || 'mod alpha sip'.includes(ql)) rows.push({ k: 'go', to: 'user/sip', label: T('MOD Alpha SIP'), tag: T('Page') });
+      funds.forEach((f) => rows.push({ g: 'Funds', k: 'fund', id: f.id, f, label: f.short || f.name, tag: `${f.category || T('Fund')}${f.returns && f.returns[5] != null ? ` · ${f.returns[5].toFixed(1)}% 5Y` : ''}` }));
+      if (q) rows.push({ g: 'Ask Alpha', k: 'ask', q, label: `“${q}”`, tag: T('Ask AI') });
+      else CMD_Q.forEach((x) => rows.push({ g: 'Ask Alpha', k: 'ask', q: x, label: T(x), tag: T('Ask AI') }));
+      PAGES.filter((p) => hit(p[1])).slice(0, q ? 4 : 7).forEach((p) => rows.push({ g: 'Pages', k: 'go', to: p[0], icon: p[2], label: T(p[1]), tag: T('Page') }));
+      const light = document.documentElement.dataset.theme === 'light', hi = document.documentElement.dataset.lang === 'hi';
+      const acts = [
+        { k: 'act', a: 'theme', icon: 'bulb', label: light ? T('Switch to dark theme') : T('Switch to light theme'), words: 'theme dark light mode night day' },
+        { k: 'act', a: 'lang', icon: 'swap', label: hi ? 'Switch to English' : 'हिन्दी में बदलें (Hindi)', words: 'language hindi english हिन्दी' },
+        { k: 'act', a: 'chat', icon: 'msg', label: T('Open chat with Alpha'), words: 'chat alpha assistant ai help' },
+      ];
+      if (funds[0] && window.MA_FUNDX) acts.unshift({ k: 'act', a: 'compare', id: funds[0].id, icon: 'layers', label: `${T('Compare')} ${funds[0].short || funds[0].name} ${T('with…')}`, words: '' });
+      acts.filter((a) => !ql || a.a === 'compare' || (a.label + ' ' + a.words).toLowerCase().includes(ql)).forEach((a) => rows.push(Object.assign({ g: 'Actions', tag: T('Action') }, a)));
       hl = 0;
-      list.innerHTML = rows.length ? rows.map((r, i) => `<div role="option" id="ma-cmd-o${i}" class="ma-cmd-it${i === hl ? ' hl' : ''}" data-i="${i}">${r.k === 'ask' ? '<i class="ai" aria-hidden="true">✦</i>' : r.k === 'fund' ? ic('search') : ic('arrowR')}<span>${esc(r.label)}</span><small>${esc(r.tag)}</small></div>`).join('') : `<p class="ma-cmd-empty">${esc(T('No matching funds'))}</p>`;
+      let g0 = '';
+      const icon = (r) => r.k === 'ask' ? '<i class="ai" aria-hidden="true">✦</i>' : r.k === 'fund' ? (typeof v22FundIcon === 'function' ? `<span class="ma-cmd-logo">${v22FundIcon(r.f)}</span>` : ic('search')) : `<span class="ma-cmd-gi">${ic(r.icon || 'arrowR')}</span>`;
+      list.innerHTML = rows.length ? rows.map((r, i) => { const head = r.g !== g0 ? `<p class="ma-cmd-g" role="presentation">${esc(T(r.g))}</p>` : ''; g0 = r.g; return `${head}<div role="option" id="ma-cmd-o${i}" class="ma-cmd-it${i === hl ? ' hl' : ''}" data-i="${i}">${icon(r)}<span>${r.k === 'fund' || r.k === 'go' ? mark(r.label, ql) : esc(r.label)}</span><small>${esc(r.tag)}</small></div>`; }).join('') + `<p class="ma-cmd-keys" role="presentation"><kbd>↑</kbd><kbd>↓</kbd> ${esc(T('move'))} · <kbd>↵</kbd> ${esc(T('open'))} · <kbd>Esc</kbd> ${esc(T('close'))}</p>` : `<p class="ma-cmd-empty">${esc(T('No matching funds'))}</p>`;
       list.hidden = false; input.setAttribute('aria-expanded', 'true'); box.classList.add('open');
     };
     const close = () => { list.hidden = true; input.setAttribute('aria-expanded', 'false'); box.classList.remove('open'); };
-    const pick = (r) => { if (!r) return; close(); input.blur(); input.value = ''; if (r.k === 'ask') ask(r.q); else if (r.k === 'fund') go('user/fund/' + encodeURIComponent(r.id)); else go(r.to); };
+    const pick = (r) => {
+      if (!r) return; close(); input.blur(); input.value = '';
+      if (r.k === 'ask') ask(r.q);
+      else if (r.k === 'fund') go('user/fund/' + encodeURIComponent(r.id));
+      else if (r.k === 'act') {
+        if (r.a === 'theme') { if (window.MA_THEME) MA_THEME.set(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'); }
+        else if (r.a === 'lang') { if (window.MA_I18N) MA_I18N.set(document.documentElement.dataset.lang === 'hi' ? 'en' : 'hi'); }
+        else if (r.a === 'chat') { if (typeof v22OpenChat === 'function') v22OpenChat(); }
+        else if (r.a === 'compare') { go('user/funds'); setTimeout(() => window.MA_FUNDX && MA_FUNDX.add(r.id), 80); }
+      } else go(r.to);
+    };
     input.addEventListener('focus', draw); input.addEventListener('input', draw);
     input.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); hl = (hl + (e.key === 'ArrowDown' ? 1 : -1) + rows.length) % rows.length; list.querySelectorAll('.ma-cmd-it').forEach((x, i) => x.classList.toggle('hl', i === hl)); input.setAttribute('aria-activedescendant', 'ma-cmd-o' + hl); }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); hl = (hl + (e.key === 'ArrowDown' ? 1 : -1) + rows.length) % rows.length; list.querySelectorAll('.ma-cmd-it').forEach((x, i) => x.classList.toggle('hl', i === hl)); input.setAttribute('aria-activedescendant', 'ma-cmd-o' + hl); list.querySelector('.ma-cmd-it.hl')?.scrollIntoView({ block: 'nearest' }); }
       else if (e.key === 'Enter') { e.preventDefault(); pick(rows[hl]); }
       else if (e.key === 'Escape') { close(); input.blur(); }
     });

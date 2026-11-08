@@ -22,8 +22,9 @@ function fundExplorer(){
   <div class="v22-fund-id">${v22FundIcon(f)}<div><b>${esc(f.name)}</b>${v22Tags(f)}</div></div>
   <div class="v22-spark-box">${v22Spark(v22FundSpark(f,i),sparkColors[(all.indexOf(f))%5])}</div>
   <div class="v22-fund-ret"><b>${f.returns[5].toFixed(1)}%</b><small>5Y CAGR</small></div>
+  ${window.MA_FUNDX?MA_FUNDX.rowExtra(f):''}
   <button type="button" class="v22-view" data-fund="${f.id}">View ${ic('arrowR')}</button>
- </article>`).join('')||'<div class="v22-empty">No schemes match your filters. Try a broader search.</div>'}</div>
+ </article>`).join('')||(window.MA_EMPTY?MA_EMPTY.html({title:'No funds match your search',text:'Try a shorter name, another category or clear the filters.',action:['Show all funds','data-ma-funds-reset'],mood:'think'}):'<div class="v22-empty">No schemes match your filters. Try a broader search.</div>')}</div>
  <nav class="v22-pager" aria-label="Pagination"><button type="button" data-v22-page="${v22Page-1}" ${v22Page===1?'disabled':''} aria-label="Previous page">${ic('chevL')}</button>${Array.from({length:pages},(_,i)=>`<button type="button" data-v22-page="${i+1}" class="${i+1===v22Page?'active':''}">${i+1}</button>`).join('')}<button type="button" data-v22-page="${v22Page+1}" ${v22Page===pages?'disabled':''} aria-label="Next page">${ic('chevR')}</button></nav>
  <p class="v22-note">Sample catalogue · ${all.length} schemes · Returns are illustrative test values, not live performance.</p></div>`;
 }
@@ -52,7 +53,7 @@ function v22DetailChartSample(f,period){
  const labels={'1M':['W1','W2','W3','W4'],'3M':['Jul','Aug','Sep','Oct'],'6M':['May','Jun','Jul','Aug','Sep','Oct'],'1Y':['Nov','Jan','Mar','May','Jul','Sep'],'3Y':['2023','2024','2025','2026'],'5Y':['2021','2022','2023','2024','2025','2026']}[period];
  const ret=((vals.at(-1)/vals[0]-1)*100);
  return v22Chart({w:1080,h:330,pad:{l:56,r:22,t:18,b:40},yMin:0,yMax,yTicks:[0,1,2,3,4,5].map(i=>i*step),yFmt:v=>v?'₹'+Math.round(v):'0',xLabels:labels,xPos:labels.map((_,i)=>56+i*(1080-56-22-40)/(labels.length-1)),axisY:true,label:'Illustrative returns performance',
-  series:[{values:vals,stops:[[0,'#3b82f6'],[.45,'#6d6cf6'],[1,'#c84cf0']],areaStops:[[0,'#2563eb'],[.6,'#7c3aed'],[1,'#c026d3']],area:.75,width:3.2,dots:2,r:4.5,endDot:7,glow:'#8b5cf6'}],
+  series:[{name:'NAV',values:vals,stops:[[0,'#3b82f6'],[.45,'#6d6cf6'],[1,'#c84cf0']],areaStops:[[0,'#2563eb'],[.6,'#7c3aed'],[1,'#c026d3']],area:.75,width:3.2,dots:2,r:4.5,endDot:7,glow:'#8b5cf6'}],crosshair:{fmt:v=>'₹'+v.toFixed(2)},
   overlays:[{at:[0,-1],cls:'v22-tip v22-tip-left',html:`<small>${period==='5Y'?'Dec 2026':'Latest'}</small><b>₹${vals.at(-1).toFixed(2)}</b><strong>${ret>=0?'+':''}${(period==='5Y'?f.returns[5]:ret).toFixed(1)}%</strong>`}]});
 }
 
@@ -84,7 +85,7 @@ function v22DetailChart(f,period){
  idx.forEach((k,i)=>{const d=v22D(n.d[k]),key=long?d.getUTCFullYear():d.getUTCMonth();const pk=i?v22D(n.d[idx[i-1]]):null;if(!i||(long?pk.getUTCFullYear()!==key:pk.getUTCMonth()!==key)){lab.push(long?String(key):V22_MON[key]+(period==='1Y'?" '"+String(d.getUTCFullYear()).slice(2):'')+(period==='1M'?' '+d.getUTCDate():''));pos.push(l+i*iw/(idx.length-1))}});
  const thin=lab.length>8?2:1;const ret=(vals.at(-1)/vals[0]-1)*100,yrs=(v22D(n.d[L])-v22D(n.d[j]))/(365.25*864e5),cagr=yrs>=1?(Math.pow(vals.at(-1)/vals[0],1/yrs)-1)*100:null;
  return v22Chart({w:W,h:330,pad:{l,r,t:18,b:40},yMin,yMax,yTicks:[0,1,2,3,4,5].map(i=>yMin+i*step),yFmt:v=>v?'₹'+Math.round(v):'0',xLabels:lab.filter((_,i)=>i%thin===0),xPos:pos.filter((_,i)=>i%thin===0),axisY:true,label:'Fund NAV from test data',
-  series:[{values:vals,stops:[[0,'#3b82f6'],[.45,'#6d6cf6'],[1,'#c84cf0']],areaStops:[[0,'#2563eb'],[.6,'#7c3aed'],[1,'#c026d3']],area:.75,width:3.2,dots:2,r:4.5,endDot:7,glow:'#8b5cf6'}],
+  series:[{name:'NAV',values:vals,stops:[[0,'#3b82f6'],[.45,'#6d6cf6'],[1,'#c84cf0']],areaStops:[[0,'#2563eb'],[.6,'#7c3aed'],[1,'#c026d3']],area:.75,width:3.2,dots:2,r:4.5,endDot:7,glow:'#8b5cf6'}],crosshair:{labels:idx.map(k=>v22Fmt(n.d[k])),fmt:v=>'₹'+v.toFixed(2)},
   overlays:[{at:[0,-1],cls:'v22-tip v22-tip-left',html:`<small>${v22Fmt(n.d[L])}</small><b>₹${vals.at(-1).toFixed(2)}</b><strong>${ret>=0?'+':''}${ret.toFixed(1)}%${cagr!=null?` <em>· ${cagr.toFixed(1)}% CAGR</em>`:''}</strong>`}]});
 }
 

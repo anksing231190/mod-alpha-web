@@ -20,7 +20,7 @@
       if (S.notifs.unread) bell.insertAdjacentHTML('beforeend', `<em class="v22-bell-badge">${S.notifs.unread > 9 ? '9+' : S.notifs.unread}</em>`);
       const ico = { billing: 'rupee', kyc: 'idcard', sip_date: 'calendar', campaign: 'bell' };
       pop.querySelectorAll('.v22-np-item').forEach((x) => x.remove());
-      pop.querySelector('.v22-np-head').insertAdjacentHTML('afterend', S.notifs.items.length ? S.notifs.items.slice(0, 8).map((n) => `<a class="v22-np-item ${n.read ? '' : 'unread'}" href="${esc(n.link || '#/user/overview')}">${cic(ico[n.kind] || 'bell', 30)}<div><b>${esc(n.title)}</b><small>${esc(n.body)}</small></div><time>${timeAgo(n.created_at)}</time></a>`).join('') : '<div class="v22-np-item"><div><small>No notifications yet.</small></div></div>');
+      pop.querySelector('.v22-np-head').insertAdjacentHTML('afterend', S.notifs.items.length ? S.notifs.items.slice(0, 8).map((n) => `<a class="v22-np-item ${n.read ? '' : 'unread'}" href="${esc(n.link || '#/user/overview')}">${cic(ico[n.kind] || 'bell', 30)}<div><b>${esc(n.title)}</b><small>${esc(n.body)}</small></div><time>${timeAgo(n.created_at)}</time></a>`).join('') : (window.MA_EMPTY?MA_EMPTY.html({title:"You're all caught up",text:'Reminders and updates will show up here.',mood:'sleep',small:true}):'<div class="v22-np-item"><div><small>No notifications yet.</small></div></div>'));
     } catch (e) {}
   }
   // '5 min ago' / '3 h ago' / date.

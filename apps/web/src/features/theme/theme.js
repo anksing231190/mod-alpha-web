@@ -10,6 +10,11 @@
   const html = document.documentElement;
   // Is the light theme active?
   const isLight = () => html.dataset.theme === 'light';
+  /* ---------- Auto theme: light from 7 AM, dark from 7 PM (saved as 'mod-alpha-theme-auto' = '1') ---------- */
+  const AUTO_KEY = 'mod-alpha-theme-auto';
+  const isAuto = () => { try { return localStorage.getItem(AUTO_KEY) === '1'; } catch (e) { return false; } };
+  const clockTheme = () => { const h = new Date().getHours(); return h >= 7 && h < 19 ? 'light' : 'dark'; };
+  const setAuto = (on) => { try { if (on) localStorage.setItem(AUTO_KEY, '1'); else localStorage.removeItem(AUTO_KEY); } catch (e) {} };
   const ATTRS = ['fill', 'stroke', 'stop-color'];
   const SUN = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="currentColor"/><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
   const MOON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 14.6A8.4 8.4 0 0 1 9.4 3.8a8.4 8.4 0 1 0 10.8 10.8Z" fill="currentColor"/></svg>';
@@ -97,12 +102,13 @@
       cards.dataset.wired = '1';
       cards.innerHTML = `
         <label class="v22-theme" data-pick="dark"><input type="radio" name="v22-theme" value="dark"><span class="v22-theme-prev dark"><i></i><i></i><i></i></span><b>Midnight</b><small>Dark — the original theme</small></label>
-        <label class="v22-theme" data-pick="light"><input type="radio" name="v22-theme" value="light"><span class="v22-theme-prev light"><i></i><i></i><i></i></span><b>Sand</b><small>Light — beige &amp; cream</small></label>`;
+        <label class="v22-theme" data-pick="light"><input type="radio" name="v22-theme" value="light"><span class="v22-theme-prev light"><i></i><i></i><i></i></span><b>Sand</b><small>Light — beige &amp; cream</small></label>
+        <label class="v22-theme" data-pick="auto"><input type="radio" name="v22-theme" value="auto"><span class="v22-theme-prev auto"><i></i><i></i><i></i></span><b>Auto</b><small>Light by day, dark at night (7 AM – 7 PM)</small></label>`;
       const sel = document.getElementById('theme-select');
       if (sel && !sel.querySelector('option[value=light]')) sel.insertAdjacentHTML('beforeend', '<option value="light">Light</option>');
     }
     if (cards) cards.querySelectorAll('.v22-theme').forEach((l) => {
-      const on = l.dataset.pick === (isLight() ? 'light' : 'dark');
+      const on = isAuto() ? l.dataset.pick === 'auto' : l.dataset.pick === (isLight() ? 'light' : 'dark');
       l.classList.toggle('on', on); l.classList.remove('off');
       const inp = l.querySelector('input'); if (inp) { inp.checked = on; inp.disabled = false; }
     });
@@ -117,9 +123,10 @@
 
   document.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-theme-toggle]');
-    if (btn) { e.preventDefault(); setThemeAndRepaint(isLight() ? 'dark' : 'light'); return; }
+    if (btn) { e.preventDefault(); setAuto(false); setThemeAndRepaint(isLight() ? 'dark' : 'light'); return; }
     const pick = e.target.closest('.v22-theme-cards [data-pick]');
-    if (pick) { e.preventDefault(); setThemeAndRepaint(pick.dataset.pick); if (window.toast) try { window.toast(`${pick.dataset.pick === 'light' ? 'Sand (light)' : 'Midnight (dark)'} theme applied`); } catch (err) {} }
+    if (pick && pick.dataset.pick === 'auto') { e.preventDefault(); setAuto(true); setThemeAndRepaint(clockTheme()); ensureToggles(); if (window.toast) try { window.toast('Auto theme on: light by day, dark at night'); } catch (err) {} return; }
+    if (pick) { e.preventDefault(); setAuto(false); setThemeAndRepaint(pick.dataset.pick); if (window.toast) try { window.toast(`${pick.dataset.pick === 'light' ? 'Sand (light)' : 'Midnight (dark)'} theme applied`); } catch (err) {} }
   });
 
   window.addEventListener('ma:theme', () => { html.classList.add('ma-theme-anim'); paint(); ensureToggles(); setTimeout(() => html.classList.remove('ma-theme-anim'), 450); });
@@ -133,5 +140,12 @@
   // Start watching the page for new charts.
   const start = () => { mo.observe(document.body, { childList: true, subtree: true }); paint(); ensureToggles(); };
   if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
-  window.MA_THEME = { isLight, set: setThemeAndRepaint, repaint: paint };
+  // every minute: follow the clock, with a slower fade than a manual switch
+  setInterval(() => {
+    if (!isAuto() || document.hidden) return;
+    const want = clockTheme(); if ((isLight() ? 'light' : 'dark') === want) return;
+    html.classList.add('ma-theme-slow'); setThemeAndRepaint(want); setTimeout(() => html.classList.remove('ma-theme-slow'), 2000);
+  }, 60000);
+  // a manual choice from elsewhere (e.g. Ctrl+K "Switch theme") turns Auto off
+  window.MA_THEME = { isLight, isAuto, setAuto, set: (t) => { setAuto(false); setThemeAndRepaint(t); }, repaint: paint };
 })();

@@ -4,6 +4,9 @@
    and the admin console, plus the hover tooltip that follows the pointer.
    ========================================================================== */
 
+/** Crosshair data per chart id (filled by v22Chart when o.crosshair is set). */
+const V22_XH={};
+
 /** Line / area chart with grid, axis labels and hover points. */
 function v22Chart(o){
  const W=o.w||1000,H=o.h||360,P=Object.assign({l:56,r:20,t:16,b:40},o.pad||{}),gid='c'+Math.random().toString(36).slice(2,8);
@@ -39,8 +42,10 @@ function v22Chart(o){
   if(se.dots){const st=se.stops||[[0,se.color],[1,se.color]];pts.forEach((p,i)=>{if(se.dots!==true&&i%se.dots!==0&&i!==n-1)return;const c=se.dotColor||v22Mix(st,i/(n-1||1));const end=i===n-1&&se.endDot;s+=`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${end?Math.max(3.5,se.endDot*.7):Math.max(2.2,(se.r||4.5)*.62)}" fill="${c}" ${end?`class="v22-enddot" style="--glow:${c}"`:''} stroke="${end?'#fff':'rgba(255,255,255,.55)'}" stroke-width="${end?1.8:.8}"/>`})}
  });
  s+='</svg>';
+ // crosshair data (shared/chart-crosshair.js): x/y of every point, in viewBox units
+ let xh='';if(o.crosshair&&(o.series||[]).length){const ks=Object.keys(V22_XH);if(ks.length>40)ks.slice(0,ks.length-40).forEach(k=>delete V22_XH[k]);V22_XH[gid]={W,H,top:P.t,bot:P.t+ih,labels:o.crosshair.labels||[],fmt:o.crosshair.fmt||o.yFmt||(v=>v),series:o.series.map(se=>{const n=se.values.length;return{name:se.name||'',color:se.dotColor||se.color||(se.stops?se.stops.at(-1)[1]:'#60a5fa'),v:se.values,x:se.values.map((_,i)=>se.xs?se.xs[i]:se.bandX?P.l+(i+.5)*iw/n:X(i,n)),y:se.values.map(Y)}})};xh=` data-ma-xh="${gid}"`}
  const ov=(o.overlays||[]).map(x=>{let px,py;if(x.at){const se=o.series[x.at[0]],n=se.values.length,i=x.at[1]<0?n+x.at[1]:x.at[1];px=se.bandX?P.l+(i+.5)*iw/n:X(i,n);py=Y(se.values[i])}else{px=x.x;py=x.y}return `<div class="v22-ov ${x.cls||''}" style="left:${(px/W*100).toFixed(2)}%;top:${(py/H*100).toFixed(2)}%">${x.html}</div>`}).join('');
- return `<div class="v22-chart ${o.cls||''}" style="aspect-ratio:${W}/${H}">${s}${ov}</div>`;
+ return `<div class="v22-chart ${o.cls||''}"${xh} style="aspect-ratio:${W}/${H}">${s}${ov}${xh?'<div class="ma-xh" aria-hidden="true"><i class="ma-xh-line"></i><b class="ma-xh-date"></b><div class="ma-xh-tip"></div></div>':''}</div>`;
 }
 
 /** Bar + line combined chart. */
