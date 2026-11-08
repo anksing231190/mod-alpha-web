@@ -71,7 +71,7 @@
       <div class="mr-ai-grid"><div class="mr-ai-feats">${feats.map((f) => `<div class="mr-ai-feat"><span class="mr-ai-ic">${typeof cic === 'function' ? cic(f[0], 26) : ''}</span><div><b>${f[1]}</b><p>${f[2]}</p></div></div>`).join('')}
         <div class="mr-ai-plans"><span>Questions a day</span><b>Free ${per('Free', 1)}</b><b>Pro ${per('Pro', 10)}</b><b>Premium ${per('Premium', 25)}</b></div>
         <a class="v22-grad-btn mr-ai-cta" href="#/signup">Try Mod Alpha AI →</a></div>
-      <div class="mr-card mr-ai-chat" aria-label="Example conversation"><header><img src="assets/brand/modalpha-bot.svg" alt="" width="44" height="44"><div><b>Mod Alpha AI</b><small><i></i>Answers from Mod Alpha data</small></div><span class="mr-ai-ex">Example</span></header>
+      <div class="mr-card mr-ai-chat" aria-label="Example conversation"><header><span class="mr-ai-av">${maAlphaMark()}</span><div><b>Mod Alpha AI</b><small><i></i>Answers from Mod Alpha data</small></div><span class="mr-ai-ex">Example</span></header>
         <div class="mr-ai-body"><div class="mr-ai-b me"></div><div class="mr-ai-b bot"></div></div>
         <div class="mr-ai-chips"><span>✦ What is CAGR?</span><span>✦ Best SIP date this month?</span><span>✦ Explain in Hindi</span></div></div></div>`;
     const faq = document.getElementById('faq-preview'); // just before the FAQ

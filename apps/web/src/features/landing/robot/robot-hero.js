@@ -95,16 +95,15 @@
     const doze = async () => {
       if (sleeping || !visible) return armIdle();
       sleeping = true; if (scene) scene.abort(); clearScreen(); delete b.dataset.ex;
-      pose(b, 'yawn'); say(sayIn, 'Yaaawn…');
+      pose(b, 'yawn'); say(sayIn, 'Resting…');
       setTimeout(() => { if (!sleeping) return; hush(sayIn); pose(b, 'is-sleepy');
-        const z = () => { const e = el('div', 'mr-zzz', 'z'); phone.appendChild(e); setTimeout(() => e.remove(), 2300); };
-        z(); zT = setInterval(z, 700); }, 1400);
+        }, 1400); // the mark simply dims while resting
     };
     const armIdle = () => { clearTimeout(idleT); idleT = setTimeout(doze, IDLE_MS()); };
     const activity = () => {
       if (sleeping) {
         sleeping = false; waking = true; clearInterval(zT);
-        pose(b, 'jolt', 'is-star'); say(sayIn, "I'm up!", ' ✦'); followUntil = Date.now() + 1500;
+        pose(b, 'jolt', 'is-star'); say(sayIn, 'Welcome back', ' ✦'); followUntil = Date.now() + 1500;
         setTimeout(() => { pose(b, 'wave', 'is-happy'); }, 700);
         setTimeout(() => { hush(sayIn); pose(b); waking = false; }, 2000);
       }

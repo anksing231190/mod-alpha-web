@@ -304,3 +304,16 @@ html[data-theme="light"] .mr-scan .g span{color:#3d3426}
 html[data-theme="light"] .mr-scan .g .dow{color:#8a7d68}
 html[data-theme="light"] .mr-tag{background:#fff;color:#0e7490;border-color:#0891b2;box-shadow:0 4px 12px rgba(8,145,178,.3)}
 @media (max-width:700px){.mr-scan{display:none}}
+
+/* ---------- Alpha is now the animated α mark (robot-core.js svg()): map the old poses to mark states ---------- */
+.mr-bot .ma-am .eyes{display:inline!important}
+.mr-bot .mr-shadow{opacity:.55}
+.mr-bot.think .ma-am-ink,.mr-bot.tap .ma-am-ink{animation-duration:1.1s}
+.mr-bot.is-happy .ma-am-ink,.mr-bot.thumb .ma-am-ink,.mr-bot.is-star .ma-am-ink,.mr-bot[data-ex] .ma-am-ink,.mr-bot.flash .ma-am-ink,.mr-bot.charge .ma-am-ink{animation:none;stroke-dashoffset:0;filter:drop-shadow(0 0 9px #22d3ee) drop-shadow(0 0 3px #fff)}
+.mr-bot.is-sleepy .ma-am-ink,.mr-bot.yawn .ma-am-ink{animation:none;stroke-dashoffset:0;opacity:.4;filter:none}
+.mr-bot.is-sleepy .ma-am-spark,.mr-bot.yawn .ma-am-spark{display:none}
+.mr-bot.wave .head{animation:mrMarkWave .5s ease-in-out 4 alternate}
+@keyframes mrMarkWave{from{transform:rotate(-7deg)}to{transform:rotate(7deg)}}
+.mr-bot.point-l .head{transform:rotate(-9deg)}.mr-bot.point-r .head{transform:rotate(9deg)}
+.mr-bot.charge .ma-am-tile,.mr-bot.flash .ma-am-tile{stroke:#67e8f9;stroke-width:2.5}
+.mr-ai-av{flex:none;width:44px;height:44px;display:block}

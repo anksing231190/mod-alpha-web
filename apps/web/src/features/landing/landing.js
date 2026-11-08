@@ -81,7 +81,8 @@ function v22HeroBase(){
 }
 
 /** Assistant illustration. */
-function v22Robot(){return `<svg viewBox="0 0 220 260" aria-hidden="true"><defs><linearGradient id="rbh" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#cfe0ff"/><stop offset="1" stop-color="#7f9cf5"/></linearGradient><linearGradient id="rbv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d1838"/><stop offset="1" stop-color="#050a1c"/></linearGradient><radialGradient id="rbe"><stop offset="0" stop-color="#e0fbff"/><stop offset=".45" stop-color="#22d3ee"/><stop offset="1" stop-color="#22d3ee" stop-opacity="0"/></radialGradient></defs><path d="M40 260c0-50 30-80 70-80s70 30 70 80z" fill="url(#rbh)" opacity=".95"/><rect x="92" y="150" width="36" height="34" rx="10" fill="#8aa6f0"/><rect x="18" y="20" width="184" height="150" rx="58" fill="url(#rbh)"/><rect x="8" y="76" width="20" height="44" rx="10" fill="#9fb6f5"/><rect x="192" y="76" width="20" height="44" rx="10" fill="#9fb6f5"/><rect x="38" y="44" width="144" height="104" rx="44" fill="url(#rbv)"/><circle cx="82" cy="96" r="26" fill="url(#rbe)"/><circle cx="138" cy="96" r="26" fill="url(#rbe)"/><circle cx="82" cy="96" r="12" fill="#a5f3fc" class="v22-eye"/><circle cx="138" cy="96" r="12" fill="#a5f3fc" class="v22-eye"/></svg>`}
+/** Mod Alpha's AI mark (was the robot drawing): the animated α (shared/alpha-mark.js). */
+function v22Robot(){return maAlphaMark({tile:false})}
 
 /** The 'How Mod Alpha works' flow diagram (data → engine → date → you). */
 function flowLarge(){

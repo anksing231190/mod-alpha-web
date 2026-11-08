@@ -34,33 +34,17 @@
   }
 
   let uid = 0;
-  /** The robot SVG (viewBox 120 x 140). Gradient ids are unique per robot. */
+  /** Alpha's drawing (viewBox 120 x 140, the same box the robot used so every position still fits): the animated
+      α mark on a dark tile. .head tilts towards the cursor, .eyes (the α) shifts a few pixels to "look", .core is
+      the centre that data flies into. Gradient ids are unique per copy. */
   function svg() {
-    const k = 'mr' + (++uid), H = `url(#${k}h)`, E = `url(#${k}e)`;
-    const star = (x) => `<path d="M${x} 33l2.4 5 5.4.7-4 3.7 1 5.4-4.8-2.6-4.8 2.6 1-5.4-4-3.7 5.4-.7z"/>`;
+    const k = 'mr' + (++uid), P = MA_ALPHA_PATH;
     return `<svg viewBox="0 0 120 140" aria-hidden="true" focusable="false"><defs>
-<linearGradient id="${k}h" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".6" stop-color="#cfe0ff"/><stop offset="1" stop-color="#7f9cf5"/></linearGradient>
-<radialGradient id="${k}e"><stop offset="0" stop-color="#e0fbff"/><stop offset=".5" stop-color="#22d3ee"/><stop offset="1" stop-color="#22d3ee" stop-opacity=".2"/></radialGradient></defs>
-<g class="arm-l"><rect x="14" y="84" width="14" height="34" rx="7" fill="${H}"/><circle cx="21" cy="120" r="7" fill="#9fb4ea"/></g>
-<g class="arm-r"><rect x="92" y="84" width="14" height="34" rx="7" fill="${H}"/><circle cx="99" cy="120" r="7" fill="#9fb4ea"/></g>
-<rect x="30" y="78" width="60" height="50" rx="18" fill="${H}"/>
-<circle class="ring" cx="60" cy="102" r="13" fill="none" stroke="#a855f7" stroke-width="2.5" stroke-dasharray="8 6"/>
-<circle class="core" cx="60" cy="102" r="8" fill="${E}"/><circle class="core-c" cx="60" cy="102" r="10" fill="#2ed3f5"/>
-<rect x="52" y="70" width="16" height="10" rx="3" fill="#8aa0d8"/>
-<g class="head">
- <line x1="60" y1="14" x2="60" y2="4" stroke="#9fb4ea" stroke-width="3"/><circle class="ant" cx="60" cy="4" r="4.5" fill="#2ed3f5"/>
- <rect x="15" y="36" width="9" height="18" rx="4" fill="#9fb4ea"/><rect x="96" y="36" width="9" height="18" rx="4" fill="#9fb4ea"/>
- <rect x="22" y="13" width="76" height="60" rx="25" fill="${H}"/><rect x="30" y="25" width="60" height="36" rx="17" fill="#0b1430"/>
- <g class="eyes"><ellipse class="eye" cx="48" cy="41" rx="6" ry="7.5" fill="${E}"/><ellipse class="eye" cx="72" cy="41" rx="6" ry="7.5" fill="${E}"/></g>
- <g class="happy" fill="none" stroke="#2ed3f5" stroke-width="3" stroke-linecap="round"><path d="M42 44q6-9 12 0"/><path d="M66 44q6-9 12 0"/></g>
- <g class="star" fill="#facc15">${star(48)}${star(72)}</g>
- <g class="sleepy" fill="none" stroke="#2ed3f5" stroke-width="3" stroke-linecap="round"><path d="M42 41h12"/><path d="M66 41h12"/></g>
- <path class="smile" d="M54 52q6 4 12 0" fill="none" stroke="#2ed3f5" stroke-width="2.2" stroke-linecap="round" opacity=".85"/>
- <ellipse class="mouth-o" cx="60" cy="53" rx="4.5" ry="5" fill="#2ed3f5"/>
- <g class="acc acc-sun"><rect x="33" y="33" width="23" height="15" rx="6" fill="#0a0a12" stroke="#facc15" stroke-width="1.5"/><rect x="64" y="33" width="23" height="15" rx="6" fill="#0a0a12" stroke="#facc15" stroke-width="1.5"/><path d="M56 39h8" stroke="#facc15" stroke-width="2.5"/><rect x="37" y="35.5" width="8" height="3" rx="1.5" fill="#fff" opacity=".7"/><rect x="68" y="35.5" width="8" height="3" rx="1.5" fill="#fff" opacity=".7"/></g>
- <g class="acc acc-cap"><path d="M24 24 Q58 -22 98 22 Q60 12 24 24Z" fill="#4f46e5"/><path d="M24 24 Q60 12 98 22" stroke="#c7d2fe" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M88 6 Q110 14 108 36" stroke="#4f46e5" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="108" cy="40" r="6.5" fill="#fff"/></g>
- <g class="acc acc-glasses" fill="none" stroke="#facc15" stroke-width="2.5"><circle cx="48" cy="41" r="10"/><circle cx="72" cy="41" r="10"/><path d="M58 41h4"/></g>
-</g></svg>`;
+<linearGradient id="${k}i" x1="0" x2="1"><stop offset="0" stop-color="#e8c58f"/><stop offset=".5" stop-color="#c4b5fd"/><stop offset="1" stop-color="#22d3ee"/></linearGradient>
+<linearGradient id="${k}t" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1d2152"/><stop offset="1" stop-color="#0a0e2a"/></linearGradient></defs>
+<g class="head"><g class="ma-am tiled" transform="translate(12 22) scale(.96)"><rect class="ma-am-tile" x="2" y="2" width="96" height="96" rx="28" fill="url(#${k}t)"/>
+<g class="eyes"><path class="ma-am-base" d="${P}"/><path class="ma-am-ink" d="${P}" stroke="url(#${k}i)"/><circle class="ma-am-spark" r="3.2"><animateMotion dur="3.2s" repeatCount="indefinite" path="${P}"/></circle></g></g></g>
+<circle class="core" cx="60" cy="70" r="1" fill="none"/><circle class="core-c" cx="60" cy="70" r="1" fill="none"/></svg>`;
   }
 
   /** Add a robot to `parent` at (x, y) in the parent's own pixels. Size 150 x 175 times `scale`. */

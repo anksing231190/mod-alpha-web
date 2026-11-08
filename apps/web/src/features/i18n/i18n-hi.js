@@ -484,7 +484,7 @@ Object.assign(window.MA_I18N_DICT, {
   "Hello again!": "फिर से नमस्ते!",
   "Let's start!": "चलिए शुरू करें!",
   "Yaaawn…": "उबासी…",
-  "I'm up!": "मैं जाग गया!",
+  "I'm up!": "मैं जाग गया!", "Resting…": "आराम…", "Welcome back": "फिर से स्वागत है",
   "Good morning!": "सुप्रभात!",
   "Good afternoon!": "नमस्कार!",
   "Good evening!": "शुभ संध्या!",
