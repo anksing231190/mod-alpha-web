@@ -32,6 +32,8 @@
     const notif = el('div', 'mr-notif', `<b>🔔 Mod Alpha · ${T('now')}</b><span></span>`); phone.appendChild(notif);
     if (!RM) { constellation(hero, sess); }
     radar(stage, phone, RM);
+    const ring = logoRing(stage, sess, RM); // real AMC logos circling the phone
+    const scan = scanCard(hero);            // month calendar (top right) that the story scene scans
 
     // stage units ↔ screen (the stage and phone are CSS-scaled)
     const stageK = () => stage.getBoundingClientRect().width / stage.offsetWidth;
@@ -126,15 +128,45 @@
       hero.classList.add('mr-cards');
       try { await s.wait(6500); } finally { hero.classList.remove('mr-cards'); }
     }
-    async function findDate(s) {
-      place('peek'); pose(b, 'wave'); await s.wait(700);
-      const { cells, badge } = calendar(scr, false);
-      pose(b, 'tap'); look(b, -4, 1); await s.wait(500); scr.classList.add('lit'); scr.querySelector('.mr-cal').classList.add('show'); await s.wait(700);
-      pose(b, 'point-l');
-      for (let i = 0; i < BEST; i++) { cells.forEach((c, j) => c.classList.toggle('scan', j === i)); look(b, -5 + (i % 7) * 0.6, -2 + Math.floor(i / 7) * 2); await s.wait(130); }
-      cells[BEST - 1].className = 'best'; await s.wait(400); badge.classList.add('show'); look(b, 0, 0);
-      pose(b, 'thumb', 'is-happy', 'nod'); await s.wait(3000);
+    // fund logos send their data (NAV, AMFI, volatility, holidays) into the robot's core, the calendar is scanned,
+    // and the best date flies into the phone as a notification
+    async function story(s) {
+      place('home'); pose(b, 'think'); look(b, 0, -4);
+      const NAMES = ['NAV', 'AMFI', 'Volatility', 'Holidays'];
+      for (let i = 0; i < NAMES.length; i++) {
+        const k = ring.front(), from = { ...ring.pos[k] }, to = inStage(b.querySelector('.core'));
+        const tag = el('div', 'mr-tag', T(NAMES[i])); stage.appendChild(tag); ring.lgs[k].classList.add('emit');
+        const cx = (from.x + to.x) / 2, cy = Math.min(from.y, to.y) - 120;
+        try {
+          await tween(1100, (q) => { const e = q * q * (3 - 2 * q), u = 1 - e;
+            tag.style.left = u * u * from.x + 2 * u * e * cx + e * e * to.x + 'px';
+            tag.style.top = u * u * from.y + 2 * u * e * cy + e * e * to.y + 'px';
+            tag.style.opacity = q > 0.85 ? (1 - q) / 0.15 : 1; }, s);
+        } finally { tag.remove(); ring.lgs[k].classList.remove('emit'); }
+        const hit = el('div', 'mr-hit'); Object.assign(hit.style, { left: to.x + 'px', top: to.y + 'px' }); stage.appendChild(hit);
+        b.classList.add('charge'); setTimeout(() => { hit.remove(); b.classList.remove('charge'); }, 600);
+        await s.wait(160);
+      }
+      pose(b, 'is-happy', 'point-r'); look(b, 5, -5);
+      try {
+        if (scan.offsetParent) { // the calendar is hidden on small screens
+          scan.classList.add('on'); await s.wait(450);
+          scan.classList.add('scan'); await s.wait(1600);
+          scan.classList.add('dim'); await s.wait(800);
+          const c = scan.querySelector('.best').getBoundingClientRect(), p = phone.getBoundingClientRect();
+          const fly = el('div', 'mr-fly', String(BEST)); Object.assign(fly.style, { left: c.x + 'px', top: c.y + 'px' }); document.body.appendChild(fly);
+          try { await s.wait(30); Object.assign(fly.style, { left: p.x + p.width / 2 - 12 + 'px', top: p.y + p.height * 0.12 + 'px', opacity: '0' }); await s.wait(800); }
+          finally { fly.remove(); }
+        }
+        notif.querySelector('span').textContent = T('Your best SIP date this month is the 12th.'); notif.classList.add('show');
+        pose(b, 'buzz', 'is-happy'); await s.wait(1000); pose(b, 'is-happy', 'thumb'); look(b, 0, 0); await s.wait(2400);
+      } finally { scan.classList.remove('on', 'scan', 'dim'); }
     }
+    const tween = (ms, fn, s) => new Promise((res, rej) => {
+      const t0 = performance.now();
+      const step = (t) => { if (!s.alive()) return rej(STOP); const q = Math.min(1, (t - t0) / ms); fn(q); q < 1 ? requestAnimationFrame(step) : res(); };
+      requestAnimationFrame(step);
+    });
     async function chat(s) {
       place('peek');
       scr.innerHTML = `<div class="mr-chat"><div class="mr-b me"></div><div class="mr-b ai"></div></div>`;
@@ -182,7 +214,7 @@
     }
 
     /* ---------- the loop ---------- */
-    const SCENES = [cards, findDate, chat, connect, sparks];
+    const SCENES = [cards, story, chat, connect, sparks];
     (async () => {
       try {
         await sess.until(canRun);
@@ -208,6 +240,39 @@
     const badge = el('div', 'mr-badge' + (done ? ' show' : ''), `✦ ${T('Best SIP date')} · 12th<small>${UPLIFT} ${T('vs a fixed-date SIP')}</small>`);
     scr.appendChild(badge); if (done) scr.classList.add('lit');
     return { cells: [...scr.querySelectorAll('.mr-grid span:not(.dow)')], badge };
+  }
+
+  /** Real fund-house logos on a tilted ring around the phone; the ones in front pass over the phone and glint.
+      pos[i] is each logo's centre in stage units; front() is the index of the logo nearest the viewer. */
+  function logoRing(stage, sess, still) {
+    const L = [['HDFC', 'hdfc'], ['SBI', 'sbi'], ['Axis', 'axis'], ['PPFAS', 'ppfas'], ['Quant', 'quant']];
+    const wrap = document.createElement('div'); wrap.className = 'mr-ring'; wrap.setAttribute('aria-hidden', 'true');
+    wrap.innerHTML = L.map(([n, f]) => `<span class="mr-lg"><img src="assets/funds/${f}.png" alt="" data-n="${n[0]}"></span>`).join('');
+    wrap.querySelectorAll('img').forEach((im) => { im.onerror = () => { im.parentNode.textContent = im.dataset.n; }; }); // monogram fallback
+    stage.appendChild(wrap);
+    const lgs = [...wrap.children], pos = [], CX = 290, CY = 490, RX = 300, RY = 34; // circles the bottom of the phone, below the robot
+    const put = (t) => lgs.forEach((l, i) => {
+      const a = t / 2600 + (i * 2 * Math.PI) / lgs.length, s = Math.sin(a), x = CX + RX * Math.cos(a), y = CY + RY * s;
+      pos[i] = { x, y, s };
+      l.style.transform = `translate(${x}px,${y}px) translate(-50%,-50%) scale(${0.7 + 0.3 * (s + 1) / 2})`;
+      l.style.zIndex = s > 0 ? 2 : 1; // front: over the phone (z 2, added later), under the info cards (z 3) l.style.opacity = s > 0 ? 1 : 0.35; l.classList.toggle('glint', s > 0.93);
+    });
+    put(0);
+    if (!still) {
+      let on = true;
+      if ('IntersectionObserver' in window) { const io = new IntersectionObserver((es) => (on = es[0].isIntersecting)); io.observe(stage); sess.signal.addEventListener('abort', () => io.disconnect(), { once: true }); }
+      const tick = (t) => { if (!sess.alive()) return; requestAnimationFrame(tick); if (on && !document.hidden) put(t); };
+      requestAnimationFrame(tick);
+    }
+    return { lgs, pos, front: () => pos.reduce((k, p, i) => (p.s > pos[k].s ? i : k), 0) };
+  }
+  /** The month calendar in the hero's top-right corner (shown only while the story scene scans it). */
+  function scanCard(hero) {
+    const { T } = window.MA_ROBOT, art = hero.querySelector('.v22-hero-art');
+    const c = document.createElement('div'); c.className = 'mr-scan'; c.setAttribute('aria-hidden', 'true');
+    const dow = ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d) => `<span class="dow">${d}</span>`).join(''); // 1 Nov 2026 is a Sunday
+    c.innerHTML = `<b>${T(MONTH)}</b><div class="g">${dow}${Array.from({ length: 30 }, (_, i) => `<span class="${i + 1 === BEST ? 'best' : ''}">${i + 1}</span>`).join('')}</div><i class="beam"></i>`;
+    (art || hero).appendChild(c); return c;
   }
 
   /** Radar sweep behind the phone; date blips light up as the sweep passes, the best date pings. */

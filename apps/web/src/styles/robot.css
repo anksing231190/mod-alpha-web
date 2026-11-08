@@ -172,7 +172,7 @@
 .mr-cta.show{opacity:1;pointer-events:auto}
 .mr-cta.show{animation:mrPulse 1.4s ease-in-out infinite}
 @keyframes mrPulse{0%{box-shadow:0 0 0 0 rgba(168,85,247,.6)}70%,100%{box-shadow:0 0 0 12px rgba(168,85,247,0)}}
-.mr-two{width:100%;display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:20px}
+.mr-two{width:min(1180px,100%);display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:20px}
 .mr-race-card{display:flex;flex-direction:column}
 .mr-race{flex:1;display:grid;gap:20px;align-content:center;padding-top:96px} /* room above the tracks for the robot */
 .mr-lane{display:grid;grid-template-columns:140px minmax(0,1fr) 104px;gap:12px;align-items:center}
@@ -275,3 +275,32 @@ html[data-theme="light"] .mr-radar .sweep{background:conic-gradient(from 0deg,tr
 .mr-ai-chips span{font-size:12.5px;border:1px solid var(--mr-border);border-radius:999px;padding:6px 12px;color:var(--mr-sub)}
 @media (max-width:1100px){.mr-ai-feats{grid-template-columns:1fr}}
 @media (max-width:900px){.mr-ai-grid{grid-template-columns:1fr}.mr-ai-chat{min-height:380px}}
+
+/* ---------- hero story: fund-logo ring → data into the robot → calendar scan ---------- */
+.mr-ring{position:absolute;inset:0;pointer-events:none}
+.mr-lg{position:absolute;left:0;top:0;width:50px;height:50px;border-radius:50%;background:#fff;display:grid;place-items:center;font:800 18px var(--v-font,Inter,sans-serif);color:#1e3a8a;box-shadow:0 6px 16px rgba(0,0,0,.4);transition:box-shadow .3s}
+.mr-lg img{width:38px;height:38px;object-fit:contain;border-radius:50%}
+.mr-lg.glint{box-shadow:0 0 0 2px #fff,0 0 22px 6px rgba(165,180,252,.85)}
+.mr-lg.emit{box-shadow:0 0 0 3px #22d3ee,0 0 26px 8px rgba(34,211,238,.8)}
+.mr-tag{position:absolute;z-index:7;translate:-50% -50%;padding:4px 10px;border-radius:999px;font:700 12px var(--v-font,Inter,sans-serif);white-space:nowrap;background:rgba(8,20,52,.92);border:1px solid #22d3ee;color:#a5f3fc;box-shadow:0 0 12px rgba(34,211,238,.6);pointer-events:none}
+.mr-hit{position:absolute;z-index:7;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;border:2px solid #67e8f9;box-shadow:0 0 16px #22d3ee;animation:mrHit .55s ease-out forwards;pointer-events:none}
+@keyframes mrHit{from{transform:scale(.4);opacity:1}to{transform:scale(3);opacity:0}}
+.mr-bot.charge .core-c{filter:brightness(1.6) drop-shadow(0 0 6px #2ed3f5)}
+.mr-scan{position:absolute;right:14px;top:18px;z-index:5;width:210px;padding:10px 12px 12px;border-radius:14px;background:rgba(11,22,54,.92);border:1px solid rgba(96,130,230,.45);box-shadow:0 14px 30px rgba(0,0,0,.4);overflow:hidden;opacity:0;transform:translateY(-8px);transition:opacity .4s,transform .4s;pointer-events:none}
+.mr-scan.on{opacity:1;transform:none}
+.mr-scan b{display:block;font:700 10.5px var(--v-font,Inter,sans-serif);letter-spacing:.14em;color:#93c5fd;margin-bottom:6px}
+.mr-scan .g{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.mr-scan .g span{font:600 10.5px/16px var(--v-font,Inter,sans-serif);text-align:center;border-radius:4px;color:#c9d3ec;transition:opacity .4s,background .3s,transform .3s}
+.mr-scan .g .dow{color:#7f8bb0}
+.mr-scan.dim .g span{opacity:.22}
+.mr-scan.dim .g span.best{opacity:1;background:linear-gradient(90deg,#3b82f6,#a855f7);color:#fff;transform:scale(1.35);box-shadow:0 0 10px #a855f7}
+.mr-scan .beam{position:absolute;top:0;bottom:0;width:18px;left:-30px;background:linear-gradient(90deg,transparent,rgba(34,211,238,.75),transparent)}
+.mr-scan.scan .beam{animation:mrBeam 1.6s linear}
+@keyframes mrBeam{to{left:230px}}
+.mr-fly{position:fixed;z-index:60;width:24px;height:20px;border-radius:5px;background:linear-gradient(90deg,#3b82f6,#a855f7);color:#fff;font:700 12px/20px var(--v-font,Inter,sans-serif);text-align:center;box-shadow:0 0 12px #a855f7;transition:left .8s cubic-bezier(.5,0,.3,1),top .8s cubic-bezier(.5,0,.3,1),opacity .3s .6s;pointer-events:none}
+html[data-theme="light"] .mr-scan{background:rgba(255,250,240,.96);border-color:rgba(120,90,40,.3);box-shadow:0 14px 30px rgba(120,90,40,.18)}
+html[data-theme="light"] .mr-scan b{color:#9a6b2f}
+html[data-theme="light"] .mr-scan .g span{color:#3d3426}
+html[data-theme="light"] .mr-scan .g .dow{color:#8a7d68}
+html[data-theme="light"] .mr-tag{background:#fff;color:#0e7490;border-color:#0891b2;box-shadow:0 4px 12px rgba(8,145,178,.3)}
+@media (max-width:700px){.mr-scan{display:none}}

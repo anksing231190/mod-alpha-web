@@ -134,13 +134,13 @@
   }
 
   /* ---------- sign-out ---------- */
-  /** "You were signed out after 15 minutes of inactivity." — the number follows the configured limit. */
+  /** "Inactive for 15 minutes." — the number follows the configured limit. */
   const idleMessage = () => {
     const min = Math.round(((st.info && st.info.idleTimeoutSec) || DEFAULTS.idleTimeoutSec) / 6) / 10; // 1 decimal
-    return `You were signed out after ${min} minutes of inactivity.`;
+    return `Inactive for ${min} minutes.`;
   };
   const MESSAGES = {
-    absolute: 'Your session reached its time limit. Please sign in again.',
+    absolute: 'Session time limit reached.',
     user: 'You have been logged out.',
   };
   /** End the session: tell the API why (audit log), then show the login screen with the reason. */
@@ -166,28 +166,29 @@
   function notifyLong(msg) { if (typeof notify === 'function') notify(msg); }
 
   /* ---------- sign-out notice on the login card ----------
-     Instead of a small toast, the reason is shown as a card at the top of the login form (icon, title, reason,
-     close button). It stays until the person signs in again or closes it, and survives the page switch. */
-  const NOTICE_KEY = 'ma-signout-notice';
-  const NOTICE_TITLES = { idle: 'Signed out for your security', absolute: 'Session time limit reached', expired: 'Your session has ended', user: 'You have been logged out' };
+     Instead of a small toast, the reason is shown as a short card at the top of the login form (icon, title, one
+     line, close button). It is kept in memory only, so it goes away when the page is refreshed, the person
+     signs in again or closes it. */
+  const NOTICE_TITLES = { idle: 'Signed out', absolute: 'Session expired', expired: 'Session ended', user: 'Logged out' };
+  let notice = null; // { k, msg } — not stored, so a refresh clears it
+  try { sessionStorage.removeItem('ma-signout-notice'); } catch (e) {} // left by older versions
   function showNotice(msg, kind) {
-    const k = kind || (/inactivity/i.test(msg) ? 'idle' : /time limit/i.test(msg) ? 'absolute' : /logged out/i.test(msg) ? 'user' : 'expired');
-    try { sessionStorage.setItem(NOTICE_KEY, JSON.stringify({ k, msg, at: now() })); } catch (e) {}
+    const k = kind || (/inactiv/i.test(msg) ? 'idle' : /time limit/i.test(msg) ? 'absolute' : /logged out/i.test(msg) ? 'user' : 'expired');
+    notice = { k, msg };
     paintNotice();
   }
-  function clearNotice() { try { sessionStorage.removeItem(NOTICE_KEY); } catch (e) {} document.querySelector('.ma-signout-note')?.remove(); }
+  function clearNotice() { notice = null; try { sessionStorage.removeItem('ma-signout-notice'); } catch (e) {} document.querySelector('.ma-signout-note')?.remove(); }
   function paintNotice() {
-    let n = null; try { n = JSON.parse(sessionStorage.getItem(NOTICE_KEY)); } catch (e) {}
+    const n = notice;
     const card = document.querySelector('.v22-auth-card'); if (!n || !card) return;
     card.querySelector('.ma-signout-note')?.remove();
     const security = n.k !== 'user';
     const icon = security
       ? '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3.2 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
       : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-    const tip = n.k === 'idle' ? T('Nothing was lost. Sign in again to continue where you left off.') : n.k === 'absolute' ? T('For safety, every session has a maximum length. Sign in again to continue.') : n.k === 'user' ? T('See you soon.') : T('Please sign in again to continue.');
     const el = document.createElement('div');
     el.className = `ma-signout-note ${security ? 'security' : 'info'}`; el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite');
-    el.innerHTML = `<span class="ma-sn-ic">${icon}</span><div class="ma-sn-txt"><b>${T(NOTICE_TITLES[n.k] || NOTICE_TITLES.expired)}</b><p>${esc(n.msg)}</p><small>${tip}</small></div><button type="button" class="ma-sn-x" aria-label="${T('Close')}">×</button>`;
+    el.innerHTML = `<span class="ma-sn-ic">${icon}</span><div class="ma-sn-txt"><b>${T(NOTICE_TITLES[n.k] || NOTICE_TITLES.expired)}</b><p>${esc(n.msg)}</p></div><button type="button" class="ma-sn-x" aria-label="${T('Close')}">×</button>`;
     el.querySelector('.ma-sn-x').onclick = clearNotice;
     card.prepend(el);
   }

@@ -21,7 +21,7 @@
   window.addEventListener('ma:unauthorized', (e) => {
     if (!S.user) return;
     const reason = e.detail && e.detail.reason;
-    signedOut(reason === 'idle' ? (window.MA_SESSION ? MA_SESSION.idleMessage() : 'You were signed out after a period of inactivity.') : reason === 'absolute' ? 'Your session reached its time limit. Please sign in again.' : 'Your session expired. Please log in again.');
+    signedOut(reason === 'idle' ? (window.MA_SESSION ? MA_SESSION.idleMessage() : 'Signed out after inactivity.') : reason === 'absolute' ? 'Session time limit reached.' : 'Your session expired. Please log in again.');
   });
   // Is the signed-in person an admin?
   const isAdmin = () => S.user && S.user.role !== 'user';

@@ -225,15 +225,12 @@ function v22HeroArtD(){
  const SPARK=L('<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>');
  const CAL=L('<path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h5"/><path d="M17.5 17.5 16 16.3V14"/><circle cx="16" cy="16" r="6"/>');
  const PIE=L('<path d="M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z"/><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>');
- // orbit from the left icon over the top icon to the right icon (the icons sit on this ellipse); no tails below them
+ // the comets' path from the left icon over the top icon to the right icon (the line itself is not drawn)
  const ARC='M70 189 A270 316 0 0 1 510 189';
  const mark=typeof v22BrandMark==='function'?v22BrandMark(18):v22Mark(20,'hdM1');
  return `<div class="v22-hero-art hd hd-orbit-art" aria-hidden="true"><div class="hd-stage">
  <svg class="hd-orbit-svg" viewBox="0 0 580 560"><defs><radialGradient id="hdDotG"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient><path id="hdArc" d="${ARC}"/></defs>
   <g class="hd-globe">${[0,1,2,3].map(k=>`<ellipse cx="290" cy="372" rx="${270-k*58}" ry="316" />`).join('')}<ellipse cx="290" cy="560" rx="300" ry="70"/><ellipse cx="290" cy="620" rx="320" ry="120"/></g>
-  <path d="${ARC}" class="hd-arc"/>
-  <path d="M70 216 V400" class="hd-dash"/><path d="M510 216 V400" class="hd-dash"/><path d="M290 96 V118" class="hd-dash"/>
-  <path d="M176 452 L192 440" class="hd-dash"/><path d="M404 452 L388 440" class="hd-dash"/>
   <circle r="4" class="hd-comet"><animateMotion dur="7s" repeatCount="indefinite" rotate="auto"><mpath href="#hdArc"/></animateMotion></circle>
   <circle r="3" class="hd-comet b"><animateMotion dur="7s" begin="-3.5s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#hdArc"/></animateMotion></circle>
  </svg>

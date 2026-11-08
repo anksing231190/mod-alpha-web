@@ -467,6 +467,8 @@ Object.assign(window.MA_I18N_DICT, {
 });
 // sign-out notice
 Object.assign(window.MA_I18N_DICT, {
+  'Signed out': 'साइन आउट हो गए', 'Session expired': 'सत्र समाप्त', 'Session ended': 'सत्र समाप्त हुआ', 'Logged out': 'लॉग आउट हो गए',
+  'Inactive for {n} minutes.': '{n} मिनट से कोई गतिविधि नहीं।', 'Session time limit reached.': 'सत्र की समय-सीमा पूरी हुई।', 'Signed out after inactivity.': 'निष्क्रियता के कारण साइन आउट।',
   'Signed out for your security': 'आपकी सुरक्षा के लिए साइन आउट किया गया', 'Session time limit reached': 'सत्र की समय-सीमा पूरी हुई', 'Your session has ended': 'आपका सत्र समाप्त हो गया', 'You have been logged out': 'आप लॉग आउट हो गए हैं',
   'Nothing was lost. Sign in again to continue where you left off.': 'कुछ भी नहीं खोया। जहाँ छोड़ा था वहीं से जारी रखने के लिए फिर से साइन इन करें।',
   'For safety, every session has a maximum length. Sign in again to continue.': 'सुरक्षा के लिए हर सत्र की एक अधिकतम अवधि होती है। जारी रखने के लिए फिर से साइन इन करें।',
@@ -493,6 +495,8 @@ Object.assign(window.MA_I18N_DICT, {
   "When should I invest this month?": "इस महीने मुझे कब निवेश करना चाहिए?",
   "The 12th — historically 2.8% better": "12 तारीख — ऐतिहासिक रूप से 2.8% बेहतर",
   "Tomorrow is your best SIP date (12th).": "कल आपकी सबसे अच्छी SIP तारीख (12) है।",
+  "Your best SIP date this month is the 12th.": "इस महीने आपकी सबसे अच्छी SIP तारीख 12 है।",
+  "AMFI": "AMFI", "Holidays": "छुट्टियाँ",
   "TRY IT YOURSELF": "ख़ुद आज़माएँ",
   "Can you": "क्या आप",
   "beat the AI?": "AI को हरा सकते हैं?",
