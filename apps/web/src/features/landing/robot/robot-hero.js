@@ -76,7 +76,7 @@
       addEventListener('mousemove', (e) => {
         if (sleeping || Date.now() < followUntil) return;
         const r = b.getBoundingClientRect(), cx = r.x + r.width / 2, cy = r.y + r.height * 0.3, dx = e.clientX - cx, dy = e.clientY - cy, d = Math.hypot(dx, dy) || 1;
-        look(b, dx / d * 5, dy / d * 4); head.style.transform = `rotate(${Math.max(-10, Math.min(10, dx / 60))}deg)`;
+        look(b, dx / d * 2, dy / d * 1.5); // the α mark stays upright; only its stroke shifts a touch towards the cursor
       }, { signal: sess.signal, passive: true });
       const go = hero.querySelector('.v22-hero-actions .v22-grad-btn');
       if (go) {

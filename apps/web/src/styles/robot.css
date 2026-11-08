@@ -312,8 +312,10 @@ html[data-theme="light"] .mr-tag{background:#fff;color:#0e7490;border-color:#089
 .mr-bot.is-happy .ma-am-ink,.mr-bot.thumb .ma-am-ink,.mr-bot.is-star .ma-am-ink,.mr-bot[data-ex] .ma-am-ink,.mr-bot.flash .ma-am-ink,.mr-bot.charge .ma-am-ink{animation:none;stroke-dashoffset:0;filter:drop-shadow(0 0 9px #22d3ee) drop-shadow(0 0 3px #fff)}
 .mr-bot.is-sleepy .ma-am-ink,.mr-bot.yawn .ma-am-ink{animation:none;stroke-dashoffset:0;opacity:.4;filter:none}
 .mr-bot.is-sleepy .ma-am-spark,.mr-bot.yawn .ma-am-spark{display:none}
-.mr-bot.wave .head{animation:mrMarkWave .5s ease-in-out 4 alternate}
-@keyframes mrMarkWave{from{transform:rotate(-7deg)}to{transform:rotate(7deg)}}
-.mr-bot.point-l .head{transform:rotate(-9deg)}.mr-bot.point-r .head{transform:rotate(9deg)}
+/* the mark never tilts: a wave is a soft pulse, pointing/shrugging/nodding keep it upright */
+.mr-bot .head{transform:none!important}
+.mr-bot.nod .head,.mr-bot.shrug .head{animation:none}
+.mr-bot.wave .ma-am-tile{animation:mrMarkPulse .5s ease-in-out 4 alternate}
+@keyframes mrMarkPulse{to{stroke:#67e8f9;stroke-width:3}}
 .mr-bot.charge .ma-am-tile,.mr-bot.flash .ma-am-tile{stroke:#67e8f9;stroke-width:2.5}
 .mr-ai-av{flex:none;width:44px;height:44px;display:block}
