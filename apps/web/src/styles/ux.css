@@ -154,3 +154,86 @@ html[data-theme="light"] .ma-tint-rose g{stroke:#be123c}html[data-theme="light"]
 /* chat button: label sits below the circle (no overlap); on the light theme the circle stays dark so the α reads */
 .v22-fab-label{margin-top:8px!important}
 html[data-theme="light"] .v22-fab-bot,html[data-theme="light"] .v22-chat-av{background:radial-gradient(circle at 50% 40%,#232a6b,#0b1022 72%)!important;border:2px solid #c99a62!important}
+
+/* ---------- content-shaped loading placeholders (ai-ui.js skel / skelBlock) ---------- */
+.ma-sk{display:block;height:12px;border-radius:7px;background:linear-gradient(90deg,var(--ma-skel) 25%,var(--ma-skel2) 50%,var(--ma-skel) 75%);background-size:800px 100%;animation:maSk 1.3s linear infinite}
+.ma-sk.sm{height:9px;margin-top:8px}
+@keyframes maSk{from{background-position:-400px 0}to{background-position:400px 0}}
+.ma-sk-tag{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--ma-mut);margin-bottom:10px}
+.ma-sk-tag .ma-orb{width:16px!important;height:16px!important}
+.ma-sk-list{display:grid;gap:12px;padding:4px 0}
+.ma-sk-row{display:grid;grid-template-columns:40px minmax(0,1fr) 70px;gap:14px;align-items:center;padding:12px;border-radius:12px;border:1px solid var(--ma-bd)}
+.ma-sk-row .ic{width:40px;height:40px;border-radius:11px}
+.ma-sk-row .end{height:26px;border-radius:8px}
+.ma-sk-chart{position:relative;display:grid;grid-template-rows:auto 1fr auto;gap:6px}
+.ma-sk-chart svg{width:100%;height:100%}
+.ma-sk-chart line{stroke:var(--ma-bd);stroke-width:1}
+.ma-sk-chart path{fill:none;stroke:var(--ma-skel2);stroke-width:5;stroke-linecap:round;animation:maSkLine 1.6s ease-in-out infinite}
+@keyframes maSkLine{50%{opacity:.45}}
+.ma-sk-axis{display:grid;grid-template-columns:repeat(6,1fr);gap:24px;padding:0 0 0 40px}
+@media (prefers-reduced-motion:reduce){.ma-sk,.ma-sk-chart path{animation:none}}
+
+/* ---------- inline field checks (shared/field-check.js) ---------- */
+.ma-fc-st{display:none}
+.ma-fc-note{display:block;min-height:0;margin-top:5px;font-size:12px;font-weight:500;line-height:1.4}
+.ma-fc-ok .ma-fc-note{color:var(--ma-g)}.ma-fc-ok .ma-fc-note:not(:empty)::before{content:"✓ "}
+.ma-fc-bad .ma-fc-note{color:#fb7185}.ma-fc-bad .ma-fc-note:not(:empty)::before{content:"! "}
+html[data-theme="light"] .ma-fc-bad .ma-fc-note{color:#be123c}
+.ma-fc-ok input{border-color:var(--ma-g)!important;box-shadow:0 0 0 3px rgba(62,224,137,.15)!important}
+.ma-fc-bad input{border-color:#fb7185!important;box-shadow:0 0 0 3px rgba(251,113,133,.14)!important}
+
+/* ---------- fund page: breadcrumbs + sticky bar (features/funds/fund-bar.js) ---------- */
+.ma-crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px;font-size:13px;color:var(--ma-mut)}
+.ma-crumbs a{color:var(--ma-sub);text-decoration:none}.ma-crumbs a:hover{color:var(--ma-c);text-decoration:underline}
+.ma-crumbs b{color:var(--ma-tx);font-weight:600}
+.ma-fundbar{position:fixed;right:0;z-index:40;height:56px;display:flex;align-items:center;gap:12px;padding:0 28px;background:var(--ma-surf);backdrop-filter:blur(10px);border-bottom:1px solid var(--ma-bd);box-shadow:0 10px 30px rgba(0,0,0,.3);transform:translateY(-120%);opacity:0;pointer-events:none;transition:transform .35s cubic-bezier(.3,1.2,.5,1),opacity .25s}
+.ma-fundbar.on{transform:none;opacity:1;pointer-events:auto}
+.ma-fb-logo{flex:none;display:grid;place-items:center;width:32px;height:32px}
+.ma-fb-logo>*{width:32px!important;height:32px!important;min-width:0!important;border-radius:8px!important}
+.ma-fb-name{font-size:15px;color:var(--ma-tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
+.ma-fb-chip{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;color:var(--ma-sub);padding:5px 10px;border-radius:999px;border:1px solid var(--ma-bd);background:var(--ma-surf2);white-space:nowrap;text-decoration:none}
+.ma-fb-chip em{font-style:normal;font-weight:700}.ma-fb-chip em.up{color:var(--ma-g)}.ma-fb-chip em.down{color:#fb7185}
+.ma-fb-chip.ai{color:var(--ma-tx);border-color:transparent;background:linear-gradient(90deg,rgba(124,58,237,.35),rgba(46,211,245,.25))}
+.ma-fb-chip.lock .v22-ic{width:13px;height:13px}
+.ma-fb-gap{flex:1}
+.ma-fundbar .v22-watch.sm{height:38px!important;padding:0 14px!important;font-size:13px!important}
+.ma-fb-top{width:36px;height:36px;border-radius:10px;border:1px solid var(--ma-bd);background:var(--ma-surf2);color:var(--ma-sub);display:grid;place-items:center;cursor:pointer}
+.ma-fb-top .v22-ic{width:16px;height:16px}
+.v22-watch.on{border-color:#facc15!important;color:#fde68a!important}
+.v22-watch.on .v22-ic{fill:#facc15;stroke:#facc15}
+html[data-theme="light"] .v22-watch.on{color:#a16207!important;border-color:#ca8a04!important}
+@media (max-width:1100px){.ma-fb-chip:not(.ai):nth-of-type(2){display:none}}
+@media (max-width:760px){.ma-fundbar{left:0!important;padding:0 12px;gap:8px}.ma-fb-chip:not(.ai){display:none}.ma-fb-name{max-width:120px}.ma-fundbar .v22-watch.sm span{display:none}}
+
+/* ---------- sparkline hover card (features/funds/spark-card.js) ---------- */
+.v22-fund-row .v22-spark-box{cursor:pointer;outline-offset:3px}
+.v22-fund-row .v22-spark-box:hover,.v22-fund-row .v22-spark-box:focus-visible{border-color:var(--ma-c)}
+.ma-spc{position:fixed;z-index:90;width:340px;padding:14px 16px;border-radius:14px;background:var(--ma-surf);border:1px solid var(--ma-bd);box-shadow:0 20px 50px rgba(0,0,0,.45);opacity:0;transform:translateY(6px);pointer-events:none;transition:opacity .18s,transform .18s}
+.ma-spc.above{translate:0 -100%}
+.ma-spc.on{opacity:1;transform:none}
+.ma-spc-head{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--ma-tx)}
+.ma-spc-head span{font-weight:700;white-space:nowrap}.ma-spc-head .up{color:var(--ma-g)}.ma-spc-head .down{color:#fb7185}
+.ma-spc svg{width:100%;height:110px;margin-top:8px;display:block}
+.ma-spc circle{stroke:#fff;stroke-width:1.5}.ma-spc circle.hi{fill:#34d399}.ma-spc circle.lo{fill:#fb7185}.ma-spc circle.now{fill:var(--ma-c)}
+.ma-spc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.ma-spc-stats small{display:block;font-size:11px;color:var(--ma-mut)}
+.ma-spc-stats b{display:block;font-size:14px;color:var(--ma-tx);font-variant-numeric:tabular-nums}.ma-spc-stats b.hi{color:var(--ma-g)}.ma-spc-stats b.lo{color:#fb7185}
+.ma-spc-stats em{font-style:normal;font-size:11px;color:var(--ma-mut)}
+.ma-spc-note{margin:6px 0 0;font-size:11.5px;color:var(--ma-mut)}
+
+/* ---------- collapsible sidebar (core/sidebar-collapse.js) ---------- */
+.ma-side-toggle{display:flex;align-items:center;gap:10px;width:100%;height:38px;margin:0 0 10px;padding:0 12px;border-radius:10px;border:1px solid var(--ma-bd);background:transparent;color:var(--ma-sub);font:600 13px var(--v-font,Inter,sans-serif);cursor:pointer}
+.ma-side-toggle:hover{color:var(--ma-tx);border-color:var(--ma-c)}
+.ma-side-toggle .v22-ic{width:16px;height:16px}
+@media (max-width:900px){.ma-side-toggle{display:none}}
+@media (min-width:901px){
+ .sidebar,.main-area{transition:width .25s ease,margin-left .25s ease,padding .25s ease}
+ html.ma-side-mini .sidebar,html.ma-side-mini .sidebar.v22-side{width:76px!important;min-width:76px!important;max-width:76px!important;padding:0 10px 16px!important}
+ html.ma-side-mini .main-area{margin-left:76px!important}
+ html.ma-side-mini .sidebar .brand-wording,html.ma-side-mini .sidebar .side-label,html.ma-side-mini .sidebar .nav-link>span,html.ma-side-mini .sidebar .caret,html.ma-side-mini .sidebar .v22-subnav,html.ma-side-mini .sidebar .ma-side-toggle span{display:none!important}
+ html.ma-side-mini .sidebar .side-brand{justify-content:center;padding:0}
+ html.ma-side-mini .sidebar .nav-link{justify-content:center!important;padding:10px 0!important;gap:0!important}
+ html.ma-side-mini .sidebar .side-bottom a,html.ma-side-mini .sidebar .side-bottom button:not(.ma-side-toggle){font-size:0!important;justify-content:center!important;padding:0!important;gap:0!important}
+ html.ma-side-mini .sidebar .side-bottom .v22-ic{width:18px!important;height:18px!important}
+ html.ma-side-mini .ma-side-toggle{justify-content:center;padding:0}
+}

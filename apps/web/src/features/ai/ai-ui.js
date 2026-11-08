@@ -28,8 +28,11 @@
   const badge = (label = 'AI') => `<span class="ma-ai-badge"><i aria-hidden="true">✦</i> ${esc(T(label))}</span>`;
   // pulsing AI orb — used for every loading state (lists, charts, admin pages, chat "thinking")
   const orb = (label = 'Loading…', h) => `<div class="ma-orb-load" role="status" aria-live="polite"${h ? ` style="min-height:${h}px"` : ''}><span class="ma-orb" aria-hidden="true"></span><small>${esc(T(label))}</small></div>`;
-  const skel = (rows = 3) => orb('Loading…', rows * 52);
-  const skelBlock = (h = 280) => orb('Loading…', h);
+  // content-shaped placeholders: grey shapes in the real layout of what is loading (list rows / a chart), with a
+  // small AI orb in the corner, so nothing jumps when the data arrives
+  const skHead = () => `<span class="ma-sk-tag"><span class="ma-orb" aria-hidden="true"></span>${esc(T('Loading…'))}</span>`;
+  const skel = (rows = 3) => `<div class="ma-sk-list" role="status" aria-live="polite">${skHead()}${Array.from({ length: rows }, (_, i) => `<div class="ma-sk-row"><i class="ma-sk ic"></i><div><i class="ma-sk" style="width:${[58, 46, 64, 52, 40][i % 5]}%"></i><i class="ma-sk sm" style="width:${[84, 72, 90, 78, 66][i % 5]}%"></i></div><i class="ma-sk end"></i></div>`).join('')}</div>`;
+  const skelBlock = (h = 280) => `<div class="ma-sk-chart" role="status" aria-live="polite" style="height:${h}px">${skHead()}<svg viewBox="0 0 600 260" preserveAspectRatio="none" aria-hidden="true">${[0, 1, 2, 3, 4].map((i) => `<line x1="40" x2="600" y1="${20 + i * 55}" y2="${20 + i * 55}"/>`).join('')}<path d="M40 230 C 120 212 160 222 220 182 S 330 150 380 122 S 470 72 600 52"/></svg><div class="ma-sk-axis">${Array.from({ length: 6 }, () => '<i class="ma-sk sm"></i>').join('')}</div></div>`;
 
   /** Text that writes itself once per session (key). Mark with data-ma-type="key" and call animate(). */
   function type(el, text, speed = 18) {

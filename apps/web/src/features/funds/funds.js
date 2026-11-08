@@ -20,7 +20,7 @@ function fundExplorer(){
  <div class="v22-sort">${ic('sort')}<span>Best 5Y Returns</span></div>
  <div class="v22-fund-list">${shown.map((f,i)=>`<article class="v22-fund-row">
   <div class="v22-fund-id">${v22FundIcon(f)}<div><b>${esc(f.name)}</b>${v22Tags(f)}</div></div>
-  <div class="v22-spark-box">${v22Spark(v22FundSpark(f,i),sparkColors[(all.indexOf(f))%5])}</div>
+  <div class="v22-spark-box" tabindex="0" aria-label="1-year chart for ${esc(f.short||f.name)}">${v22Spark(v22FundSpark(f,i),sparkColors[(all.indexOf(f))%5])}</div>
   <div class="v22-fund-ret"><b>${f.returns[5].toFixed(1)}%</b><small>5Y CAGR</small></div>
   ${window.MA_FUNDX?MA_FUNDX.rowExtra(f):''}
   <button type="button" class="v22-view" data-fund="${f.id}">View ${ic('arrowR')}</button>
@@ -40,7 +40,9 @@ function fundDetail(id){
  // glossary term with an "✦ Explained" card (features/ai/ai-ui.js); plain text without it
  const tm=(l,k)=>window.MA_AI?MA_AI.term(l,k):l;
  return `<div class="v22 v22-detail">
- <header class="v22-detail-head"><div class="v22-detail-id">${v22FundLogo(f,'lg')}<div><h1>${esc(f.name)}</h1>${v22Tags(f)}</div></div><button type="button" class="v22-watch" data-action="watchlist">${ic('star')}<span>Add to Watchlist</span></button></header>
+ ${window.MA_FUNDBAR?MA_FUNDBAR.crumbs(f):''}
+ <header class="v22-detail-head"><div class="v22-detail-id">${v22FundLogo(f,'lg')}<div><h1>${esc(f.name)}</h1>${v22Tags(f)}</div></div>${window.MA_WATCH?MA_WATCH.button(f.id):`<button type="button" class="v22-watch" data-action="watchlist">${ic('star')}<span>Add to Watchlist</span></button>`}</header>
+ ${window.MA_FUNDBAR?MA_FUNDBAR.bar(f):''}
  <div class="v22-tabs" role="tablist">${[['overview','Overview'],['performance','Performance'],['nav','NAV History'],['ai','AI Insights'],['info','Fund Info']].map((t,i)=>`<button type="button" role="tab" data-tab="${t[0]}" class="${i===0?'active':''}">${t[0]==='ai'&&window.MA_AI?'<span class="ma-spark" aria-hidden="true">✦</span> ':''}${t[1]}</button>`).join('')}</div>
  <section class="v22-metrics">${metric(f.returns[5].toFixed(1)+'%',tm('5Y CAGR','cagr'),'pos')}${metric(f.returns[3].toFixed(1)+'%',tm('3Y CAGR','cagr'),'pos')}${metric(f.returns[1].toFixed(1)+'%','1Y Returns','pos')}${metric((f.sharpe||1.5).toFixed(1),tm('Sharpe Ratio','sharpe'),'pos-soft')}${metric(esc(f.riskLabel||'Moderate'),tm('Risk Level','risk'),'pos')}</section>
  <section id="fund-tab-content">${fundTab(f,'overview')}</section></div>`;

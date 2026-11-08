@@ -26,7 +26,6 @@ document.addEventListener('click',e=>{
  if(e.target.closest('[data-action="clear-fund-search"]')){filters.q='';const i=document.getElementById('fund-search');if(i)i.value='';renderUser('funds');return}
  const pg=e.target.closest('[data-page-number]');if(pg){maFundPage=Number(pg.dataset.pageNumber);renderUser('funds');return}
  const dir=e.target.closest('[data-page-dir]');if(dir&&!dir.disabled){maFundPage=Math.max(1,maFundPage+Number(dir.dataset.pageDir));renderUser('funds');return}
- if(e.target.closest('[data-action="watchlist"]')){notify('Fund added to your demo watchlist.');return}
 });
 });
 
