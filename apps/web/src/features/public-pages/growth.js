@@ -55,7 +55,7 @@
         <label class="v22-fl">${T('Fund')}<span class="v22-select"><select id="ma-ck-fund">${F.map((f) => `<option value="${esc(f.id)}" ${f.id === ck.fund ? 'selected' : ''}>${esc(f.name)}</option>`).join('')}</select>${ic('chevDown')}</span></label>
         <div class="v22-fl">${T('Monthly SIP')}<div class="v22-seg-pills wrap">${[1000, 5000, 10000, 25000].map((a) => `<button type="button" class="${ck.amount === a ? 'active' : ''}" data-ma-ck-amt="${a}">${money(a)}</button>`).join('')}</div></div>
         <div class="v22-fl">${T('Over the last')}<div class="v22-seg-pills wrap">${[3, 5, 10].map((y) => `<button type="button" class="${ck.years === y ? 'active' : ''}" data-ma-ck-yrs="${y}">${y} ${T('years')}</button>`).join('')}</div></div>
-      </div><div class="v22-card ma-ck-out" id="ma-ck-out">${window.MA_AI ? MA_AI.skelBlock(260) : ''}</div><div id="ma-ck-side" class="ma-dp-slot"></div></div>
+      </div><div class="v22-card ma-ck-out" id="ma-ck-out">${window.MA_AI ? MA_AI.skelBlock(260) : ''}</div><div id="ma-ck-side" class="ma-xp-slot"></div></div>
       <p class="v22-note ma-grow-note">${T('Illustrative backtest on historical NAV: the SIP buys at the first NAV on or after the chosen day each month. Past performance does not guarantee future returns. Not investment advice.')}</p></section>`;
   }
   async function run() {
@@ -78,10 +78,10 @@
   const pct = (v) => (v == null ? '—' : `${(+v).toFixed(1)}%`);
   /** Shared panel markup: eyebrow + title, a headline value, label/value rows, a note and actions. */
   function panel({ icon, tint, eyebrow, title, bigLabel, big, bigCls = 'pos', rows, body = '', note, acts }) {
-    return `<aside class="v22-card ma-dp" aria-live="polite"><header class="ma-dp-head"><span class="ma-dp-ic"${tint ? ` style="--t:${tint}"` : ''}>${icon}</span><div><span class="ma-dp-eb">${eyebrow}</span><h3>${title}</h3></div><button type="button" class="ma-dp-x" data-ma-dp-close aria-label="${T('Close')}">${ic('x')}</button></header>
-      ${big != null ? `<div class="ma-dp-big"><span>${bigLabel}</span><b class="${bigCls}">${big}</b></div>` : ''}${body}
-      ${rows && rows.length ? `<dl class="ma-dp-dl">${rows.map(([k, v, c]) => `<div><dt>${k}</dt><dd class="${c || ''}">${v}</dd></div>`).join('')}</dl>` : ''}
-      ${note ? `<p class="ma-dp-note">${note}</p>` : ''}${acts ? `<div class="ma-dp-acts">${acts}</div>` : ''}</aside>`;
+    return `<aside class="v22-card ma-xp" aria-live="polite"><header class="ma-xp-head"><span class="ma-xp-ic"${tint ? ` style="--t:${tint}"` : ''}>${icon}</span><div><span class="ma-xp-eb">${eyebrow}</span><h3>${title}</h3></div><button type="button" class="ma-xp-x" data-ma-xp-close aria-label="${T('Close')}">${ic('x')}</button></header>
+      ${big != null ? `<div class="ma-xp-big"><span>${bigLabel}</span><b class="${bigCls}">${big}</b></div>` : ''}${body}
+      ${rows && rows.length ? `<dl class="ma-xp-dl">${rows.map(([k, v, c]) => `<div><dt>${k}</dt><dd class="${c || ''}">${v}</dd></div>`).join('')}</dl>` : ''}
+      ${note ? `<p class="ma-xp-note">${note}</p>` : ''}${acts ? `<div class="ma-xp-acts">${acts}</div>` : ''}</aside>`;
   }
   function side() {
     const slot = document.getElementById('ma-ck-side'), wrap = slot && slot.parentElement; if (!slot || !last) return;
@@ -110,9 +110,9 @@
   function sheet() {
     const slot = phone() ? [...document.querySelectorAll('#ma-ck-side, #ma-learn-side')].find((x) => x.children.length) : null, open = !!slot;
     if (document.body.classList.contains('ma-sheet-open') !== open) document.body.classList.toggle('ma-sheet-open', open);
-    let bd = document.getElementById('ma-dp-backdrop');
+    let bd = document.getElementById('ma-xp-backdrop');
     // the backdrop sits right before the sheet, in the same stacking layer, so it dims the page but not the sheet
-    if (open && (!bd || bd.nextElementSibling !== slot)) { bd?.remove(); bd = document.createElement('div'); bd.id = 'ma-dp-backdrop'; bd.addEventListener('click', () => slot.querySelector('[data-ma-dp-close]')?.click()); slot.before(bd); }
+    if (open && (!bd || bd.nextElementSibling !== slot)) { bd?.remove(); bd = document.createElement('div'); bd.id = 'ma-xp-backdrop'; bd.addEventListener('click', () => slot.querySelector('[data-ma-xp-close]')?.click()); slot.before(bd); }
     if (!open && bd) bd.remove();
   }
   new MutationObserver(() => sheet()).observe(document.documentElement, { childList: true, subtree: true });
@@ -126,7 +126,7 @@
       document.querySelector('[data-ma-ck-about]')?.classList.toggle('active', ck.sel === 'fund');
       side(); reveal('ma-ck-side'); return;
     }
-    const x = t.closest('[data-ma-dp-close]'); if (!x) return;
+    const x = t.closest('[data-ma-xp-close]'); if (!x) return;
     if (x.closest('#ma-ck-side')) { ck.sel = null; document.querySelectorAll('[data-ma-ck-day].sel').forEach((b) => b.classList.remove('sel')); document.querySelector('[data-ma-ck-about]')?.classList.remove('active'); side(); }
     if (x.closest('#ma-learn-side')) { learnSel = null; learnSide(); }
   });
@@ -176,7 +176,7 @@
     const a = learnSel && art(learnSel); if (!a) { slot.innerHTML = ''; return; }
     const [s, c, t, m, p] = a, [col, icn] = TINT[s] || ['', 'doc'], i = ART.indexOf(a), next = [ART[(i + 1) % ART.length], ART[(i + 2) % ART.length]];
     slot.innerHTML = panel({ icon: cic(icn, 40), tint: col, eyebrow: `${esc(T(c).toUpperCase())} · ${m} ${T('read').toUpperCase()}`, title: esc(T(t)),
-      body: `<div class="ma-dp-body">${p.map((x) => `<p>${esc(T(x))}</p>`).join('')}</div><div class="ma-dp-next"><small>${T('Keep reading')}</small>${next.map(([ns, , nt]) => `<button type="button" data-ma-learn="${ns}">${esc(T(nt))} ${ic('arrowR')}</button>`).join('')}</div>`,
+      body: `<div class="ma-xp-body">${p.map((x) => `<p>${esc(T(x))}</p>`).join('')}</div><div class="ma-xp-next"><small>${T('Keep reading')}</small>${next.map(([ns, , nt]) => `<button type="button" data-ma-learn="${ns}">${esc(T(nt))} ${ic('arrowR')}</button>`).join('')}</div>`,
       note: T('For education only. Not investment advice. Past performance does not guarantee future returns.'),
       acts: `<a class="v22-grad-btn" href="#/signup">✦ ${T('Ask Alpha free')}</a>` });
   }
@@ -186,7 +186,7 @@
   });
   function learnHtml() {
     return `<section class="v22 ma-land-sec" id="learn" data-v22-reveal><div class="v22-sec-head"><span class="v22-eyebrow">${T('LEARN')}</span><h2>${T('Invest with more confidence')}</h2><p>${T('Short, plain-language guides to SIPs, returns and choosing funds.')}</p></div>
-      <div class="ma-split" id="ma-learn-split"><div class="ma-learn-grid">${learnCards()}</div><div id="ma-learn-side" class="ma-dp-slot"></div></div></section>`;
+      <div class="ma-split" id="ma-learn-split"><div class="ma-learn-grid">${learnCards()}</div><div id="ma-learn-side" class="ma-xp-slot"></div></div></section>`;
   }
   function article(slug) {
     const a = art(slug); if (!a) { if (window.MA_SYS) MA_SYS.notFoundPage(); return; }
