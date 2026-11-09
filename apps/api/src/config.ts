@@ -11,6 +11,10 @@ const Env = z.object({
   PORT: z.coerce.number().default(8080),
   HOST: z.string().default('0.0.0.0'),
   PUBLIC_APP_URL: z.string().url().default('http://localhost:8081'),
+  // Maintenance mode: every API call except /health and /ready answers 503 'maintenance' and the website shows
+  // its "Down for maintenance" page. MAINTENANCE_UNTIL is shown to users (free text, e.g. "10:30 PM IST").
+  MAINTENANCE_MODE: bool,
+  MAINTENANCE_UNTIL: z.string().max(80).optional(),
   API_PUBLIC_URL: z.string().url().default('http://localhost:8080'),
   CORS_ORIGINS: z.string().default('http://localhost:8081'),
   DATABASE_URL: z.string().min(1),

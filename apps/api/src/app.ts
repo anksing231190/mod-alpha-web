@@ -42,6 +42,10 @@ export async function buildApp(cfg: Config, db: Db, overrides: Partial<Providers
   await app.register(cookie);
   await app.register(multipart, { limits: { fileSize: cfg.MAX_UPLOAD_MB * 1024 * 1024, files: 1 } });
   await app.register(rateLimit, { global: true, max: cfg.APP_ENV === 'test' ? 10000 : 300, timeWindow: '1 minute' });
+  // Maintenance mode (MAINTENANCE_MODE=true): the website shows "Down for maintenance" until it is switched off.
+  if (cfg.MAINTENANCE_MODE) app.addHook('onRequest', async (req, reply) => {
+    if (req.url.startsWith('/api/')) return reply.status(503).header('Retry-After', '600').send({ error: { code: 'maintenance', message: 'Mod Alpha is down for scheduled maintenance.', details: { until: cfg.MAINTENANCE_UNTIL ?? null } } });
+  });
   app.addHook('onRequest', authenticate(cfg, db));
   // API responses carry personal data: never store them in browser or proxy caches (no stale pages after logout)
   app.addHook('onSend', async (req, reply) => { if (req.url.startsWith('/api/')) reply.header('Cache-Control', 'no-store'); });

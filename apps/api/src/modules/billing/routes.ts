@@ -24,9 +24,12 @@ type Cycle = keyof typeof CYCLE_MONTHS;
 // Database plan row → what the website shows.
 export const planView = (p: any) => ({ id: p.id, name: p.name, tagline: p.tagline, prices: p.prices, features: p.features, limits: p.limits, active: p.active, version: p.version, price: p.prices.Monthly });
 
-// The user's active (or past-due) subscription, newest first.
+/** Days a subscription keeps its features after a failed renewal ("Past due") before falling back to Free. */
+export const GRACE_DAYS = 7;
+// The user's active subscription, or a past-due one still inside its grace period, newest first.
 export async function currentSubscription(q: Q, userId: string) {
-  const r = await q.query(`SELECT s.*, p.name AS plan_name, p.limits FROM subscriptions s JOIN plans p ON p.id=s.plan_id WHERE s.user_id=$1 AND s.status IN ('Active','Past due') ORDER BY s.start_date DESC LIMIT 1`, [userId]);
+  const r = await q.query(`SELECT s.*, p.name AS plan_name, p.limits, (s.renewal_date + ${GRACE_DAYS}) AS grace_ends_on FROM subscriptions s JOIN plans p ON p.id=s.plan_id
+    WHERE s.user_id=$1 AND (s.status='Active' OR (s.status='Past due' AND coalesce(s.renewal_date, CURRENT_DATE) + ${GRACE_DAYS} >= CURRENT_DATE)) ORDER BY s.start_date DESC LIMIT 1`, [userId]);
   return r.rows[0] ?? null;
 }
 // What the user's plan allows (AI questions per day, custom reminders, …). Free plan when there is no
@@ -35,7 +38,7 @@ export async function entitlements(q: Q, userId: string) {
   const s = await currentSubscription(q, userId);
   const plan = s ? s.plan_id : 'Free';
   const limits = s ? s.limits : (await q.query(`SELECT limits FROM plans WHERE id='Free'`)).rows[0]?.limits ?? { ai_queries_per_day: 1 };
-  return { plan, limits, subscription: s ? { id: s.id, cycle: s.billing_cycle, status: s.status, renewalDate: s.renewal_date, cancelAtPeriodEnd: s.cancel_at_period_end } : null };
+  return { plan, limits, subscription: s ? { id: s.id, cycle: s.billing_cycle, status: s.status, renewalDate: s.renewal_date, cancelAtPeriodEnd: s.cancel_at_period_end, graceEndsOn: s.status === 'Past due' ? s.grace_ends_on : null, amountInr: Number(s.amount_inr) } : null };
 }
 
 /** Idempotently mark a payment captured and activate its subscription. Shared by verify, webhook and mock. */
@@ -151,13 +154,24 @@ export default async function billing(app: FastifyInstance) {
 
   // GET /billing/subscription — the current subscription (or null).
   app.get('/billing/subscription', async (req) => { const u = requireUser(req); return { subscription: await currentSubscription(db, u.id) }; });
-  // Cancel at period end: access continues until the renewal date.
+  // Cancel at period end: access continues until the renewal date. The optional survey (reason + comment) is kept
+  // for the product team.
+  const REASONS = ['too_expensive', 'not_using', 'missing_feature', 'found_alternative', 'temporary', 'other'] as const;
   app.post('/billing/subscriptions/:id/cancel', async (req) => {
     const u = requireUser(req);
-    const r = await db.query(`UPDATE subscriptions SET cancel_at_period_end=true, updated_at=now() WHERE id=$1 AND user_id=$2 AND status IN ('Active','Past due') RETURNING id, renewal_date`, [(req.params as any).id, u.id]);
+    const b = parse(z.object({ reason: z.enum(REASONS).optional(), comment: z.string().trim().max(1000).optional() }), req.body ?? {});
+    const r = await db.query(`UPDATE subscriptions SET cancel_at_period_end=true, cancel_reason=coalesce($3, cancel_reason), cancel_comment=coalesce($4, cancel_comment), updated_at=now() WHERE id=$1 AND user_id=$2 AND status IN ('Active','Past due') RETURNING id, renewal_date`, [(req.params as any).id, u.id, b.reason ?? null, b.comment || null]);
     if (!r.rows[0]) throw notFound('No active subscription with this id');
-    await audit(db, req, { action: 'SUBSCRIPTION_CANCEL_REQUESTED', category: 'Subscription', resource: r.rows[0].id });
+    await audit(db, req, { action: 'SUBSCRIPTION_CANCEL_REQUESTED', category: 'Subscription', resource: r.rows[0].id, meta: { reason: b.reason ?? null } });
     return { ok: true, endsOn: r.rows[0].renewal_date, message: 'Your plan stays active until the end of the current billing period.' };
+  });
+  // Keep the plan: undo a cancellation before the period ends.
+  app.post('/billing/subscriptions/:id/resume', async (req) => {
+    const u = requireUser(req);
+    const r = await db.query(`UPDATE subscriptions SET cancel_at_period_end=false, updated_at=now() WHERE id=$1 AND user_id=$2 AND status='Active' AND cancel_at_period_end RETURNING id, renewal_date`, [(req.params as any).id, u.id]);
+    if (!r.rows[0]) throw notFound('No cancelled subscription to resume');
+    await audit(db, req, { action: 'SUBSCRIPTION_RESUMED', category: 'Subscription', resource: r.rows[0].id });
+    return { ok: true, renewsOn: r.rows[0].renewal_date, message: 'Your plan will renew as usual.' };
   });
   // Invoices of the signed-in user.
   app.get('/billing/invoices', async (req) => {

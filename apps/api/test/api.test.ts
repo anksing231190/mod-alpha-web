@@ -209,6 +209,54 @@ describe('me', () => {
   });
 });
 
+describe('support requests, cancellation survey, grace period, test accounts', () => {
+  it('lists my requests and shows the team reply', async () => {
+    const c = client(app); await c.post('/auth/signup', { name: 'Help Seeker', email: 'help@example.com', password: 'secret-pass-1' });
+    const t = (await c.post('/support/tickets', { email: 'help@example.com', topic: 'Fund data', message: 'The NAV looks a day old today.' })).json();
+    let mine = (await c.get('/me/support-tickets')).json().items;
+    expect(mine[0].number).toBe(t.number); expect(mine[0].status).toBe('Open'); expect(mine[0].reply).toBeNull();
+    expect((await c.raw('PATCH', `/admin/support/tickets/${t.number}`, { reply: 'Fixed, thanks!' })).statusCode).toBe(403);
+    const adm = await adminClient(app);
+    expect((await adm.patch(`/admin/support/tickets/${t.number}`, { reply: 'Thanks, the NAV is updated now.' })).json().ticket.status).toBe('Answered');
+    mine = (await c.get('/me/support-tickets')).json().items;
+    expect(mine[0].reply).toContain('NAV is updated'); expect(mine[0].replied_at).toBeTruthy();
+    const other = client(app); await other.post('/auth/signup', { name: 'Someone Else', email: 'else@example.com', password: 'secret-pass-1' });
+    expect((await other.get('/me/support-tickets')).json().items.length).toBe(0);
+  });
+  it('test accounts cover each state: grace period, cancelling with resume, unverified email', async () => {
+    const { seedDemoAccounts, DEMO_PASSWORD } = await import('../src/cli/seed.js');
+    expect(await seedDemoAccounts(db as any, loadConfig({ ...process.env, APP_ENV: 'test' } as any))).toBe(5);
+    const login = async (email: string) => { const c = client(app); expect((await c.post('/auth/login', { email, password: DEMO_PASSWORD })).statusCode).toBe(200); return c; };
+    // renewal failed 3 days ago: still Pro (grace) until renewal + 7 days
+    const pd = await login('demo.pastdue@modalpha.test');
+    const e = (await pd.get('/me/entitlements')).json();
+    expect(e.plan).toBe('Pro'); expect(e.subscription.status).toBe('Past due'); expect(e.subscription.graceEndsOn).toBeTruthy();
+    // past the grace period → Free
+    await db.query(`UPDATE subscriptions SET renewal_date = CURRENT_DATE - 9 WHERE id='demo-sub-pastdue'`);
+    expect((await pd.get('/me/entitlements')).json().plan).toBe('Free');
+    // cancelling at period end → resume keeps the plan; cancelling again records the survey
+    const cn = await login('demo.cancelling@modalpha.test');
+    let s = (await cn.get('/me/entitlements')).json().subscription;
+    expect(s.cancelAtPeriodEnd).toBe(true);
+    expect((await cn.post(`/billing/subscriptions/${s.id}/resume`)).json().ok).toBe(true);
+    expect((await cn.get('/me/entitlements')).json().subscription.cancelAtPeriodEnd).toBe(false);
+    expect((await cn.post(`/billing/subscriptions/${s.id}/cancel`, { reason: 'bogus' })).statusCode).toBe(400);
+    expect((await cn.post(`/billing/subscriptions/${s.id}/cancel`, { reason: 'too_expensive', comment: 'Need a cheaper yearly plan' })).json().ok).toBe(true);
+    expect((await db.query(`SELECT cancel_reason FROM subscriptions WHERE id=$1`, [s.id])).rows[0].cancel_reason).toBe('too_expensive');
+    // unverified email: the flag the website uses for its banner, then the emailed link verifies it
+    const un = await login('demo.unverified@modalpha.test');
+    expect((await un.get('/auth/me')).json().user.emailVerified).toBe(false);
+    expect((await un.post('/me/verify-email')).json().ok).toBe(true);
+    expect((await un.post('/auth/verify-email', { token: 'not-a-real-token-123' })).statusCode).toBe(400);
+    // the Pro test account has two requests, one answered
+    const pro = await login('demo.pro@modalpha.test');
+    const tk = (await pro.get('/me/support-tickets')).json().items;
+    expect(tk.length).toBe(2); expect(tk.some((x: any) => x.status === 'Answered' && x.reply)).toBe(true);
+    // refused in prod
+    await expect(seedDemoAccounts(db as any, { APP_ENV: 'prod' } as any)).rejects.toThrow(/prod/);
+  });
+});
+
 describe('signed-in devices', () => {
   it('lists this account\'s sessions and signs out another device', async () => {
     const a = client(app), b = client(app);

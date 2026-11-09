@@ -35,7 +35,7 @@
     if (/^admin\b/.test(h) && !isAdmin()) { notify('Admin access required.'); go('user/overview'); return; }
     if ((h === 'login' || h === 'signup') && S.user) { go(isAdmin() ? 'admin/dashboard' : 'user/overview'); return; }
     if (h.startsWith('reset-password')) return renderResetPassword();
-    if (h.startsWith('verify-email')) return renderVerifyEmail();
+    if (h.startsWith('verify-email')) return window.MA_VERIFY ? MA_VERIFY.page() : renderVerifyEmail();
     if (h.startsWith('kyc/mock')) return MA_LIVE.renderMockKyc();
     if (/^user\/fund\//.test(h)) { const id = h.split('/')[2]; baseRoute(); ensureNav(id).then(() => { const el = document.getElementById('v22-detail-chart'); const f = D.funds.find((x) => x.id === id); if (el && f) el.innerHTML = v22DetailChart(f, v22DetailPeriod); }).catch(() => {}); return; }
     if (h === 'user/overview' || h === 'user') { baseRoute(); Promise.all(D.funds.slice(0, 3).map((f) => ensureNav(f.id))).then(() => { const el = document.getElementById('v22-dash-chart'); if (el) el.innerHTML = v22DashChart(v22DashPeriod); }).catch(() => {}); MA_LIVE.refreshBell(); return; }

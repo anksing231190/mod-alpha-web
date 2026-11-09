@@ -8,8 +8,9 @@ import type { FastifyInstance } from 'fastify';
 import crypto from 'node:crypto';
 import { z } from 'zod';
 import { parse } from '../../shared/validate.js';
-import { tooMany } from '../../shared/errors.js';
-import { requireUser } from '../auth/session.js';
+import { notFound, tooMany } from '../../shared/errors.js';
+import { audit } from '../../shared/audit.js';
+import { requireAdmin, requireUser } from '../auth/session.js';
 import { entitlements } from '../billing/routes.js';
 import { aiPricePerMTok } from '../../providers/ai.js';
 import { mockAnswer } from '../../providers/mock-ai.js';
@@ -83,5 +84,23 @@ export default async function content(app: FastifyInstance) {
     const ref = await providers.support.create({ email: b.email, subject: b.topic, message: b.message, number });
     await db.query('INSERT INTO support_tickets (number, user_id, email, topic, message, provider, provider_ref) VALUES ($1,$2,$3,$4,$5,$6,$7)', [number, req.user?.id ?? null, b.email, b.topic, b.message, providers.support.name, ref]);
     return { number, message: `Request ${number} received. We reply within one business day.` };
+  });
+
+  // GET /me/support-tickets — the signed-in person's requests with their status and our reply (Help & FAQ → My requests).
+  app.get('/me/support-tickets', async (req) => {
+    const u = requireUser(req);
+    const r = await db.query(`SELECT number, topic, message, status, reply, replied_at, created_at, updated_at FROM support_tickets WHERE user_id=$1 ORDER BY created_at DESC LIMIT 50`, [u.id]);
+    return { items: r.rows };
+  });
+  // PATCH /admin/support/tickets/:number — set the status and/or reply (the reply is also emailed to the person).
+  app.patch('/admin/support/tickets/:number', async (req) => {
+    requireAdmin(req);
+    const { number } = parse(z.object({ number: z.string().min(3).max(40) }), req.params);
+    const b = parse(z.object({ status: z.enum(['Open', 'In progress', 'Answered', 'Closed']).optional(), reply: z.string().trim().min(2).max(4000).optional() }), req.body);
+    const r = await db.query(`UPDATE support_tickets SET status=coalesce($2, CASE WHEN $3::text IS NOT NULL THEN 'Answered' ELSE status END), reply=coalesce($3, reply), replied_at=CASE WHEN $3::text IS NOT NULL THEN now() ELSE replied_at END, updated_at=now() WHERE number=$1 RETURNING number, email, topic, status, reply`, [number, b.status ?? null, b.reply ?? null]);
+    if (!r.rows[0]) throw notFound('Ticket not found');
+    if (b.reply) await providers.email.send({ to: r.rows[0].email, subject: `Re: ${r.rows[0].topic} (${number})`, text: b.reply });
+    await audit(db, req, { action: 'SUPPORT_TICKET_UPDATED', category: 'Account', resource: number, meta: { status: r.rows[0].status } });
+    return { ticket: r.rows[0] };
   });
 }

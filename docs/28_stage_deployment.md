@@ -165,6 +165,28 @@ docker compose --env-file .env.stage exec api node dist/cli/seed.js --workbook=/
 The seed loads funds, 10 years of NAV, SIP dates and holidays — **no users or subscribers** (those come only from
 sign-ups or a backup restore, docs/27).
 
+**Test accounts (optional, stage only — refused in prod).** One account per situation the website shows; all
+use the password `Demo@12345`. Payments, KYC, email and SMS stay on the mock providers.
+```bash
+docker compose --env-file .env.stage exec api node dist/cli/seed.js --demo-accounts
+```
+| Email | What you see |
+|---|---|
+| demo.free@modalpha.test | Free plan, KYC not started (checkout asks for KYC first) |
+| demo.pro@modalpha.test | Pro active, renews in 20 days; Help → My requests has one answered and one in-progress request |
+| demo.pastdue@modalpha.test | Renewal payment failed 3 days ago: red banner, features kept until the grace period ends (7 days) |
+| demo.cancelling@modalpha.test | Premium cancelled, ends in 9 days: "Keep my plan" banner |
+| demo.unverified@modalpha.test | Email not verified: yellow banner with "Resend link" (the link lands in Admin → Notifications → Mock outbox) |
+
+Running the command again resets these accounts to the states above.
+
+**Checkout on stage** opens Mod Alpha's checkout screens with a *Test mode* strip: pick Success, Failure or Pending
+(Pending → "Check status" completes it). Test card 4111 1111 1111 1111 · 12/30 · 123, test UPI ID success@razorpay.
+
+**Maintenance mode.** Set `MAINTENANCE_MODE=true` (and optionally `MAINTENANCE_UNTIL=10:30 PM IST`) in `.env.stage`
+and run `./deploy.sh`: every page shows "Down for maintenance" and checks again each minute. Set it back to
+`false` and deploy to reopen. `/health` and `/ready` keep answering.
+
 **Problem C — `./.env.stage: line 43: Alpha: command not found`.** Older `deploy.sh` / `backup.sh` loaded
 `.env.stage` as a shell script, so a value with spaces (`INVOICE_SELLER_NAME=Mod Alpha Ventures LLP`) broke it.
 Fixed in git: the scripts now let Docker Compose read the file. On a server with the old scripts:

@@ -35,6 +35,8 @@
       const e = new ApiError(res.status, data);
       // tell the page the session is gone, with the reason when it was a timeout
       if (res.status === 401 && opts.onUnauthorized !== false) window.dispatchEvent(new CustomEvent('ma:unauthorized', { detail: { reason: endReason || e.details?.reason || null } }));
+      // the API is in maintenance mode: the page shows "Down for maintenance" (features/system/system-pages.js)
+      if (res.status === 503 && e.code === 'maintenance') window.dispatchEvent(new CustomEvent('ma:maintenance', { detail: e.details || {} }));
       throw e;
     }
     return data;

@@ -57,6 +57,43 @@ export async function bootstrapAdmin(db: Db, cfg: Config) {
   return r.rows[0].id;
 }
 
+/**
+ * Test accounts for stage and local testing (refused in prod), one per state the website shows. All use the
+ * password DEMO_PASSWORD. Payments, KYC, email and SMS stay on the mock providers.
+ *   demo.free@modalpha.test        Free plan, KYC not started, email verified
+ *   demo.pro@modalpha.test         Pro (monthly) active, renews in 20 days, KYC verified, two support requests
+ *   demo.pastdue@modalpha.test     Pro, renewal payment failed 3 days ago → grace period (features until day 7)
+ *   demo.cancelling@modalpha.test  Premium cancelled at period end, ends in 9 days
+ *   demo.unverified@modalpha.test  Free plan, email not verified yet (shows the verify banner)
+ */
+export const DEMO_PASSWORD = 'Demo@12345';
+export async function seedDemoAccounts(db: Db, cfg: Config) {
+  if (cfg.APP_ENV === 'prod') throw new Error('Refusing to create test accounts in prod');
+  const hash = await bcrypt.hash(DEMO_PASSWORD, 11);
+  const user = async (email: string, name: string, verified: boolean, kyc: string) => (await db.query(
+    `INSERT INTO users (email, full_name, password_hash, email_verified_at, kyc_status, mobile, mobile_verified_at) VALUES ($1,$2,$3, CASE WHEN $4 THEN now() END, $5, NULL, NULL)
+     ON CONFLICT (email) DO UPDATE SET full_name=EXCLUDED.full_name, password_hash=EXCLUDED.password_hash, email_verified_at=EXCLUDED.email_verified_at, kyc_status=EXCLUDED.kyc_status RETURNING id`, [email, name, hash, verified, kyc])).rows[0].id;
+  const sub = async (uid: string, id: string, plan: string, status: string, renewInDays: number, cancel = false) => {
+    await db.query(`DELETE FROM subscriptions WHERE id=$1 OR user_id=$2`, [id, uid]);
+    const amount = (await db.query(`SELECT (prices->>'Monthly')::numeric AS a FROM plans WHERE id=$1`, [plan])).rows[0]?.a ?? 299;
+    await db.query(`INSERT INTO subscriptions (id, user_id, plan_id, billing_cycle, amount_inr, status, start_date, last_payment_date, renewal_date, provider, cancel_at_period_end)
+      VALUES ($1,$2,$3,'Monthly',$4,$5, CURRENT_DATE - 40, CURRENT_DATE - 10, CURRENT_DATE + $6::int, 'mock', $7)`, [id, uid, plan, amount, status, renewInDays, cancel]);
+  };
+  await user('demo.free@modalpha.test', 'Free Tester', true, 'Not started');
+  const pro = await user('demo.pro@modalpha.test', 'Pro Tester', true, 'Verified');
+  await sub(pro, 'demo-sub-pro', 'Pro', 'Active', 20);
+  await db.query(`DELETE FROM support_tickets WHERE user_id=$1`, [pro]);
+  await db.query(`INSERT INTO support_tickets (number, user_id, email, topic, message, status, provider, reply, replied_at, created_at) VALUES
+    ('MA-DEMO-0001',$1,'demo.pro@modalpha.test','Subscription','I was charged twice this month. Can you check?','Answered','mock','Thanks for flagging this. The second charge was a pending authorisation and has been released; it should disappear from your statement within 5 working days.', now() - interval '1 day', now() - interval '3 days'),
+    ('MA-DEMO-0002',$1,'demo.pro@modalpha.test','Fund data','The NAV for Quant Small Cap looks a day old today.','In progress','mock',NULL,NULL, now() - interval '5 hours')`, [pro]);
+  const pd = await user('demo.pastdue@modalpha.test', 'Renewal Failed Tester', true, 'Verified');
+  await sub(pd, 'demo-sub-pastdue', 'Pro', 'Past due', -3);
+  const cn = await user('demo.cancelling@modalpha.test', 'Cancelling Tester', true, 'Verified');
+  await sub(cn, 'demo-sub-cancel', 'Premium', 'Active', 9, true);
+  await user('demo.unverified@modalpha.test', 'Unverified Tester', false, 'Not started');
+  return 5;
+}
+
 // Load a workbook into the database. Database set-up passes allowPersonal=false: the Users / Subscriptions sheets
 // are skipped, so a new database starts with no users or subscribers. Only the API tests load them (true), as fixtures.
 export async function importWorkbookFile(db: Db, file: string, allowPersonal: boolean) {
@@ -72,6 +109,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   await migrate(db); await seedReference(db); const admin = await bootstrapAdmin(db, cfg);
   console.log('reference data seeded', admin ? `· admin ${cfg.ADMIN_BOOTSTRAP_EMAIL}` : '');
   const wb = process.argv.find((a) => a.startsWith('--workbook='))?.slice(11);
+  if (process.argv.includes('--demo-accounts')) console.log('test accounts created (password ' + DEMO_PASSWORD + '):', await seedDemoAccounts(db, cfg));
   if (wb) { if (cfg.APP_ENV === 'prod') throw new Error('Refusing to import a test workbook in prod'); console.log('imported (funds, NAV, SIP dates, holidays — no users or subscriptions)', await importWorkbookFile(db, wb, false)); }
   await db.end();
 }

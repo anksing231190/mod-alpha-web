@@ -128,9 +128,16 @@
       if (plan === 'Free') { ls.set(LS_PLAN, null); ls.set(LS_REM, null); applyDemoState(); route(); notify(T('You are on the Free plan.')); return; }
       // first paid plan: KYC first (features/subscription/kyc.js), then the demo activation below
       if (window.MA_KYC && MA_KYC.state.status !== 'Verified' && (MA_KYC.status(), MA_KYC.state.status) !== 'Verified') { MA_KYC.open({ onVerified: () => b.click() }); return; }
-      dialog(`Activate ${plan} (demo)?`,
-        `<p class="ma-rem-q">${T('Payments are not connected in demo mode.')}</p><ul class="ma-rem-list"><li>${T(`Activate ${plan} in this browser to try subscriber features such as custom SIP reminders.`)}</li><li>${T('In the live app this step is secure checkout.')}</li></ul>`,
-        `Activate ${plan} (demo)`, 'Cancel',
+      // demo: the same checkout screens as stage (features/subscription/checkout.js); success activates the plan here
+      const p0 = (typeof D !== 'undefined' && D.plans || []).find((x) => x.name === plan) || {}, yearly = typeof v22Billing !== 'undefined' && v22Billing === 'yearly';
+      const amount = yearly ? (p0.prices?.Yearly ?? Math.round((p0.price || 299) * 0.8) * 12) : (p0.price || 299);
+      const open = (m) => window.MA_PAY.open({ planName: plan, cycle: yearly ? 'Yearly' : 'Monthly', amount, test: true, method: m,
+        pay: async (mm, outcome) => { await new Promise((r) => setTimeout(r, 1200)); return outcome; },
+        check: async () => 'success',
+        onSuccess: () => { ls.set(LS_PLAN, plan); try { localStorage.removeItem('ma-demo-substate'); } catch (e) {} applyDemoState(); route(); },
+        retry: (m) => open(m) });
+      if (window.MA_PAY) { open(); return; }
+      dialog(`Activate ${plan} (demo)?`, `<p class="ma-rem-q">${T('Payments are not connected in demo mode.')}</p>`, `Activate ${plan} (demo)`, 'Cancel',
         async () => { ls.set(LS_PLAN, plan); applyDemoState(); route(); notify(T(`${plan} plan activated (demo).`)); });
     }, true);
   } else {

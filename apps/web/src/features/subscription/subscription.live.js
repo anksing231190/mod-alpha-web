@@ -7,7 +7,7 @@
   if (!window.MA_LIVE) return; // demo mode (no API): nothing to do
   const { API, S, busy, fail, fmt, on } = MA_LIVE;
   // ------------------------------------------------------------------ checkout
-  async function startCheckout(planName, btn) {
+  async function startCheckout(planName, btn, method) {
     const plan = S.plans?.find((p) => p.name === planName); if (!plan) return;
     if (plan.id === 'Free') { notify('You are on the Free plan.'); return; }
     const cycle = pricingBilling === 'yearly' ? 'Yearly' : 'Monthly';
@@ -19,10 +19,20 @@
         await loadScript('https://checkout.razorpay.com/v1/checkout.js');
         const rz = new window.Razorpay({ key: co.order.keyId, order_id: co.order.orderId, amount: co.order.amountPaise, currency: 'INR', name: 'Mod Alpha', description: co.order.description, prefill: co.order.prefill, theme: { color: '#5b5cf6' },
           handler: async (r) => { try { await API.post('/billing/verify', { orderId: r.razorpay_order_id, paymentId: r.razorpay_payment_id, signature: r.razorpay_signature }); await paid(); } catch (e) { fail(e); } } });
+        // a failed attempt in Razorpay's window → our "Payment failed" screen with Try again (features/subscription/checkout.js)
+        rz.on('payment.failed', (f) => { try { rz.close(); } catch (e) {} if (window.MA_PAY) MA_PAY.open({ planName: plan.name, cycle, amount: co.amountInr, retry: () => startCheckout(planName, btn) }).failed(f && f.error && f.error.description); });
         rz.open(); return;
       }
-      showModal('Test payment (stage)', `<div class="v22"><p class="v22-sub">Payments are mocked on this environment. Choose an outcome — it is sent through the same signed webhook the real gateway (Razorpay) will use.</p><div class="v22-kv" style="margin-top:12px"><div><span>Plan</span><b>${esc(plan.name)} · ${cycle}</b></div><div><span>Amount</span><b>${inr(co.amountInr)}</b></div><div><span>Order</span><b class="mono">${esc(co.order.orderId)}</b></div></div><div class="v22-modal-actions"><button class="v22-outline-btn" data-ma-pay="failure">Simulate failure</button><button class="v22-grad-btn" data-ma-pay="success">Pay ${inr(co.amountInr)} (test)</button></div></div>`);
-      document.querySelectorAll('[data-ma-pay]').forEach((b) => (b.onclick = async () => { const d2 = busy(b); try { await API.post('/billing/mock/complete', { orderId: co.order.orderId, outcome: b.dataset.maPay }); modalRoot.innerHTML = ''; if (b.dataset.maPay === 'success') await paid(); else notify('Payment failed (test). Nothing was charged.'); } catch (e) { d2(); fail(e); } }));
+      // stage: payments are mocked — our checkout screens; the chosen outcome goes through the same signed webhook
+      // the real gateway uses ("pending" sends nothing until Check status)
+      if (window.MA_PAY) {
+        const complete = (outcome) => API.post('/billing/mock/complete', { orderId: co.order.orderId, outcome });
+        MA_PAY.open({ planName: plan.name, cycle, amount: co.amountInr, orderId: co.order.orderId, test: true, method,
+          pay: async (m, outcome) => { await new Promise((r) => setTimeout(r, 1200)); if (outcome === 'pending') return 'pending'; await complete(outcome); return outcome; },
+          check: async () => { await complete('success'); return 'success'; },
+          onSuccess: () => paid(true), retry: (m) => startCheckout(planName, btn, m) });
+        return;
+      }
     } catch (e) {
       done();
       // first paid plan: PAN-first KYC (features/subscription/kyc.js), then continue to payment
@@ -32,9 +42,10 @@
     }
   }
   // After payment: reload the plan and go to the dashboard.
-  async function paid() { S.ent = await API.get('/me/entitlements'); await MA_LIVE.refreshSip(); notify(`${S.ent.plan} plan activated. Thank you!`); go('user/subscription'); renderUser('subscription'); }
+  async function paid(quiet) { S.ent = await API.get('/me/entitlements'); await MA_LIVE.refreshSip(); if (quiet) return; notify(`${S.ent.plan} plan activated. Thank you!`); go('user/subscription'); renderUser('subscription'); }
   // Load an external script once (Razorpay checkout).
   const loadScript = (src) => new Promise((res, rej) => { if (document.querySelector(`script[src="${src}"]`)) return res(); const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Could not load payment checkout')); document.head.appendChild(s); });
+  window.MA_CHECKOUT = (plan, method) => startCheckout(plan, null, method);
   on('[data-plan]', (b) => startCheckout(b.dataset.plan, b));
   // public pricing CTAs: signed-in users go straight to checkout
   on('.v22-plan a[href="#/signup"], .v22-plan .v22-grad-btn', (b) => { const name = b.closest('.v22-plan')?.querySelector('h3')?.textContent; if (!S.user) { sessionStorage.setItem('ma-next', 'user/subscription'); go('signup'); return; } go('user/subscription'); setTimeout(() => startCheckout(name, null), 300); });
