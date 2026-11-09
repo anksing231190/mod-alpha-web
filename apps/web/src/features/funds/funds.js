@@ -41,7 +41,7 @@ function fundDetail(id){
  const tm=(l,k)=>window.MA_AI?MA_AI.term(l,k):l;
  return `<div class="v22 v22-detail">
  ${window.MA_FUNDBAR?MA_FUNDBAR.crumbs(f):''}
- <header class="v22-detail-head"><div class="v22-detail-id">${v22FundLogo(f,'lg')}<div><h1>${esc(f.name)}</h1>${v22Tags(f)}</div></div>${window.MA_WATCH?MA_WATCH.button(f.id):`<button type="button" class="v22-watch" data-action="watchlist">${ic('star')}<span>Add to Watchlist</span></button>`}</header>
+ <header class="v22-detail-head"><div class="v22-detail-id">${v22FundLogo(f,'lg')}<div><h1>${esc(f.name)}</h1>${v22Tags(f)}</div></div><div class="ma-head-acts">${window.MA_FACTSHEET?MA_FACTSHEET.button(f.id):''}${window.MA_WATCH?MA_WATCH.button(f.id):`<button type="button" class="v22-watch" data-action="watchlist">${ic('star')}<span>Add to Watchlist</span></button>`}</div></header>
  ${window.MA_FUNDBAR?MA_FUNDBAR.bar(f):''}
  <div class="v22-tabs" role="tablist">${[['overview','Overview'],['performance','Performance'],['nav','NAV History'],['ai','AI Insights'],['info','Fund Info']].map((t,i)=>`<button type="button" role="tab" data-tab="${t[0]}" class="${i===0?'active':''}">${t[0]==='ai'&&window.MA_AI?'<span class="ma-spark" aria-hidden="true">✦</span> ':''}${t[1]}</button>`).join('')}</div>
  <section class="v22-metrics">${metric(f.returns[5].toFixed(1)+'%',tm('5Y CAGR','cagr'),'pos')}${metric(f.returns[3].toFixed(1)+'%',tm('3Y CAGR','cagr'),'pos')}${metric(f.returns[1].toFixed(1)+'%','1Y Returns','pos')}${metric((f.sharpe||1.5).toFixed(1),tm('Sharpe Ratio','sharpe'),'pos-soft')}${metric(esc(f.riskLabel||'Moderate'),tm('Risk Level','risk'),'pos')}</section>

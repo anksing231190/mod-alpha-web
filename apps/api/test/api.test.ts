@@ -209,6 +209,26 @@ describe('me', () => {
   });
 });
 
+describe('signed-in devices', () => {
+  it('lists this account\'s sessions and signs out another device', async () => {
+    const a = client(app), b = client(app);
+    await a.post('/auth/login', { email: 'pay@example.com', password: 'secret-pass-1' });
+    await b.post('/auth/login', { email: 'pay@example.com', password: 'secret-pass-1' });
+    const list = (await a.get('/me/sessions')).json().items;
+    expect(list.length).toBeGreaterThanOrEqual(2);
+    const mine = list.find((s: any) => s.current), other = list.find((s: any) => !s.current);
+    expect(mine).toBeTruthy(); expect(other).toBeTruthy();
+    expect((await a.del(`/me/sessions/${mine.id}`)).statusCode).toBe(400); // this device: use Log out
+    expect((await a.del(`/me/sessions/${other.id}`)).statusCode).toBe(200);
+    expect((await a.del(`/me/sessions/${other.id}`)).statusCode).toBe(404);
+    expect((await a.get('/auth/me')).statusCode).toBe(200);
+    // another account cannot see or end these sessions
+    const c = client(app); await c.post('/auth/signup', { name: 'Other Person', email: 'other-dev@example.com', password: 'secret-pass-1' });
+    expect((await c.get('/me/sessions')).json().items.every((s: any) => s.id !== mine.id)).toBe(true);
+    expect((await c.del(`/me/sessions/${mine.id}`)).statusCode).toBe(404);
+  });
+});
+
 describe('admin', () => {
   it('metrics come from the database with a date range', async () => {
     const a = await adminClient(app);

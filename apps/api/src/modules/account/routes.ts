@@ -3,6 +3,7 @@
  *   PATCH /me · POST /me/password · POST /me/verify-email
  *   GET/PUT /me/preferences (notification channels, language, SIP reminder mode) · PUT /me/consents
  *   GET /me/notifications · POST /me/notifications/read · GET/POST/DELETE /me/watchlist
+ *   GET /me/sessions · DELETE /me/sessions/:id (signed-in devices)
  *   POST /me/data-export · GET /me/data-export/:id · POST /me/deletion-request (DPDP data rights)
  */
 import type { FastifyInstance } from 'fastify';
@@ -65,6 +66,27 @@ export default async function me(app: FastifyInstance) {
     const ended = await db.query(`UPDATE sessions SET revoked_at=now(), end_reason='password_change' WHERE user_id=$1 AND id<>$2 AND revoked_at IS NULL`, [u.id, u.sid]);
     await audit(db, req, { action: 'PASSWORD_CHANGED', category: 'Access', resource: u.id, meta: { otherSessionsEnded: ended.rowCount } });
     return { ok: true, otherSessionsEnded: ended.rowCount };
+  });
+
+  // ---- signed-in devices (Settings → Security)
+  // GET /me/sessions — every live session of this account: browser string, masked IP, when it started and
+  // was last used; `current` marks the one making this request.
+  app.get('/me/sessions', async (req) => {
+    const u = requireUser(req);
+    const r = await db.query(`SELECT id, user_agent, ip, created_at, last_seen_at FROM sessions
+      WHERE user_id=$1 AND revoked_at IS NULL AND expires_at > now() AND absolute_expires_at > now() ORDER BY last_seen_at DESC LIMIT 20`, [u.id]);
+    const mask = (ip: string | null) => (!ip ? null : ip.includes(':') ? ip.split(':').slice(0, 3).join(':') + ':…' : ip.split('.').slice(0, 2).join('.') + '.x.x');
+    return { items: r.rows.map((s) => ({ id: s.id, userAgent: s.user_agent, ip: mask(s.ip), createdAt: s.created_at, lastSeenAt: s.last_seen_at, current: s.id === u.sid })) };
+  });
+  // DELETE /me/sessions/:id — sign out one other device (its refresh and access tokens stop working at once).
+  app.delete('/me/sessions/:id', async (req) => {
+    const u = requireUser(req);
+    const { id } = parse(z.object({ id: z.string().uuid() }), req.params);
+    if (id === u.sid) throw badRequest('Use Log out to end the session on this device');
+    const r = await db.query(`UPDATE sessions SET revoked_at=now(), end_reason='signed_out_by_user' WHERE id=$1 AND user_id=$2 AND revoked_at IS NULL`, [id, u.id]);
+    if (!r.rowCount) throw notFound('Session not found');
+    await audit(db, req, { action: 'SESSION_REVOKED', category: 'Access', resource: id });
+    return { ok: true };
   });
 
   // POST /me/verify-email — send a new verification link.
