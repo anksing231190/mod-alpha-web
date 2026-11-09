@@ -92,7 +92,7 @@
         rows: [[T('1-year return'), pct(f.returns[1]), 'pos'], [T('3-year CAGR'), pct(f.returns[3]), 'pos'], [T('10-year CAGR'), pct(f.returns[10]), 'pos'], [T('Risk'), esc(f.riskLabel || f.risk || '—')], ...(h ? [[T('Health score'), `${h.score} / 100 · ${T(h.label)}`]] : []),
           ...[['AMC', f.amc], ['Category', f.category], ['Benchmark', f.benchmark], ['AUM', f.aum], ['Expense ratio', f.expense != null ? f.expense + '%' : null], ['Plan', [f.plan, f.option].filter(Boolean).join(' · ')]].filter(([, v]) => v && v !== '—').map(([k, v]) => [T(k), esc(String(v))])],
         note: T('Past performance does not guarantee future returns. Mutual fund investments are subject to market risks.'),
-        acts: `<a class="v22-grad-btn" href="#/signup">${ic('star')} ${T('Follow this fund')}</a><a class="v22-outline-btn" href="#/f/${encodeURIComponent(f.id)}">${T('Full fund page')} ${ic('arrowR')}</a>` });
+        acts: `<a class="v22-grad-btn" href="#/signup">${ic('star')} ${T('Follow this fund')}</a>` });
     } else {
       const r = res.find((x) => x.d === ck.sel); if (!r) { ck.sel = 'fund'; side(); return; }
       const gain = r.value - r.paid, rank = [...res].sort((a, b) => b.value - a.value).indexOf(r) + 1;
@@ -166,7 +166,7 @@
     slot.innerHTML = panel({ icon: cic(icn, 40), tint: col, eyebrow: `${esc(T(c).toUpperCase())} · ${m} ${T('read').toUpperCase()}`, title: esc(T(t)),
       body: `<div class="ma-side-body">${p.map((x) => `<p>${esc(T(x))}</p>`).join('')}</div><div class="ma-side-next"><small>${T('Keep reading')}</small>${next.map(([ns, , nt]) => `<button type="button" data-ma-learn="${ns}">${esc(T(nt))} ${ic('arrowR')}</button>`).join('')}</div>`,
       note: T('For education only. Not investment advice. Past performance does not guarantee future returns.'),
-      acts: `<a class="v22-grad-btn" href="#/signup">✦ ${T('Ask Alpha free')}</a><a class="v22-outline-btn" href="#/learn/${s}">${T('Open as a page')} ${ic('arrowR')}</a>` });
+      acts: `<a class="v22-grad-btn" href="#/signup">✦ ${T('Ask Alpha free')}</a>` });
   }
   document.addEventListener('click', (e) => {
     const c = e.target.closest && e.target.closest('[data-ma-learn]'); if (!c || !c.closest('#ma-learn-split') || e.metaKey || e.ctrlKey || e.shiftKey) return;
