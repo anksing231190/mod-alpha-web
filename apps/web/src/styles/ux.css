@@ -897,3 +897,14 @@ html[data-theme="light"] .ma-bsel-pop{background:#fffaf1}
 .ma-lim-n:disabled{opacity:.55}
 .ma-lim-unl{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ma-sub);cursor:pointer}.ma-lim-unl input{width:18px;height:18px;accent-color:#8b5cf6}
 @media (max-width:600px){.ma-lim-grid{grid-template-columns:1fr!important}}
+
+/* filled + outlined buttons side by side: same height, corners and text size everywhere
+   (the filled one is 44px and the outlined one 38px by default) */
+:is(div,span,section,footer,header,form,p):has(> .v22-grad-btn):has(> .v22-outline-btn) > :is(.v22-grad-btn,.v22-outline-btn){height:44px!important;min-height:44px;padding:0 20px!important;border-radius:10px!important;font-size:15px!important;line-height:1;box-sizing:border-box;margin-top:0!important;margin-bottom:0!important}
+:is(div,span,section,footer,header,form,p):has(> .v22-grad-btn):has(> .v22-outline-btn){align-items:center}
+/* any row of two or more main buttons (filled or outlined): one height, one text size */
+:is(div,span,section,footer,header,form,p):has(> :is(.v22-grad-btn,.v22-outline-btn) ~ :is(.v22-grad-btn,.v22-outline-btn)) > :is(.v22-grad-btn,.v22-outline-btn){height:44px!important;min-height:44px;padding:0 20px!important;border-radius:10px!important;font-size:15px!important;font-weight:600!important;line-height:1;box-sizing:border-box;margin-top:0!important;margin-bottom:0!important}
+/* dialog titles read as titles: larger than the text under them */
+.modal-head h3{font-size:18px!important;font-weight:700!important;letter-spacing:-.01em}
+.ma-chg-lead{font-size:15px!important;line-height:1.6}
+.ma-chg-notes,.ma-chg-tbl td{font-size:14px!important}
