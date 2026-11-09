@@ -52,3 +52,4 @@ Mod Alpha is an AI-assisted mutual-fund analytics and SIP-timing intelligence pl
 Keep this directory in the project repository as `/docs`. Update the version/date and decision log whenever scope or architecture changes. Screenshots are design references; approved Figma/design-system source files should be added when available.
 - [27 · Backup and recovery](27_backup_and_recovery.md)
 - [28 · Stage hosting — complete step-by-step guide](28_stage_deployment.md)
+- [29 · Subscription upgrade, downgrade and cancellation rules](29_subscription_rules.md)
