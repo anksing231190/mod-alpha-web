@@ -638,7 +638,7 @@ button.ma-ck-row.ma{cursor:default}button.ma-ck-row.ma:hover{background:transpar
 .v22-landing .v22-eyebrow,.v22-landing .eyebrow{display:none!important}
 
 /* ---------- one loading look everywhere: the small orb + "Loading…" used in Insights (MA_AI.skel / skelBlock) ---------- */
-.ma-sk-tag{justify-self:start;align-self:flex-start}
+.ma-sk-list>.ma-sk-tag,.ma-sk-chart>.ma-sk-tag{justify-self:start;align-self:flex-start}
 .ma-sk-tag .v22-spin{width:16px!important;height:16px!important}
 /* charts: the skeleton fills the chart area instead of shrinking to the middle of a centring flex box */
 .ma-sk-chart{width:100%;align-self:stretch;flex:1 1 auto}
@@ -650,3 +650,12 @@ button.ma-ck-row.ma{cursor:default}button.ma-ck-row.ma:hover{background:transpar
 .v22-loading:has(>.v22-spin) b{display:inline;font-size:12.5px;font-weight:500;color:var(--ma-mut)!important}
 .v22-loading:has(>.v22-spin) small{display:inline;margin:0 0 0 6px;font-size:12px;color:var(--ma-mut)}
 .v22-loading:has(>.v22-spin)>div{display:flex;flex-wrap:wrap;align-items:baseline}
+
+/* ---------- one loading look everywhere: a 16px AI orb + "Loading…" in 12px, as on Insights ---------- */
+.ma-boot{display:grid;place-items:center;height:var(--vh100,100vh)}
+.ma-boot .ma-sk-tag{margin:0}
+.ma-orb-load{flex-direction:row!important;gap:8px!important;padding:12px 4px!important;font-size:12px!important;color:var(--ma-mut)!important;justify-content:flex-start!important}
+.ma-orb-load .ma-orb,.v22-bubble .ma-orb{width:16px!important;height:16px!important}
+.ma-orb-load small{font-size:12px}
+.v22-bubble .ma-orb-load{padding:2px 0!important}
+.ma-sk-tag,.v22-loading:has(>.v22-spin) b{font-size:12px!important;font-weight:500;color:var(--ma-mut)!important}

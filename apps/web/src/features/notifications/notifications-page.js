@@ -48,11 +48,11 @@
   const when = (t) => { const m = Math.round((Date.now() - new Date(t)) / 60000); return m < 60 ? `${Math.max(1, m)} ${T('min ago')}` : m < 1440 ? `${Math.round(m / 60)} ${T('h ago')}` : new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }); };
 
   function page() {
-    if (!items) { load(); return `<div class="v22 ma-nc" id="ma-nc">${head(0)}${window.MA_AI ? MA_AI.skel(4) : ''}</div>`; }
+    if (!items) { load(); return `<div class="v22 ma-nc" id="ma-nc">${head(null)}${window.MA_AI ? MA_AI.skel(4) : ''}</div>`; }
     return `<div class="v22 ma-nc" id="ma-nc">${body()}</div>`;
   }
   function head(unread) {
-    return `<div class="ma-nc-head"><header class="v22-title"><h1>${T('Notifications')}</h1><p>${unread ? `${unread} ${T('unread')}` : T('You’re all caught up')}</p></header>
+    return `<div class="ma-nc-head"><header class="v22-title"><h1>${T('Notifications')}</h1><p>${unread == null ? '&nbsp;' : unread ? `${unread} ${T('unread')}` : T('You’re all caught up')}</p></header>
       <div class="ma-nc-acts"><button type="button" class="v22-outline-btn" data-ma-nc-all ${unread ? '' : 'disabled'}>${ic('check')} ${T('Mark all read')}</button><button type="button" class="v22-outline-btn" data-ma-nc-settings>${ic('gear')} ${T('Notification settings')}</button></div></div>`;
   }
   function body() {
