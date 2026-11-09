@@ -123,7 +123,7 @@ Renewals run on a UPI Autopay or card mandate set up through Razorpay, and RBI r
 
 ## What the product does today
 
-Cancellation and the grace period already follow these rules; upgrades, downgrades and credit notes do not yet.
+Updated 9 Nov 2026 (v24): cancellation, the grace period, prorated upgrades, scheduled downgrades and credit notes now follow these rules. Automatic-payment items wait for Razorpay Subscriptions to go live.
 
 | Rule | Status | Today in Mod Alpha |
 | --- | --- | --- |
@@ -131,9 +131,9 @@ Cancellation and the grace period already follow these rules; upgrades, downgrad
 | 7-day grace period with Retry payment | Built | Works as described |
 | Tax invoice for every payment (CGST/SGST or IGST) | Built | Works as described |
 | Price changes saved as versions | Built | Works as described |
-| Upgrade charges only the difference | To build | Charges the full new price and replaces the plan at once |
-| Downgrade at next renewal, with Undo | To build | Takes effect at once, no credit |
-| Refunds with a credit note | Partly built | Admin refunds through Razorpay; no credit note is issued |
+| Upgrade charges only the difference | Built | Preview with the exact amount, prorated charge, renewal date kept (monthly → yearly starts a new year minus the credit) |
+| Downgrade at next renewal, with Undo | Built | Scheduled for the renewal date, banner with Undo; the jobs worker applies it on the day |
+| Refunds with a credit note | Built | Every admin refund issues a numbered GST credit note (CN/yy-yy/nnnnn) shown in Billing history with a PDF |
 | Pre-debit notice and mandate re-approval | To build | Needs Razorpay Subscriptions live (stage uses mock payments) |
 | 30-day notice of a price increase | To build | Not sent |
 

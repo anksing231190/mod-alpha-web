@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Live mode — checkout
+   Live mode — checkout (plan changes for existing subscribers: plan-change.js)
    Plan buttons start POST /billing/checkout (KYC first if needed). On stage a test
    payment dialog confirms; with Razorpay the real checkout opens. Also cancel and invoices.
    ========================================================================== */
@@ -46,6 +46,7 @@
   // Load an external script once (Razorpay checkout).
   const loadScript = (src) => new Promise((res, rej) => { if (document.querySelector(`script[src="${src}"]`)) return res(); const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Could not load payment checkout')); document.head.appendChild(s); });
   window.MA_CHECKOUT = (plan, method) => startCheckout(plan, null, method);
+  window.MA_LIVE_PAID = paid; window.MA_LIVE_LOADSCRIPT = loadScript;
   on('[data-plan]', (b) => startCheckout(b.dataset.plan, b));
   // public pricing CTAs: signed-in users go straight to checkout
   on('.v22-plan a[href="#/signup"], .v22-plan .v22-grad-btn', (b) => { const name = b.closest('.v22-plan')?.querySelector('h3')?.textContent; if (!S.user) { sessionStorage.setItem('ma-next', 'user/subscription'); go('signup'); return; } go('user/subscription'); setTimeout(() => startCheckout(name, null), 300); });
@@ -62,16 +63,16 @@
     try {
       const r = await API.get('/billing/invoices');
       const b = S.user && S.user.billing, noState = !(b && b.stateCode);
-      showModal('Billing history', `<div class="v22 ma-inv-hist">${r.items.length ? `<table class="v22-table"><thead><tr><th>Invoice no.</th><th>Plan</th><th>Date</th><th style="text-align:right">Amount (incl. GST)</th><th></th></tr></thead><tbody>${r.items.map((i) => `<tr><td class="mono">${esc(i.number)}</td><td>${esc(i.plan_id || '')} · ${esc(i.billing_cycle || '')}</td><td>${fmt(i.issued_at)}</td><td style="text-align:right">${inr(i.amount_inr)}</td><td><div class="ma-inv-acts"><button class="v22-row-btn" data-ma-inv="${i.id}">${ic('eye')} View</button><button class="v22-row-btn" data-ma-inv-dl="${i.id}" data-no="${esc(i.number)}">${ic('download')} PDF</button></div></td></tr>`).join('')}</tbody></table>` : (window.MA_EMPTY?MA_EMPTY.html({title:'No invoices yet',text:'A GST tax invoice is created after every payment.',mood:'sleep'}):'<p class="v22-sub">No invoices yet. A GST tax invoice is created after every payment.</p>')}
+      showModal('Billing history', `<div class="v22 ma-inv-hist">${r.items.length ? `<table class="v22-table"><thead><tr><th>Document</th><th>Plan</th><th>Date</th><th style="text-align:right">Amount (incl. GST)</th><th></th></tr></thead><tbody>${r.items.map((i) => { const cn = i.type === 'credit_note', kind = cn ? 'credit-notes' : 'invoices'; return `<tr class="${cn ? 'ma-cn-row' : ''}"><td><span class="mono">${esc(i.number)}</span>${cn ? `<small class="ma-cn-tag">${window.MA_T ? MA_T('Credit note') : 'Credit note'}${i.against ? ` · ${window.MA_T ? MA_T('against') : 'against'} ${esc(i.against)}` : ''}</small>` : `<small class="ma-cn-tag inv">${window.MA_T ? MA_T('Tax invoice') : 'Tax invoice'}</small>`}</td><td>${esc(i.plan_id || '')} · ${esc(i.billing_cycle || '')}</td><td>${fmt(i.issued_at)}</td><td style="text-align:right" class="${cn ? 'ma-cn-amt' : ''}">${cn ? '−' : ''}₹${Number(i.amount_inr).toLocaleString('en-IN', { minimumFractionDigits: Number(i.amount_inr) % 1 ? 2 : 0, maximumFractionDigits: 2 })}</td><td><div class="ma-inv-acts"><button class="v22-row-btn" data-ma-inv="${i.id}" data-kind="${kind}">${ic('eye')} View</button><button class="v22-row-btn" data-ma-inv-dl="${i.id}" data-kind="${kind}" data-no="${esc(i.number)}">${ic('download')} PDF</button></div></td></tr>`; }).join('')}</tbody></table>` : (window.MA_EMPTY?MA_EMPTY.html({title:'No invoices yet',text:'A GST tax invoice is created after every payment, and a credit note after every refund.',mood:'sleep'}):'<p class="v22-sub">No invoices yet. A GST tax invoice is created after every payment.</p>')}
         ${noState ? `<p class="v22-hint" style="margin-top:12px">${ic('info')} Add your state (and GSTIN, for a business) under <a href="#/user/settings" data-ma-goto-billing>Settings → Profile → Billing details</a> so your next invoice shows the right place of supply.</p>` : ''}</div>`);
     } catch (e) { fail(e); }
   });
   // Open the invoice PDF in a new tab (blob URL, so the session cookie stays with the API).
   on('[data-ma-inv]', async (b) => {
     const w = window.open('', '_blank');
-    try { const r = await API.get(`/billing/invoices/${b.dataset.maInv}/pdf`, null, { raw: true }); const url = URL.createObjectURL(await r.blob()); if (w) w.location.href = url; else location.href = url; }
+    try { const r = await API.get(`/billing/${b.dataset.kind || 'invoices'}/${b.dataset.maInv}/pdf`, null, { raw: true }); const url = URL.createObjectURL(await r.blob()); if (w) w.location.href = url; else location.href = url; }
     catch (e) { if (w) w.close(); fail(e); }
   });
-  on('[data-ma-inv-dl]', async (b) => { try { await API.download(`/billing/invoices/${b.dataset.maInvDl}/pdf`, null, `Mod-Alpha-invoice-${b.dataset.no.replace(/\//g, '-')}.pdf`); } catch (e) { fail(e); } });
+  on('[data-ma-inv-dl]', async (b) => { try { await API.download(`/billing/${b.dataset.kind || 'invoices'}/${b.dataset.maInvDl}/pdf`, null, `Mod-Alpha-${b.dataset.kind === 'credit-notes' ? 'credit-note' : 'invoice'}-${b.dataset.no.replace(/\//g, '-')}.pdf`); } catch (e) { fail(e); } });
   on('[data-ma-goto-billing]', () => { modalRoot.innerHTML = ''; settingsTab = 'profile'; });
 })();

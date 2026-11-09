@@ -31,7 +31,9 @@
 
   /* ---------- SIP date checker ---------- */
   const DAYS = [1, 5, 10, 15, 20, 25, 28];
-  let ck = { fund: null, amount: 5000, years: 5, sel: 'fund' }, last = null;
+  const phone = () => matchMedia('(max-width:760px)').matches;
+  // on a phone the details open as a sheet only when asked for, so nothing covers the page on arrival
+  let ck = { fund: null, amount: 5000, years: 5, sel: phone() ? null : 'fund' }, last = null;
   /** Value today of a monthly SIP bought on `day` for the last `years` years. */
   function simulate(n, day, amount, years) {
     const L = n.d.length - 1, end = String(n.d[L]).slice(0, 10), endD = new Date(end + 'T00:00:00Z');
@@ -104,7 +106,17 @@
     }
   }
   const mobile = () => matchMedia('(max-width:1099px)').matches;
-  const reveal = (id) => { if (mobile()) setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 30); };
+  /** Phones: the filled panel is a bottom sheet over a dimmed page; tapping the dim area or ✕ closes it. */
+  function sheet() {
+    const slot = phone() ? [...document.querySelectorAll('#ma-ck-side, #ma-learn-side')].find((x) => x.children.length) : null, open = !!slot;
+    if (document.body.classList.contains('ma-sheet-open') !== open) document.body.classList.toggle('ma-sheet-open', open);
+    let bd = document.getElementById('ma-dp-backdrop');
+    // the backdrop sits right before the sheet, in the same stacking layer, so it dims the page but not the sheet
+    if (open && (!bd || bd.nextElementSibling !== slot)) { bd?.remove(); bd = document.createElement('div'); bd.id = 'ma-dp-backdrop'; bd.addEventListener('click', () => slot.querySelector('[data-ma-dp-close]')?.click()); slot.before(bd); }
+    if (!open && bd) bd.remove();
+  }
+  new MutationObserver(() => sheet()).observe(document.documentElement, { childList: true, subtree: true });
+  const reveal = (id) => { if (phone()) return; if (mobile()) setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 30); };
   document.addEventListener('click', (e) => {
     const t = e.target; if (!t.closest) return;
     const day = t.closest('[data-ma-ck-day]'), about = t.closest('[data-ma-ck-about]');
@@ -152,10 +164,10 @@
   ];
   const art = (s) => ART.find((a) => a[0] === s);
   const TINT = { 'sip-basics': ['#10b981', 'doc'], 'why-sip-date': ['#3b82f6', 'calendar'], 'what-is-cagr': ['#8b5cf6', 'chart'], 'small-vs-large': ['#ec4899', 'bank'], 'expense-ratio': ['#f59e0b', 'rupee'], 'kyc-for-investing': ['#06b6d4', 'idcard'] };
-  let learnSel = 'sip-basics';
+  let learnSel = phone() ? null : 'sip-basics';
   function learnCards() {
     return ART.map(([s, c, t, m, p]) => { const [col, icn] = TINT[s] || ['#3b82f6', 'doc'], on = learnSel === s;
-      return `<a class="ma-learn-card ma-tcard${on ? ' sel' : ''}" style="--t:${col}" href="#/learn/${s}" data-ma-learn="${s}" aria-pressed="${on}"><span class="ma-tcard-top">${cic(icn, 40)}<i class="ma-tcard-mark">${on ? ic('check') : ic('arrowR')}</i></span><span class="ma-learn-c">${esc(T(c))} · ${m}</span><b>${esc(T(t))}</b><p>${esc(T(p[0]).slice(0, 110))}…</p><span class="ma-tcard-bar"><em></em></span></a>`; }).join('');
+      return `<a class="ma-learn-card ma-tcard${on ? ' sel' : ''}" style="--t:${col}" href="#/learn/${s}" data-ma-learn="${s}" aria-current="${on ? 'true' : 'false'}"><span class="ma-tcard-top">${cic(icn, 40)}<i class="ma-tcard-mark">${on ? ic('check') : ic('arrowR')}</i></span><span class="ma-learn-c">${esc(T(c))} · ${m}</span><b>${esc(T(t))}</b><p>${esc(T(p[0]).slice(0, 110))}…</p><span class="ma-tcard-bar"><em></em></span></a>`; }).join('');
   }
   function learnSide() {
     const split = document.getElementById('ma-learn-split'), slot = document.getElementById('ma-learn-side'); if (!split || !slot) return;

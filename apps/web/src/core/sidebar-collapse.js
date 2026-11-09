@@ -1,6 +1,6 @@
 /* ==========================================================================
    Core: collapsible sidebar (desktop and tablet, wider than 900px)
-   A « button at the bottom of the menu shrinks the sidebar to an icon rail (76px) and gives the page the
+   A small « button at the top of the menu (right end of the WORKSPACE / ADMIN CONSOLE label) shrinks the sidebar to an icon rail (76px) and gives the page the
    room; » expands it again. Hovering an icon shows its name. The choice is remembered on this device
    (localStorage 'ma-side-mini') and applied before first paint (index.html). Styles: src/styles/ux.css
    ========================================================================== */
@@ -21,10 +21,10 @@
     let b = side.querySelector('.ma-side-toggle');
     if (!b) {
       b = document.createElement('button'); b.type = 'button'; b.className = 'ma-side-toggle';
-      const bottom = side.querySelector('.side-bottom'); (bottom || side).insertBefore(b, bottom ? bottom.firstChild : null);
+      const label = side.querySelector('.side-label'); if (label) label.appendChild(b); else side.insertBefore(b, side.firstChild.nextSibling);
     }
     const on = mini();
-    b.innerHTML = `${ic(on ? 'chevR' : 'chevL')}<span>${T(on ? 'Expand menu' : 'Collapse menu')}</span>`;
+    b.innerHTML = ic(on ? 'chevR' : 'chevL');
     b.setAttribute('aria-label', T(on ? 'Expand menu' : 'Collapse menu')); b.title = T(on ? 'Expand menu' : 'Collapse menu');
     b.setAttribute('aria-expanded', String(!on));
   }

@@ -36,5 +36,7 @@ fs.writeFileSync(path.join(out, 'config/env.js'), `/* generated for ${env} — d
 // cache-bust local scripts/styles
 const version = crypto.createHash('sha1').update(fs.readdirSync(out).join() + Date.now()).digest('hex').slice(0, 8);
 const idx = path.join(out, 'index.html');
+// the service worker's cache name changes with every build, so a new deploy replaces the cached app files
+const swf = path.join(out, 'sw.js'); if (fs.existsSync(swf)) fs.writeFileSync(swf, fs.readFileSync(swf, 'utf8').replace(/__BUILD__/g, version));
 fs.writeFileSync(idx, fs.readFileSync(idx, 'utf8').replace(/(src|href)="((?!https?:)[^"]+\.(?:js|css))"/g, `$1="$2?v=${version}"`));
 console.log(`built ${env} → ${path.relative(root, out)} (API ${cfg.API_BASE_URL || 'none — demo mode'})`);

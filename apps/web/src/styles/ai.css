@@ -7,7 +7,7 @@
   --ma-surf:rgba(12,22,54,.96);--ma-surf2:rgba(20,32,74,.6);--ma-bd:rgba(92,128,220,.36);--ma-tx:#eef3ff;--ma-sub:#a7b3cf;--ma-mut:#7d8bab;
   --ma-skel:#13204a;--ma-skel2:#22336e;--ma-sel:rgba(46,211,245,.24);--ma-glow:rgba(46,211,245,.35)}
 html[data-theme="light"]{--ma-v:#7c3aed;--ma-c:#0e7490;--ma-g:#15803d;--ma-ai:linear-gradient(110deg,#7c3aed,#0891b2);
-  --ma-surf:#fffaf1;--ma-surf2:#fbf3e4;--ma-bd:rgba(120,90,40,.24);--ma-tx:#2a2216;--ma-sub:#5b5142;--ma-mut:#8a7d68;
+  --ma-surf:#fffaf1;--ma-surf2:#fbf3e4;--ma-bd:rgba(120,90,40,.24);--ma-tx:#2a2216;--ma-sub:#5b5142;--ma-mut:#6b604d;
   --ma-skel:#efe5d2;--ma-skel2:#faf4e8;--ma-sel:rgba(8,145,178,.16);--ma-glow:rgba(124,58,237,.2)}
 @keyframes maSpin{to{--ma-a:360deg}}
 @keyframes maShim{from{background-position:200% 0}to{background-position:-200% 0}}

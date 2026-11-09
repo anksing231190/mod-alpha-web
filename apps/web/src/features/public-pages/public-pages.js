@@ -33,7 +33,7 @@ function publicFooterBase(){
      <div class="footer-bottom">
        <span>© 2026 Mod Alpha Ventures LLP</span>
        <span class="footer-disclaimer">Historical insights are illustrative and not a guarantee of future returns.</span>
-       <span class="footer-legal-links"><a href="#/faq">Privacy</a><i>·</i><a href="#/faq">Terms</a></span>
+       <span class="footer-legal-links"><a href="#/faq">Privacy</a><i>·</i><a href="#/faq">Terms</a><i>·</i><a href="#" data-ma-cookie-settings>Cookie settings</a></span>
      </div>
    </div>
  </footer>`;
@@ -48,7 +48,7 @@ const V22_FAQ=[
  ['product','calendar','How is the monthly SIP date chosen?','Our engine analyses historical NAV data, volatility windows, market holidays and multiple statistical factors to identify the historically strongest date each month. The detailed model remains proprietary.'],
  ['product','chart','Is the recommended date guaranteed to give higher returns?','No. Recommendations are based on historical analysis, which does not predict or guarantee future performance. Each insight comes with a confidence level so you can decide for yourself.'],
  ['pricing','idcard','When do I need to complete KYC?','KYC is required once, before your first paid subscription is activated, through an approved secure verification flow. The Free plan does not require KYC.'],
- ['pricing','rocket','Can I upgrade, downgrade or cancel my plan?','Plan changes will be available from the Subscription page. Final billing, cancellation and refund terms will be confirmed before launch.'],
+ ['pricing','rocket','Can I upgrade, downgrade or cancel my plan?','Yes, from the Subscription page. An upgrade starts at once and you pay only the difference for the days left in your cycle. A downgrade starts on your renewal date and nothing is charged today. If you cancel, your plan stays active until the end of the period you paid for. Refunds are made only for billing errors, with a GST credit note.'],
  ['data','db','Where does the fund data come from?','NAV data is uploaded by administrators and validated before it is published. Daily NAVs follow the data published by AMFI.']
 ];
 
@@ -60,7 +60,7 @@ function v22Faq(full=false){
  const cats=[['all','All'],['product','Product'],['pricing','Pricing & KYC'],['data','Data']];
  return `<section class="v22 v22-faq" id="faq-preview" data-v22-reveal><div class="v22-faq-grid"><div class="v22-faq-side"><span class="v22-eyebrow">NEED TO KNOW MORE?</span><h2>Frequently asked questions</h2><p>Everything you need to know about how Mod Alpha works, pricing and your data.</p>
  <div class="v22-faq-help">${cic('help',36)}<div><b>Still have questions?</b><small>Our support team answers questions about funds, plans and your account.</small><div class="v22-faq-actions">${full?`<a class="v22-grad-btn" href="mailto:support@modalpha.in">Contact support ${ic('arrowR')}</a>`:`<a class="v22-grad-btn" href="#/faq">View all FAQs ${ic('arrowR')}</a>`}</div></div></div></div>
- <div class="v22-faq-main"><div class="v22-faq-cats" role="tablist">${cats.map(c=>`<button type="button" data-v22-faqcat="${c[0]}" class="${v22FaqCat===c[0]?'active':''}">${c[1]}</button>`).join('')}</div>
+ <div class="v22-faq-main"><div class="v22-faq-cats" role="tablist">${cats.map(c=>`<button type="button" role="tab" aria-selected="${v22FaqCat===c[0]}" data-v22-faqcat="${c[0]}" class="${v22FaqCat===c[0]?'active':''}">${c[1]}</button>`).join('')}</div>
  <div class="v22-acc">${V22_FAQ.map((q,i)=>`<div class="v22-acc-item ${i===0?'open':''}" data-cat="${q[0]}" ${v22FaqCat!=='all'&&v22FaqCat!==q[0]?'hidden':''}><button type="button" class="v22-acc-q" aria-expanded="${i===0}" data-v22-acc>${cic(q[1],26)}<span>${q[2]}</span><i class="v22-acc-plus"></i></button><div class="v22-acc-a"><div><p>${q[3]}</p></div></div></div>`).join('')}</div></div></div></section>`;
 }
 

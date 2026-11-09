@@ -1,0 +1,23 @@
+{
+  "name": "Mod Alpha — SIP date insights",
+  "short_name": "Mod Alpha",
+  "description": "Mutual fund analytics and the best SIP date each month, with a reminder the day before.",
+  "id": "./",
+  "start_url": "./#/user/overview",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#080b18",
+  "theme_color": "#080b18",
+  "lang": "en-IN",
+  "categories": ["finance", "education"],
+  "icons": [
+    { "src": "assets/app/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/app/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/app/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "This month's SIP date", "url": "./#/user/sip", "icons": [{ "src": "assets/app/icon-192.png", "sizes": "192x192" }] },
+    { "name": "My watchlist", "url": "./#/user/watchlist", "icons": [{ "src": "assets/app/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

@@ -134,7 +134,7 @@
       const open = (m) => window.MA_PAY.open({ planName: plan, cycle: yearly ? 'Yearly' : 'Monthly', amount, test: true, method: m,
         pay: async (mm, outcome) => { await new Promise((r) => setTimeout(r, 1200)); return outcome; },
         check: async () => 'success',
-        onSuccess: () => { ls.set(LS_PLAN, plan); try { localStorage.removeItem('ma-demo-substate'); } catch (e) {} applyDemoState(); route(); },
+        onSuccess: () => { ls.set(LS_PLAN, plan); try { localStorage.removeItem('ma-demo-substate'); localStorage.setItem('ma-demo-cycle', yearly ? 'Yearly' : 'Monthly'); localStorage.removeItem('ma-demo-pending'); } catch (e) {} applyDemoState(); route(); },
         retry: (m) => open(m) });
       if (window.MA_PAY) { open(); return; }
       dialog(`Activate ${plan} (demo)?`, `<p class="ma-rem-q">${T('Payments are not connected in demo mode.')}</p>`, `Activate ${plan} (demo)`, 'Cancel',

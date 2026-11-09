@@ -27,7 +27,7 @@
       const tm = v22ThisMonth(), sp = v22SipFor(tm.y, tm.m);
       if (sp) sip = sp.locked ? `<a class="ma-fb-chip lock" href="#/user/subscription">${ic('lock')} ${T('SIP date with Pro')}</a>` : `<span class="ma-fb-chip ai">✦ ${T('Best SIP date')} · ${ord(sp.day)}</span>`;
     }
-    return `<div class="ma-fundbar" id="ma-fundbar" aria-hidden="true">
+    return `<div class="ma-fundbar" id="ma-fundbar" aria-hidden="true" inert>
       ${typeof v22FundIcon === 'function' ? `<span class="ma-fb-logo">${v22FundIcon(f)}</span>` : ''}<b class="ma-fb-name">${esc(f.short || f.name)}</b>
       ${nv ? `<span class="ma-fb-chip">${T('NAV')} ₹${nv.v.toFixed(2)}${nv.ch != null ? ` <em class="${nv.ch >= 0 ? 'up' : 'down'}">${nv.ch >= 0 ? '▲' : '▼'} ${Math.abs(nv.ch).toFixed(2)}%</em>` : ''}</span>` : ''}
       ${r5 != null ? `<span class="ma-fb-chip">5Y CAGR <em class="up">${r5.toFixed(1)}%</em></span>` : ''}
@@ -52,7 +52,7 @@
     const tb = Math.max(0, top ? top.getBoundingClientRect().bottom : 0) / z, ml = (main ? main.getBoundingClientRect().left : 0) / z;
     b.style.top = tb + 'px'; b.style.left = ml + 'px';
     const show = h.getBoundingClientRect().bottom / z < tb + 4;
-    if (show !== b.classList.contains('on')) { b.classList.toggle('on', show); b.setAttribute('aria-hidden', String(!show)); }
+    if (show !== b.classList.contains('on')) { b.classList.toggle('on', show); b.setAttribute('aria-hidden', String(!show)); b.inert = !show; }
   }
   const queue = () => { if (!raf) raf = requestAnimationFrame(place); };
   window.addEventListener('scroll', queue, { passive: true, capture: true });

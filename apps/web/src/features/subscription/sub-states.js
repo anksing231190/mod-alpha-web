@@ -27,17 +27,20 @@
     let plan = null; try { plan = localStorage.getItem('mod-alpha-demo-plan') || (window.MA_STATE && MA_STATE.ent && MA_STATE.ent.plan !== 'Free' ? MA_STATE.ent.plan : null); } catch (e) {}
     if (!plan || plan === 'Free') return null;
     let st = 'active'; try { st = localStorage.getItem(DKEY) || 'active'; } catch (e) {}
-    const price = ((typeof D !== 'undefined' && D.plans || []).find((p) => p.name === plan) || {}).price || 299;
+    const p0 = (typeof D !== 'undefined' && D.plans || []).find((p) => p.name === plan) || {};
+    let cycle = 'Monthly', pendingChange = null; try { cycle = localStorage.getItem('ma-demo-cycle') || 'Monthly'; pendingChange = JSON.parse(localStorage.getItem('ma-demo-pending') || 'null'); } catch (e) {}
+    const price = cycle === 'Yearly' ? (p0.prices?.Yearly ?? Math.round((p0.price || 299) * 0.8) * 12) : (p0.price || 299);
     if (st === 'past_due') return { id: 'demo', plan, status: 'Past due', renewalDate: day(-3), graceEndsOn: day(4), amountInr: price, cycle: 'Monthly' };
     if (st === 'cancelling') return { id: 'demo', plan, status: 'Active', renewalDate: day(9), cancelAtPeriodEnd: true, amountInr: price, cycle: 'Monthly' };
     if (st === 'renewing') return { id: 'demo', plan, status: 'Active', renewalDate: day(2), amountInr: price, cycle: 'Monthly' };
-    return { id: 'demo', plan, status: 'Active', renewalDate: day(20), amountInr: price, cycle: 'Monthly' };
+    return { id: 'demo', plan, status: 'Active', renewalDate: (pendingChange && pendingChange.effectiveOn) || day(cycle === 'Yearly' ? 300 : 20), amountInr: price, cycle, pendingChange };
   }
   function banner() {
     const s = sub(); if (!s) return '';
     const days = s.renewalDate ? Math.ceil((new Date(s.renewalDate) - Date.now()) / 864e5) : 99;
     if (s.status === 'Past due') return `<div class="ma-subbar bad" role="alert">${ic('warn')}<span><b>${T('Your renewal payment didn’t go through.')}</b> ${T('Pay by')} <b>${fmt(s.graceEndsOn)}</b> ${T('to keep')} ${esc(s.plan)}. ${T('Until then everything keeps working.')}</span><button type="button" class="v22-grad-btn" data-ma-sub-retry="${esc(s.plan)}">${T('Retry payment')}</button><a class="v22-outline-btn" href="#/user/help">${T('Get help')}</a></div>`;
     if (s.cancelAtPeriodEnd) return `<div class="ma-subbar warn" role="status">${ic('clock')}<span><b>${T('Your')} ${esc(s.plan)} ${T('plan ends on')} ${fmt(s.renewalDate)}.</b> ${T('After that you move to the Free plan; your watchlist and settings stay.')}</span><button type="button" class="v22-grad-btn" data-ma-sub-resume="${esc(s.id)}">${T('Keep my plan')}</button></div>`;
+    if (s.pendingChange) return `<div class="ma-subbar info" role="status">${ic('calendar')}<span><b>${T('Changes to')} ${esc(s.pendingChange.plan)}${s.pendingChange.cycle !== s.cycle ? ` (${T(s.pendingChange.cycle.toLowerCase())})` : ''} ${T('on')} ${fmt(s.pendingChange.effectiveOn)}.</b> ${T('You keep')} ${esc(s.plan)} ${T('until then; from that date you pay')} ${money(s.pendingChange.amountInr)}.</span><button type="button" class="v22-outline-btn" data-ma-change-undo>${T('Undo')}</button></div>`;
     if (s.status === 'Active' && days >= 0 && days <= 3) return `<div class="ma-subbar info" role="status">${ic('calendar')}<span>${esc(s.plan)} ${T('renews on')} <b>${fmt(s.renewalDate)}</b> ${T('for')} ${money(s.amountInr || 0)}. ${T('Nothing to do: we’ll email the GST invoice.')}</span></div>`;
     return '';
   }

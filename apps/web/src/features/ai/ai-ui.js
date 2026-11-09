@@ -182,7 +182,7 @@
   function initCommandBar() {
     const top = document.querySelector('.workspace-topbar'); if (!top || top.querySelector('.ma-cmd')) return;
     const box = document.createElement('div'); box.className = 'ma-cmd';
-    box.innerHTML = `<span class="ma-cmd-ic" aria-hidden="true">✦</span><input id="ma-cmd-input" type="search" autocomplete="off" placeholder="${esc(T('Search funds or ask Mod Alpha…'))}" aria-label="${esc(T('Search funds or ask Mod Alpha'))}" aria-controls="ma-cmd-list" aria-expanded="false"><kbd>${/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'} K</kbd><div class="ma-cmd-list" id="ma-cmd-list" role="listbox" hidden></div>`;
+    box.innerHTML = `<span class="ma-cmd-ic" aria-hidden="true">✦</span><input id="ma-cmd-input" type="search" role="combobox" aria-autocomplete="list" autocomplete="off" placeholder="${esc(T('Search funds or ask Mod Alpha…'))}" aria-label="${esc(T('Search funds or ask Mod Alpha'))}" aria-controls="ma-cmd-list" aria-expanded="false"><kbd>${/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'} K</kbd><div class="ma-cmd-list" id="ma-cmd-list" role="listbox" hidden></div>`;
     top.insertBefore(box, top.querySelector('.workspace-actions'));
     const input = box.querySelector('input'), list = box.querySelector('.ma-cmd-list'); let rows = [], hl = 0;
     // grouped results: Funds · Ask Alpha · Pages · Actions (↑↓ move, ↵ open, Esc close)

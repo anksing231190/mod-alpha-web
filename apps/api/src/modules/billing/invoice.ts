@@ -27,7 +27,7 @@ export function sellerFromConfig(cfg: Config) {
  * <PREFIX>/<yy-yy>/<5 digits>, consecutive inside each financial year (an advisory lock keeps it gap-free
  * when two payments land at the same moment).
  */
-export async function issueInvoice(c: Q, cfg: Config, o: { userId: string; paymentId: string; amount: number; date: string; plan: string; cycle: string; periodEnd: string }) {
+export async function issueInvoice(c: Q, cfg: Config, o: { userId: string; paymentId: string; amount: number; date: string; plan: string; cycle: string; periodEnd: string; description?: string }) {
   await c.query(`SELECT pg_advisory_xact_lock(hashtext('invoice_number'))`);
   const fy = financialYear(o.date);
   const seq = (await c.query('SELECT coalesce(max(seq),0)::int + 1 n FROM invoices WHERE fy=$1', [fy])).rows[0].n;
@@ -38,11 +38,44 @@ export async function issueInvoice(c: Q, cfg: Config, o: { userId: string; payme
   const pos = u.billing_state_code || (u.billing_gstin ? u.billing_gstin.slice(0, 2) : seller.stateCode);
   const t = splitTax(o.amount, seller.stateCode, pos);
   const buyer = { name: u.full_name, email: u.email, mobile: u.mobile, address: u.billing_address, stateCode: u.billing_state_code, gstin: u.billing_gstin };
-  const description = `Mod Alpha ${o.plan} plan — ${o.cycle} subscription (research & SIP date insights)`;
+  const description = o.description ?? `Mod Alpha ${o.plan} plan — ${o.cycle} subscription (research & SIP date insights)`;
   const r = await c.query(`INSERT INTO invoices (number, user_id, payment_id, amount_inr, gst_inr, issued_at, fy, seq, seller, buyer, sac, description, period_start, period_end, place_of_supply, taxable_inr, cgst_inr, sgst_inr, igst_inr)
     VALUES ($1,$2,$3,$4,$5,now(),$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18) RETURNING id, number`,
     [number, o.userId, o.paymentId, o.amount, +(t.cgst + t.sgst + t.igst).toFixed(2), fy, seq, JSON.stringify(seller), JSON.stringify(buyer), cfg.INVOICE_SAC, description, o.date, o.periodEnd, pos, t.taxable, t.cgst, t.sgst, t.igst]);
   return r.rows[0] as { id: string; number: string };
+}
+
+/**
+ * GST credit note for a refund (CGST Act s.34), inside the refund transaction. Own number series per financial
+ * year: CN/<yy-yy>/<5 digits>. The tax is split like the original invoice (same place of supply), so the GST it
+ * reverses matches what was charged. Must be issued by 30 November after the financial year ends.
+ */
+export async function issueCreditNote(c: Q, cfg: Config, o: { paymentId: string; userId: string; amount: number; reason: string; refundRef?: string; date: string }) {
+  await c.query(`SELECT pg_advisory_xact_lock(hashtext('credit_note_number'))`);
+  const fy = financialYear(o.date);
+  const seq = (await c.query('SELECT coalesce(max(seq),0)::int + 1 n FROM credit_notes WHERE fy=$1', [fy])).rows[0].n;
+  const number = `CN/${fy.slice(2, 4)}-${fy.slice(5)}/${String(seq).padStart(5, '0')}`;
+  const inv = (await c.query('SELECT id, seller, buyer, sac, place_of_supply FROM invoices WHERE payment_id=$1 ORDER BY issued_at LIMIT 1', [o.paymentId])).rows[0];
+  const seller = inv?.seller ?? sellerFromConfig(cfg);
+  const pos = inv?.place_of_supply ?? seller.stateCode;
+  const t = splitTax(o.amount, seller.stateCode, pos);
+  const buyer = inv?.buyer ?? null;
+  const r = await c.query(`INSERT INTO credit_notes (number, fy, seq, user_id, invoice_id, payment_id, amount_inr, taxable_inr, cgst_inr, sgst_inr, igst_inr, place_of_supply, seller, buyer, sac, reason, refund_ref)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING id, number`,
+    [number, fy, seq, o.userId, inv?.id ?? null, o.paymentId, o.amount, t.taxable, t.cgst, t.sgst, t.igst, pos, JSON.stringify(seller), JSON.stringify(buyer), inv?.sac ?? cfg.INVOICE_SAC, o.reason, o.refundRef ?? null]);
+  return r.rows[0] as { id: string; number: string };
+}
+/** A credit note in the same printable shape as an invoice (invoicePdf prints it as "CREDIT NOTE"). */
+export function creditNoteView(cfg: Config, c: any) {
+  const seller = c.seller ?? sellerFromConfig(cfg);
+  const pos = c.place_of_supply ?? seller.stateCode;
+  return {
+    id: c.id, number: c.number, issuedAt: c.issued_at, seller, pos, posName: GST_STATES[pos] ?? pos,
+    buyer: c.buyer ?? {}, sac: c.sac ?? cfg.INVOICE_SAC,
+    description: `Refund: ${c.reason}${c.invoice_description ? ` (against: ${c.invoice_description})` : ''}`,
+    periodStart: null, periodEnd: null, total: +c.amount_inr, taxable: +c.taxable_inr, cgst: +c.cgst_inr, sgst: +c.sgst_inr, igst: +c.igst_inr,
+    paymentRef: c.refund_ref, paidOn: c.issued_at, docType: 'credit_note' as const, againstNumber: c.invoice_number ?? null, againstDate: c.invoice_date ?? null,
+  };
 }
 
 /** One invoice with everything needed to print it. Invoices issued before v23.18 get the details filled in. */
@@ -65,7 +98,8 @@ const money = (n: number) => `Rs. ${n.toLocaleString('en-IN', { minimumFractionD
 const dmy = (d: any) => (d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }) : '—');
 
 /** Render the invoice as an A4 PDF. */
-export function invoicePdf(v: ReturnType<typeof invoiceView>): Buffer {
+export function invoicePdf(v: ReturnType<typeof invoiceView> | ReturnType<typeof creditNoteView>): Buffer {
+  const cn = (v as any).docType === 'credit_note', docWord = cn ? 'credit note' : 'invoice';
   const p = new Pdf(), L = 40, R = p.width - 40, W = R - L;
   // header band: seller name, address lines, identifiers (the band grows with the lines present)
   const addr = String(v.seller.address || '').split('|').map((x: string) => x.trim()).filter(Boolean);
@@ -76,13 +110,13 @@ export function invoicePdf(v: ReturnType<typeof invoiceView>): Buffer {
   p.rect(0, bandH, p.width, 3, { fill: BRAND });
   p.text(L, 46, v.seller.name || 'Mod Alpha', { size: 18, bold: true, color: INK });
   headLines.forEach((line, n) => p.text(L, 64 + n * 12, line, { size: 9, color: n < addr.length ? MUTED : INK }));
-  p.text(R, 46, 'TAX INVOICE', { size: 16, bold: true, color: BRAND, align: 'right' });
+  p.text(R, 46, cn ? 'CREDIT NOTE' : 'TAX INVOICE', { size: 16, bold: true, color: BRAND, align: 'right' });
   p.text(R, 62, 'Original for recipient', { size: 8.5, color: MUTED, align: 'right' });
 
   // invoice details (right) and billed to (left)
   let y = bandH + 32;
   p.text(L, y, 'BILLED TO', { size: 8, bold: true, color: MUTED });
-  const meta: [string, string][] = [['Invoice number', v.number], ['Invoice date', dmy(v.issuedAt)], ['Place of supply', `${v.posName} (${v.pos})`], ['Reverse charge', 'No']];
+  const meta: [string, string][] = [[cn ? 'Credit note number' : 'Invoice number', v.number], [cn ? 'Credit note date' : 'Invoice date', dmy(v.issuedAt)], ...(cn ? [['Against invoice', String((v as any).againstNumber ?? '—')], ['Invoice date', (v as any).againstDate ? dmy((v as any).againstDate) : '—']] as [string, string][] : []), ['Place of supply', `${v.posName} (${v.pos})`], ['Reverse charge', 'No']];
   meta.forEach(([k, val], i) => { p.text(R - 170, y + i * 15, k, { size: 9, color: MUTED }); p.text(R, y + i * 15, val, { size: 9, bold: true, color: INK, align: 'right' }); });
   let by = y + 16;
   p.text(L, by, v.buyer.name || 'Customer', { size: 11, bold: true, color: INK }); by += 14;
@@ -117,7 +151,7 @@ export function invoicePdf(v: ReturnType<typeof invoiceView>): Buffer {
   tot.forEach(([k, val], i) => { p.text(R - 200, y + i * 16, k, { size: 9.5, color: MUTED }); p.text(R - 6, y + i * 16, val, { size: 9.5, color: INK, align: 'right' }); });
   y += tot.length * 16 + 4;
   p.rect(R - 210, y - 2, 210, 26, { fill: BAND });
-  p.text(R - 200, y + 15, 'Total (incl. GST)', { size: 10.5, bold: true, color: INK });
+  p.text(R - 200, y + 15, cn ? 'Total credited (incl. GST)' : 'Total (incl. GST)', { size: 10.5, bold: true, color: INK });
   p.text(R - 6, y + 15, money(v.total), { size: 11, bold: true, color: BRAND, align: 'right' });
   y += 40;
   p.text(L, y, 'Amount in words', { size: 8, bold: true, color: MUTED });
@@ -125,16 +159,16 @@ export function invoicePdf(v: ReturnType<typeof invoiceView>): Buffer {
 
   // payment
   y += 10;
-  p.text(L, y, 'PAYMENT', { size: 8, bold: true, color: MUTED });
-  p.text(L, y + 14, `Paid${v.paidOn ? ` on ${dmy(v.paidOn)}` : ''} · Payment reference ${v.paymentRef || '—'}`, { size: 9, color: INK });
+  p.text(L, y, cn ? 'REFUND' : 'PAYMENT', { size: 8, bold: true, color: MUTED });
+  p.text(L, y + 14, cn ? `Refunded to the original payment method${v.paidOn ? ` on ${dmy(v.paidOn)}` : ''} · Refund reference ${v.paymentRef || '—'} · GST reversed under section 34 of the CGST Act` : `Paid${v.paidOn ? ` on ${dmy(v.paidOn)}` : ''} · Payment reference ${v.paymentRef || '—'}`, { size: 9, color: INK });
 
   // signature + notes
   y = p.height - 150;
   p.line(L, y, R, y, { color: RULE });
   p.text(R, y + 22, `For ${v.seller.name || 'Mod Alpha'}`, { size: 9.5, bold: true, color: INK, align: 'right' });
   p.text(R, y + 58, 'Authorised signatory', { size: 8.5, color: MUTED, align: 'right' });
-  let ny = p.wrap(L, y + 22, 'This is a computer-generated invoice and does not need a physical signature.', 300, { size: 8.5, color: MUTED });
-  ny = p.wrap(L, ny + 2, `Questions about this invoice: ${v.seller.email}`, 300, { size: 8.5, color: MUTED });
+  let ny = p.wrap(L, y + 22, `This is a computer-generated ${docWord} and does not need a physical signature.`, 300, { size: 8.5, color: MUTED });
+  ny = p.wrap(L, ny + 2, `Questions about this ${docWord}: ${v.seller.email}`, 300, { size: 8.5, color: MUTED });
   if (v.seller.sebiReg) p.wrap(L, Math.max(ny + 6, y + 80), 'Registration granted by SEBI and certification from NISM in no way guarantee performance of the intermediary or provide any assurance of returns to investors.', W, { size: 7.5, color: MUTED });
-  return p.toBuffer({ title: `Tax invoice ${v.number}`, author: v.seller.name });
+  return p.toBuffer({ title: `${cn ? 'Credit note' : 'Tax invoice'} ${v.number}`, author: v.seller.name });
 }

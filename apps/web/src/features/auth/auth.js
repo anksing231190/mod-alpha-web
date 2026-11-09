@@ -10,7 +10,7 @@ function renderAuthForm(){
  const signup=authMode==='signup',mobile=maAuthMethod==='mobile';
  app.innerHTML=`${topbar(true)}<main class="v22 v22-auth"><div class="v22-auth-bg" aria-hidden="true">${v22NetworkBg()}</div><section class="v22-auth-card">
  <h1>${signup?'Create Account':'Welcome Back'}</h1><p>${signup?'Start your AI-powered investment insights':'Continue to your AI-powered investment insights'}</p>
- <div class="v22-seg" role="tablist"><button type="button" class="${!mobile?'active':''}" data-auth-method="email">Email</button><button type="button" class="${mobile?'active':''}" data-auth-method="mobile">Mobile</button></div>
+ <div class="v22-seg" role="tablist"><button type="button" role="tab" aria-selected="${!mobile}" class="${!mobile?'active':''}" data-auth-method="email">Email</button><button type="button" role="tab" aria-selected="${!!mobile}" class="${mobile?'active':''}" data-auth-method="mobile">Mobile</button></div>
  <form id="auth-form" novalidate>
   ${signup?`<label class="v22-auth-in">${ic('user')}<input name="name" placeholder="Full name" required autocomplete="name"></label>`:''}
   <label class="v22-auth-in">${ic(mobile?'msg':'user')}<input name="email" type="${mobile?'tel':'email'}" placeholder="${mobile?'+91 98765 43210':'you@example.com'}" required autocomplete="${mobile?'tel':'email'}"></label>

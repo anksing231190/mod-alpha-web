@@ -12,7 +12,7 @@ function v22AmcMono(amc){const st=V22_AMC_STYLE[amc];if(st)return st;const w=Str
 
 /** Fund house logo image, or the monogram. */
 function v22FundLogo(f,cls=''){const amc=f&&f.amc||'',src=(window.MA_AMC_LOGOS||{})[amc],[mono,col]=v22AmcMono(amc),len=mono.length;
- return `<span class="v22-fund-logo ${cls} ${src?'has-img':''} l${len}" style="--fc:${col}" title="${esc(amc)}" aria-label="${esc(amc)}">${src?`<img src="${src}" alt="" loading="lazy" onerror="this.parentElement.classList.remove('has-img');this.remove()">`:''}<b>${esc(mono)}</b></span>`}
+ return `<span class="v22-fund-logo ${cls} ${src?'has-img':''} l${len}" style="--fc:${col}" title="${esc(amc)}" role="img" aria-label="${esc(amc)}">${src?`<img src="${src}" alt="" loading="lazy" onerror="this.parentElement.classList.remove('has-img');this.remove()">`:''}<b>${esc(mono)}</b></span>`}
 
 /** Logo for a fund object. */
 function v22FundIcon(f){return v22FundLogo(f)}

@@ -6,7 +6,7 @@
 
 /** Billing FAQ on the subscription page. */
 const V22_SUB_FAQ=[
- ['Can I change my plan later?','Yes. Upgrade or switch plans at any time from this page. A new plan starts immediately and your next renewal date moves accordingly.'],
+ ['Can I change my plan later?','Yes. An upgrade (or a longer billing cycle) starts at once and you pay only the difference for the days left; you see the exact amount before paying. A downgrade (or a shorter cycle) starts on your renewal date, with nothing charged today, and you can undo it until then.'],
  ['What happens when I cancel?','Your plan stays active until the end of the current billing period. After that your account moves to the Free plan; your settings and watchlist are kept.'],
  ['Why is KYC required?','Regulations require identity verification before a paid subscription. You complete it once, through our verification partner, using PAN and DigiLocker.'],
  ['Do prices include GST?','Yes. All prices shown include 18% GST. A GST invoice is available under Billing history after every payment.'],

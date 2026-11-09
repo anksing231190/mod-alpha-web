@@ -34,9 +34,12 @@ export async function dispatchDueCampaigns(d: Deps) {
 // Active → Past due after the renewal date; Past due / Cancelled → Expired after the grace period.
 export async function subscriptionLifecycle(d: Deps) {
   const ended = await d.db.query(`UPDATE subscriptions SET status='Cancelled', cancelled_at=now() WHERE cancel_at_period_end AND status IN ('Active','Past due') AND renewal_date <= CURRENT_DATE RETURNING id`);
+  // scheduled downgrades / shorter cycles (docs/29) start on the renewal date: the renewal is charged at the new
+  // plan's price. With Razorpay Subscriptions the plan is also updated on the gateway at this point.
+  const changed = await d.db.query(`UPDATE subscriptions SET plan_id=pending_plan_id, billing_cycle=pending_cycle, amount_inr=pending_amount_inr, pending_plan_id=NULL, pending_cycle=NULL, pending_amount_inr=NULL, pending_requested_at=NULL, updated_at=now() WHERE pending_plan_id IS NOT NULL AND status='Active' AND renewal_date <= CURRENT_DATE RETURNING id`);
   const overdue = await d.db.query(`UPDATE subscriptions SET status='Past due' WHERE status='Active' AND provider<>'import' AND renewal_date < CURRENT_DATE - 3 RETURNING id`);
   const stale = await d.db.query(`UPDATE subscriptions SET status='Expired' WHERE status='Created' AND created_at < now() - interval '1 day' RETURNING id`);
-  return { ended: ended.rowCount, pastDue: overdue.rowCount, abandonedCheckouts: stale.rowCount };
+  return { ended: ended.rowCount, changed: changed.rowCount, pastDue: overdue.rowCount, abandonedCheckouts: stale.rowCount };
 }
 /** Fulfil DPDP data-export requests and anonymise accounts whose deletion grace period (30 days) has passed. */
 // Data rights: build the export file, or delete the account and its personal data (audited).

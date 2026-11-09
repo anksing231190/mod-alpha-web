@@ -96,7 +96,7 @@
     let b = host.querySelector('.ma-start');
     if (done === all || ls.get('ma-start-hide')) { if (b) b.remove(); return; }
     const r = 15, c = 2 * Math.PI * r, open = b && b.classList.contains('open');
-    const html = `<button type="button" class="ma-start-btn" data-ma-start aria-expanded="${open}"><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="${r}" class="bg"/><circle cx="18" cy="18" r="${r}" class="fg" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - done / all)}"/></svg><span><b>${T('Getting started')}</b><small>${done} / ${all} ${T('done')}</small></span>${ic(open ? 'chevUp' : 'chevDown')}</button>
+    const html = `<button type="button" class="ma-start-btn" data-ma-start aria-expanded="${!!open}"><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="${r}" class="bg"/><circle cx="18" cy="18" r="${r}" class="fg" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - done / all)}"/></svg><span><b>${T('Getting started')}</b><small>${done} / ${all} ${T('done')}</small></span>${ic(open ? 'chevUp' : 'chevDown')}</button>
       <div class="ma-start-pop" role="list">${ITEMS.map(([k, t, s, ok]) => { const d = ok(); return `<button type="button" role="listitem" class="ma-start-it${d ? ' done' : ''}" data-ma-start-go="${k}" ${d ? 'tabindex="-1"' : ''}><i>${d ? '✓' : ''}</i><span><b>${esc(T(t))}</b><small>${esc(T(s))}</small></span>${d ? '' : ic('arrowR')}</button>`; }).join('')}<button type="button" class="ma-start-hide" data-ma-start-hide>${T('Hide this list')}</button></div>`;
     if (!b) { b = document.createElement('div'); b.className = 'ma-start'; host.appendChild(b); }
     b.innerHTML = html; b.classList.toggle('open', open);
@@ -125,7 +125,7 @@
     if (!u || u.limit < 0) { if (m) m.remove(); return; }
     const left = Math.max(0, u.limit - u.today), frac = u.limit ? left / u.limit : 0, r = 13, c = 2 * Math.PI * r, low = left <= Math.max(0, Math.floor(u.limit * 0.2));
     const mLeft = u.monthLimit >= 0 ? Math.max(0, u.monthLimit - u.month) : null, open = m && m.classList.contains('open');
-    const html = `<button type="button" class="ma-usage-btn${low ? ' low' : ''}" data-ma-usage aria-expanded="${open}" title="${esc(T('AI questions left today'))}"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="${r}" class="bg"/><circle cx="16" cy="16" r="${r}" class="fg" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - frac)}"/></svg><span>✦ ${left}/${u.limit}</span></button>
+    const html = `<button type="button" class="ma-usage-btn${low ? ' low' : ''}" data-ma-usage aria-expanded="${!!open}" title="${esc(T('AI questions left today'))}"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="${r}" class="bg"/><circle cx="16" cy="16" r="${r}" class="fg" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - frac)}"/></svg><span>✦ ${left}/${u.limit}</span></button>
       <div class="ma-usage-pop"><b>${T('AI questions')}</b>
         <div class="ma-usage-row"><span>${T('Today')}</span><em>${left} ${T('of')} ${u.limit} ${T('left')}</em></div><i class="ma-usage-bar"><i style="width:${(frac * 100).toFixed(0)}%"></i></i>
         ${mLeft != null ? `<div class="ma-usage-row"><span>${T('This month')}</span><em>${mLeft} ${T('of')} ${u.monthLimit} ${T('left')}</em></div><i class="ma-usage-bar"><i style="width:${(u.monthLimit ? mLeft / u.monthLimit * 100 : 0).toFixed(0)}%"></i></i>` : ''}

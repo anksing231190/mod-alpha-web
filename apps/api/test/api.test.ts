@@ -257,6 +257,79 @@ describe('support requests, cancellation survey, grace period, test accounts', (
   });
 });
 
+describe('plan changes (docs/29): prorated upgrade, scheduled downgrade, credit notes', () => {
+  it('previewChange follows the rules doc, including its worked examples', async () => {
+    const { previewChange } = await import('../src/modules/billing/plan-change.js');
+    const plans: any[] = [{ id: 'Free', name: 'Free', sort: 1, prices: { Monthly: 0, Quarterly: 0, Yearly: 0 } }, { id: 'Pro', name: 'Pro', sort: 2, prices: { Monthly: 299, Quarterly: 897, Yearly: 2868 } }, { id: 'Premium', name: 'Premium', sort: 3, prices: { Monthly: 499, Quarterly: 1497, Yearly: 4788 } }];
+    const sub = (plan: string, cycle: any, amount: number, renewal: string, status = 'Active') => ({ plan_id: plan, billing_cycle: cycle, amount_inr: amount, renewal_date: renewal, status });
+    // Pro monthly → Premium monthly, 15 of 30 days left (Nov has 30 days): 249.50 − 149.50 = ₹100
+    const up: any = previewChange(sub('Pro', 'Monthly', 299, '2026-11-25'), plans, { planId: 'Premium', cycle: 'Monthly' }, '2026-11-10');
+    expect(up).toMatchObject({ kind: 'upgrade', daysLeft: 15, daysInCycle: 31, renewsOn: '2026-11-25', newCycle: false });
+    const up2: any = previewChange(sub('Pro', 'Monthly', 299, '2026-12-25'), plans, { planId: 'Premium', cycle: 'Monthly' }, '2026-12-10');
+    expect(up2).toMatchObject({ kind: 'upgrade', daysLeft: 15, daysInCycle: 30, chargeNow: 100, credit: 149.5, newPart: 249.5 });
+    // Pro monthly → Pro yearly with 10 of 30 days left: 2868 − 99.67 = 2768.33, new 12-month cycle from today
+    const cyc: any = previewChange(sub('Pro', 'Monthly', 299, '2026-12-20'), plans, { planId: 'Pro', cycle: 'Yearly' }, '2026-12-10');
+    expect(cyc).toMatchObject({ kind: 'upgrade', chargeNow: 2768.33, renewsOn: '2027-12-10', newCycle: true });
+    // less → scheduled for the renewal date, nothing charged
+    expect(previewChange(sub('Premium', 'Monthly', 499, '2026-11-25'), plans, { planId: 'Pro', cycle: 'Monthly' }, '2026-11-10')).toMatchObject({ kind: 'scheduled', effectiveOn: '2026-11-25', chargeNow: 0, nextAmount: 299 });
+    expect(previewChange(sub('Pro', 'Yearly', 2868, '2027-06-01'), plans, { planId: 'Pro', cycle: 'Monthly' }, '2026-11-10')).toMatchObject({ kind: 'scheduled', effectiveOn: '2027-06-01' });
+    expect(previewChange(sub('Pro', 'Monthly', 299, '2026-11-25'), plans, { planId: 'Free', cycle: 'Monthly' }, '2026-11-10')).toMatchObject({ kind: 'scheduled', toFree: true });
+    // higher plan on a shorter cycle is refused; past due must pay first; same plan is a no-op
+    expect(previewChange(sub('Pro', 'Yearly', 2868, '2027-06-01'), plans, { planId: 'Premium', cycle: 'Monthly' }, '2026-11-10').kind).toBe('blocked');
+    expect(previewChange(sub('Pro', 'Monthly', 299, '2026-11-08', 'Past due'), plans, { planId: 'Premium', cycle: 'Monthly' }, '2026-11-10').kind).toBe('blocked');
+    expect(previewChange(sub('Pro', 'Monthly', 299, '2026-11-25'), plans, { planId: 'Pro', cycle: 'Monthly' }, '2026-11-10').kind).toBe('same');
+    expect(previewChange(null, plans, { planId: 'Pro', cycle: 'Yearly' }, '2026-11-10')).toMatchObject({ kind: 'new', chargeNow: 2868 });
+  });
+  it('upgrades through checkout, schedules and undoes a downgrade, applies it on renewal, refunds with a credit note', async () => {
+    const { subscriptionLifecycle } = await import('../src/jobs/index.js');
+    const { todayIST } = await import('../src/modules/billing/plan-change.js');
+    const c = client(app);
+    await c.post('/auth/signup', { name: 'Plan Changer', email: 'changer@example.com', password: 'secret-pass-1' });
+    const k = (await c.post('/kyc/sessions')).json(); await c.post('/kyc/mock/complete', { ref: k.ref, decision: 'Verified' });
+    const co = (await c.post('/billing/checkout', { planId: 'Pro', cycle: 'Monthly' })).json();
+    await c.post('/billing/mock/complete', { orderId: co.order.orderId });
+    // pretend we are half-way through the month
+    const t = todayIST(), renew = new Date(Date.parse(t) + 15 * 864e5).toISOString().slice(0, 10);
+    await db.query(`UPDATE subscriptions SET renewal_date=$2 WHERE id=$1`, [co.subscriptionId, renew]);
+    const pv = (await c.get('/billing/change/preview?planId=Premium&cycle=Monthly')).json().preview;
+    expect(pv).toMatchObject({ kind: 'upgrade', daysLeft: 15, renewsOn: renew });
+    expect(pv.chargeNow).toBeCloseTo(200 * 15 / pv.daysInCycle, 1);
+    const ch = (await c.post('/billing/change', { planId: 'Premium', cycle: 'Monthly' })).json();
+    expect(ch.amountInr).toBe(pv.chargeNow);
+    await c.post('/billing/mock/complete', { orderId: ch.order.orderId });
+    let e = (await c.get('/me/entitlements')).json();
+    expect(e.plan).toBe('Premium'); expect(e.subscription).toMatchObject({ id: co.subscriptionId, renewalDate: renew, amountInr: 499 });
+    let inv = (await c.get('/billing/invoices')).json().items;
+    expect(inv.filter((i: any) => i.type === 'invoice')).toHaveLength(2);
+    expect(inv.find((i: any) => Number(i.amount_inr) === pv.chargeNow)).toBeTruthy();
+    // downgrade waits for the renewal date; undo clears it; the job applies it on the day
+    const dn = (await c.post('/billing/change', { planId: 'Pro', cycle: 'Monthly' })).json();
+    expect(dn).toMatchObject({ scheduled: true, preview: { effectiveOn: renew, chargeNow: 0 } });
+    e = (await c.get('/me/entitlements')).json();
+    expect(e.plan).toBe('Premium'); expect(e.subscription.pendingChange).toMatchObject({ plan: 'Pro', effectiveOn: renew, amountInr: 299 });
+    expect((await c.post('/billing/change/undo')).json().ok).toBe(true);
+    expect((await c.get('/me/entitlements')).json().subscription.pendingChange).toBeNull();
+    expect((await c.post('/billing/change/undo')).statusCode).toBe(404);
+    await c.post('/billing/change', { planId: 'Pro', cycle: 'Monthly' });
+    await db.query(`UPDATE subscriptions SET renewal_date=CURRENT_DATE WHERE id=$1`, [co.subscriptionId]);
+    expect((await subscriptionLifecycle(app.deps)).changed).toBeGreaterThanOrEqual(1);
+    e = (await c.get('/me/entitlements')).json();
+    expect(e.plan).toBe('Pro'); expect(e.subscription.pendingChange).toBeNull();
+    // refund → credit note against the original invoice, listed and printable
+    const a = await adminClient(app);
+    const pay = (await db.query(`SELECT p.id FROM payments p JOIN users u ON u.id=p.user_id WHERE u.email='changer@example.com' AND p.kind='upgrade'`)).rows[0];
+    const rf = (await a.post(`/admin/payments/${pay.id}/refund`, { amountInr: 50, reason: 'Goodwill refund' })).json();
+    expect(rf.creditNote.number).toMatch(/^CN\/\d{2}-\d{2}\/\d{5}$/);
+    inv = (await c.get('/billing/invoices')).json().items;
+    const cn = inv.find((i: any) => i.type === 'credit_note');
+    expect(cn).toMatchObject({ number: rf.creditNote.number }); expect(cn.against).toMatch(/^MA\//);
+    expect(Number(cn.gst_inr)).toBeCloseTo(50 - 50 / 1.18, 1);
+    const pdf = await c.get(`/billing/credit-notes/${cn.id}/pdf`);
+    expect(pdf.headers['content-type']).toContain('application/pdf');
+    expect((await client(app).get(`/billing/credit-notes/${cn.id}`)).statusCode).toBe(401);
+  });
+});
+
 describe('signed-in devices', () => {
   it('lists this account\'s sessions and signs out another device', async () => {
     const a = client(app), b = client(app);

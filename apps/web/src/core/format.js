@@ -38,7 +38,7 @@ const v22Status=(t)=>{const m={Active:'ok',Verified:'ok',Published:'ok',Success:
 const v22Avatar=(n,i=0)=>`<span class="v22-av" style="--c:${['#3b82f6','#8b5cf6','#14b8a6','#f59e0b','#ec4899','#22c55e'][i%6]}">${esc(n.split(' ').map(x=>x[0]).join('').slice(0,2))}</span>`;
 
 /** Styled <select>. */
-const v22Sel=(id,opts,cls='')=>`<label class="v22-select ${cls}"><select ${id?`id="${id}"`:''}>${opts.map(o=>`<option>${o}</option>`).join('')}</select>${ic('chevDown')}</label>`;
+const v22Sel=(id,opts,cls='',name='')=>`<span class="v22-select ${cls}"><select ${id?`id="${id}"`:''}${name?` aria-label="${name}"`:''}>${opts.map(o=>`<option>${o}</option>`).join('')}</select>${ic('chevDown')}</span>`;
 
 /** On/off switch. */
 const v22Toggle=(on,attr='')=>`<label class="v22-switch"><input type="checkbox" ${on?'checked':''} ${attr}><span></span></label>`;
