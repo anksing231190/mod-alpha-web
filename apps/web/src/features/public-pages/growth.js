@@ -31,20 +31,20 @@
 
   /* ---------- SIP date checker ---------- */
   const DAYS = [1, 5, 10, 15, 20, 25, 28];
-  let ck = { fund: null, amount: 5000, years: 5 };
+  let ck = { fund: null, amount: 5000, years: 5, sel: 'fund' }, last = null;
   /** Value today of a monthly SIP bought on `day` for the last `years` years. */
   function simulate(n, day, amount, years) {
     const L = n.d.length - 1, end = String(n.d[L]).slice(0, 10), endD = new Date(end + 'T00:00:00Z');
-    let units = 0, paid = 0;
+    let units = 0, paid = 0, months = 0;
     for (let k = years * 12; k >= 1; k--) {
       const t = new Date(Date.UTC(endD.getUTCFullYear(), endD.getUTCMonth() - k, Math.min(day, 28)));
       const iso = t.toISOString().slice(0, 10);
       let i = typeof v22NavAt === 'function' ? v22NavAt(n, iso) : -1;
       if (i < 0) continue;
       if (String(n.d[i]).slice(0, 10) < iso && i < L) i++;
-      units += amount / n.v[i]; paid += amount;
+      units += amount / n.v[i]; paid += amount; months++;
     }
-    return { value: units * n.v[L], paid };
+    return { value: units * n.v[L], paid, units, months };
   }
   function checkerHtml() {
     const F = funds(); if (!ck.fund && F.length) ck.fund = F[0].id;
@@ -53,7 +53,7 @@
         <label class="v22-fl">${T('Fund')}<span class="v22-select"><select id="ma-ck-fund">${F.map((f) => `<option value="${esc(f.id)}" ${f.id === ck.fund ? 'selected' : ''}>${esc(f.name)}</option>`).join('')}</select>${ic('chevDown')}</span></label>
         <div class="v22-fl">${T('Monthly SIP')}<div class="v22-seg-pills wrap">${[1000, 5000, 10000, 25000].map((a) => `<button type="button" class="${ck.amount === a ? 'active' : ''}" data-ma-ck-amt="${a}">${money(a)}</button>`).join('')}</div></div>
         <div class="v22-fl">${T('Over the last')}<div class="v22-seg-pills wrap">${[3, 5, 10].map((y) => `<button type="button" class="${ck.years === y ? 'active' : ''}" data-ma-ck-yrs="${y}">${y} ${T('years')}</button>`).join('')}</div></div>
-      </div><div class="v22-card ma-ck-out" id="ma-ck-out">${window.MA_AI ? MA_AI.skelBlock(260) : ''}</div></div>
+      </div><div class="v22-card ma-ck-out" id="ma-ck-out">${window.MA_AI ? MA_AI.skelBlock(260) : ''}</div><div id="ma-ck-side" class="ma-side-slot"></div></div>
       <p class="v22-note ma-grow-note">${T('Illustrative backtest on historical NAV: the SIP buys at the first NAV on or after the chosen day each month. Past performance does not guarantee future returns. Not investment advice.')}</p></section>`;
   }
   async function run() {
@@ -62,14 +62,62 @@
     if (!f || !n || n.v.length < 40) { out.innerHTML = `<p class="v22-sub">${T('NAV history for this fund is not available yet. Try another fund.')}</p>`; return; }
     const res = DAYS.map((d) => ({ d, ...simulate(n, d, ck.amount, ck.years) })), max = Math.max(...res.map((r) => r.value)), min = Math.min(...res.map((r) => r.value));
     const best = res.find((r) => r.value === max), worst = res.find((r) => r.value === min), paid = res[0].paid;
+    last = { f, res, best, worst, max, min };
     const teaser = max * 1.012;
-    const ord = (d) => d + (d === 1 ? 'st' : d === 2 ? 'nd' : d === 3 ? 'rd' : 'th');
     out.innerHTML = `<div class="ma-ck-head">${typeof v22FundLogo === 'function' ? v22FundLogo(f) : ''}<div><b>${esc(f.short || f.name)}</b><small>${money(ck.amount)} ${T('a month for')} ${ck.years} ${T('years')} · ${T('you invest')} ${money(paid)}</small></div></div>
-      <div class="ma-ck-bars">${res.map((r) => `<div class="ma-ck-row${r === best ? ' best' : r === worst ? ' worst' : ''}"><span>${T('SIP on the')} ${ord(r.d)}</span><i><em style="width:${(8 + (r.value - min) / (max - min || 1) * 92).toFixed(1)}%"></em></i><b>${money(r.value)}</b></div>`).join('')}
+      <div class="ma-ck-bars">${res.map((r) => `<button type="button" data-ma-ck-day="${r.d}" class="ma-ck-row${r === best ? ' best' : r === worst ? ' worst' : ''}${ck.sel === r.d ? ' sel' : ''}"><span>${T('SIP on the')} ${ord(r.d)}</span><i><em style="width:${(8 + (r.value - min) / (max - min || 1) * 92).toFixed(1)}%"></em></i><b>${money(r.value)}</b></button>`).join('')}
         <div class="ma-ck-row ma"><span>✦ ${T('Mod Alpha date')}</span><i><em style="width:100%"></em></i><b class="ma-blur">${money(teaser)}</b></div></div>
       <div class="ma-ck-sum"><div><small>${T('Best fixed date')}</small><b class="pos">${ord(best.d)} · ${money(best.value)}</b></div><div><small>${T('Worst fixed date')}</small><b>${ord(worst.d)} · ${money(worst.value)}</b></div><div><small>${T('Difference')}</small><b class="pos">${money(max - min)}</b></div></div>
-      <div class="ma-ck-cta"><span>${T('Mod Alpha picks the historically strongest date each month and reminds you the day before.')}</span><a class="v22-grad-btn" href="#/signup">${T('Sign up free to see your date')} ${ic('arrowR')}</a><a class="v22-outline-btn" href="#/f/${encodeURIComponent(f.id)}">${T('About this fund')}</a></div>`;
+      <div class="ma-ck-cta"><span>${T('Mod Alpha picks the historically strongest date each month and reminds you the day before.')}</span><a class="v22-grad-btn" href="#/signup">${T('Sign up free to see your date')} ${ic('arrowR')}</a><button type="button" class="v22-outline-btn${ck.sel === 'fund' ? ' active' : ''}" data-ma-ck-about>${ic('info')} ${T('About this fund')}</button></div>`;
+    side();
   }
+  /* ---------- detail panel on the right (fund details or one SIP date) ---------- */
+  const ord = (d) => d + (d === 1 ? 'st' : d === 2 ? 'nd' : d === 3 ? 'rd' : 'th');
+  const pct = (v) => (v == null ? '—' : `${(+v).toFixed(1)}%`);
+  /** Shared panel markup: eyebrow + title, a headline value, label/value rows, a note and actions. */
+  function panel({ icon, tint, eyebrow, title, bigLabel, big, bigCls = 'pos', rows, body = '', note, acts }) {
+    return `<aside class="v22-card ma-side" aria-live="polite"><header class="ma-side-head"><span class="ma-side-ic"${tint ? ` style="--t:${tint}"` : ''}>${icon}</span><div><span class="ma-side-eb">${eyebrow}</span><h3>${title}</h3></div><button type="button" class="ma-side-x" data-ma-side-close aria-label="${T('Close')}">${ic('x')}</button></header>
+      ${big != null ? `<div class="ma-side-big"><span>${bigLabel}</span><b class="${bigCls}">${big}</b></div>` : ''}${body}
+      ${rows && rows.length ? `<dl class="ma-side-dl">${rows.map(([k, v, c]) => `<div><dt>${k}</dt><dd class="${c || ''}">${v}</dd></div>`).join('')}</dl>` : ''}
+      ${note ? `<p class="ma-side-note">${note}</p>` : ''}${acts ? `<div class="ma-side-acts">${acts}</div>` : ''}</aside>`;
+  }
+  function side() {
+    const slot = document.getElementById('ma-ck-side'), wrap = slot && slot.parentElement; if (!slot || !last) return;
+    wrap.classList.toggle('has-side', ck.sel != null);
+    if (ck.sel == null) { slot.innerHTML = ''; return; }
+    const { f, res, best, worst } = last, logo = typeof v22FundLogo === 'function' ? v22FundLogo(f) : cic('chart', 40);
+    if (ck.sel === 'fund') {
+      const h = window.MA_FUNDX ? MA_FUNDX.health(f) : null;
+      slot.innerHTML = panel({ icon: logo, eyebrow: T('FUND DETAILS'), title: esc(f.short || f.name), bigLabel: T('5-year CAGR'), big: pct(f.returns[5]),
+        rows: [[T('1-year return'), pct(f.returns[1]), 'pos'], [T('3-year CAGR'), pct(f.returns[3]), 'pos'], [T('10-year CAGR'), pct(f.returns[10]), 'pos'], [T('Risk'), esc(f.riskLabel || f.risk || '—')], ...(h ? [[T('Health score'), `${h.score} / 100 · ${T(h.label)}`]] : []),
+          ...[['AMC', f.amc], ['Category', f.category], ['Benchmark', f.benchmark], ['AUM', f.aum], ['Expense ratio', f.expense != null ? f.expense + '%' : null], ['Plan', [f.plan, f.option].filter(Boolean).join(' · ')]].filter(([, v]) => v && v !== '—').map(([k, v]) => [T(k), esc(String(v))])],
+        note: T('Past performance does not guarantee future returns. Mutual fund investments are subject to market risks.'),
+        acts: `<a class="v22-grad-btn" href="#/signup">${ic('star')} ${T('Follow this fund')}</a><a class="v22-outline-btn" href="#/f/${encodeURIComponent(f.id)}">${T('Full fund page')} ${ic('arrowR')}</a>` });
+    } else {
+      const r = res.find((x) => x.d === ck.sel); if (!r) { ck.sel = 'fund'; side(); return; }
+      const gain = r.value - r.paid, rank = [...res].sort((a, b) => b.value - a.value).indexOf(r) + 1;
+      slot.innerHTML = panel({ icon: cic('calendar', 40), eyebrow: T('SIP DATE DETAILS'), title: `${T('SIP on the')} ${ord(r.d)}`, bigLabel: T('Value today'), big: money(r.value),
+        rows: [[T('You invested'), money(r.paid)], [T('Gain'), `${money(gain)} · ${pct(gain / r.paid * 100)}`, gain >= 0 ? 'pos' : 'neg'], [T('Monthly instalments'), String(r.months)], [T('Units bought'), r.units.toFixed(1)],
+          [T('Rank among the 7 dates'), `${rank} ${T('of')} ${res.length}`], [T('Compared with the best date'), r === best ? T('This is the best date') : `−${money(best.value - r.value)}`, r === best ? 'pos' : 'neg'], [T('Compared with the worst date'), r === worst ? T('This is the worst date') : `+${money(r.value - worst.value)}`, r === worst ? 'neg' : 'pos']],
+        note: `${esc(f.short || f.name)} · ${money(ck.amount)} ${T('a month for')} ${ck.years} ${T('years')}. ${T('Illustrative backtest on historical NAV. Not investment advice.')}`,
+        acts: `<a class="v22-grad-btn" href="#/signup">${T('Sign up free to see your date')} ${ic('arrowR')}</a>` });
+    }
+  }
+  const mobile = () => matchMedia('(max-width:1099px)').matches;
+  const reveal = (id) => { if (mobile()) setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 30); };
+  document.addEventListener('click', (e) => {
+    const t = e.target; if (!t.closest) return;
+    const day = t.closest('[data-ma-ck-day]'), about = t.closest('[data-ma-ck-about]');
+    if (day || about) {
+      ck.sel = day ? +day.dataset.maCkDay : 'fund';
+      document.querySelectorAll('[data-ma-ck-day]').forEach((b) => b.classList.toggle('sel', +b.dataset.maCkDay === ck.sel));
+      document.querySelector('[data-ma-ck-about]')?.classList.toggle('active', ck.sel === 'fund');
+      side(); reveal('ma-ck-side'); return;
+    }
+    const x = t.closest('[data-ma-side-close]'); if (!x) return;
+    if (x.closest('#ma-ck-side')) { ck.sel = null; document.querySelectorAll('[data-ma-ck-day].sel').forEach((b) => b.classList.remove('sel')); document.querySelector('[data-ma-ck-about]')?.classList.remove('active'); side(); }
+    if (x.closest('#ma-learn-side')) { learnSel = null; learnSide(); }
+  });
   document.addEventListener('change', (e) => { if (e.target.id === 'ma-ck-fund') { ck.fund = e.target.value; run(); } });
   document.addEventListener('click', (e) => {
     const a = e.target.closest && e.target.closest('[data-ma-ck-amt]'), y = e.target.closest && e.target.closest('[data-ma-ck-yrs]');
@@ -80,7 +128,7 @@
   async function fundPage(id) {
     const f = ((typeof D !== 'undefined' && D.funds) || []).find((x) => x.id === id);
     if (!f) { if (window.MA_SYS) MA_SYS.notFoundPage(); return; }
-    const pct = (v) => (v == null ? '—' : `${(+v).toFixed(1)}%`), h = window.MA_FUNDX ? MA_FUNDX.health(f) : null;
+    const h = window.MA_FUNDX ? MA_FUNDX.health(f) : null;
     page(`<section class="ma-pf"><nav class="ma-crumbs"><a href="#/landing">${T('Home')}</a><span>›</span><a href="#/sip-date-checker">${T('Funds')}</a><span>›</span><b>${esc(f.short || f.name)}</b></nav>
       <header class="ma-pf-head">${typeof v22FundLogo === 'function' ? v22FundLogo(f, 'lg') : ''}<div><h1>${esc(f.name)}</h1>${typeof v22Tags === 'function' ? v22Tags(f) : ''}</div><a class="v22-grad-btn" href="#/signup">${ic('star')} ${T('Follow this fund')}</a></header>
       <div class="ma-pf-kpis">${[['1Y', f.returns[1]], ['3Y CAGR', f.returns[3]], ['5Y CAGR', f.returns[5]], ['10Y CAGR', f.returns[10]]].map(([l, v]) => `<div class="v22-card"><small>${l}</small><b class="pos">${pct(v)}</b></div>`).join('')}<div class="v22-card"><small>${T('Risk')}</small><b>${esc(f.riskLabel || f.risk || '—')}</b></div>${h ? `<div class="v22-card"><small>${T('Health score')}</small><b>${h.score}<em> / 100 · ${T(h.label)}</em></b></div>` : ''}</div>
@@ -103,9 +151,30 @@
     ['kyc-for-investing', 'Getting started', 'KYC for mutual funds: what you need', '3 min', ['KYC (Know Your Customer) is a one-time identity check required by SEBI. You need your PAN, and Aadhaar-based verification through DigiLocker in most cases.', 'Once your KYC is registered with a KRA, any fund house or platform can use it; you do not repeat it.', 'Mod Alpha asks for KYC only before your first paid plan, through an approved verification partner.']],
   ];
   const art = (s) => ART.find((a) => a[0] === s);
+  const TINT = { 'sip-basics': ['#10b981', 'doc'], 'why-sip-date': ['#3b82f6', 'calendar'], 'what-is-cagr': ['#8b5cf6', 'chart'], 'small-vs-large': ['#ec4899', 'bank'], 'expense-ratio': ['#f59e0b', 'rupee'], 'kyc-for-investing': ['#06b6d4', 'idcard'] };
+  let learnSel = 'sip-basics';
+  function learnCards() {
+    return ART.map(([s, c, t, m, p]) => { const [col, icn] = TINT[s] || ['#3b82f6', 'doc'], on = learnSel === s;
+      return `<a class="ma-learn-card ma-tcard${on ? ' sel' : ''}" style="--t:${col}" href="#/learn/${s}" data-ma-learn="${s}" aria-pressed="${on}"><span class="ma-tcard-top">${cic(icn, 40)}<i class="ma-tcard-mark">${on ? ic('check') : ic('arrowR')}</i></span><span class="ma-learn-c">${esc(T(c))} · ${m}</span><b>${esc(T(t))}</b><p>${esc(T(p[0]).slice(0, 110))}…</p><span class="ma-tcard-bar"><em></em></span></a>`; }).join('');
+  }
+  function learnSide() {
+    const split = document.getElementById('ma-learn-split'), slot = document.getElementById('ma-learn-side'); if (!split || !slot) return;
+    split.classList.toggle('closed', !learnSel);
+    split.querySelector('.ma-learn-grid').innerHTML = learnCards();
+    const a = learnSel && art(learnSel); if (!a) { slot.innerHTML = ''; return; }
+    const [s, c, t, m, p] = a, [col, icn] = TINT[s] || ['', 'doc'], i = ART.indexOf(a), next = [ART[(i + 1) % ART.length], ART[(i + 2) % ART.length]];
+    slot.innerHTML = panel({ icon: cic(icn, 40), tint: col, eyebrow: `${esc(T(c).toUpperCase())} · ${m} ${T('read').toUpperCase()}`, title: esc(T(t)),
+      body: `<div class="ma-side-body">${p.map((x) => `<p>${esc(T(x))}</p>`).join('')}</div><div class="ma-side-next"><small>${T('Keep reading')}</small>${next.map(([ns, , nt]) => `<button type="button" data-ma-learn="${ns}">${esc(T(nt))} ${ic('arrowR')}</button>`).join('')}</div>`,
+      note: T('For education only. Not investment advice. Past performance does not guarantee future returns.'),
+      acts: `<a class="v22-grad-btn" href="#/signup">✦ ${T('Ask Alpha free')}</a><a class="v22-outline-btn" href="#/learn/${s}">${T('Open as a page')} ${ic('arrowR')}</a>` });
+  }
+  document.addEventListener('click', (e) => {
+    const c = e.target.closest && e.target.closest('[data-ma-learn]'); if (!c || !c.closest('#ma-learn-split') || e.metaKey || e.ctrlKey || e.shiftKey) return;
+    e.preventDefault(); learnSel = c.dataset.maLearn; learnSide(); reveal('ma-learn-side');
+  });
   function learnHtml() {
     return `<section class="v22 ma-land-sec" id="learn" data-v22-reveal><div class="v22-sec-head"><span class="v22-eyebrow">${T('LEARN')}</span><h2>${T('Invest with more confidence')}</h2><p>${T('Short, plain-language guides to SIPs, returns and choosing funds.')}</p></div>
-      <div class="ma-learn-grid">${ART.map(([s, c, t, m, p], i) => `<a class="v22-card ma-learn-card" href="#/learn/${s}"><span class="ma-learn-c">${esc(T(c))} · ${m}</span><b>${esc(T(t))}</b><p>${esc(T(p[0]).slice(0, 130))}…</p><span class="ma-learn-go">${T('Read')} ${ic('arrowR')}</span></a>`).join('')}</div></section>`;
+      <div class="ma-split" id="ma-learn-split"><div class="ma-learn-grid">${learnCards()}</div><div id="ma-learn-side" class="ma-side-slot"></div></div></section>`;
   }
   function article(slug) {
     const a = art(slug); if (!a) { if (window.MA_SYS) MA_SYS.notFoundPage(); return; }
@@ -121,7 +190,7 @@
   /** Called by renderLanding(): the checker and Learn sit on the landing page, before pricing. */
   window.MA_GROWTH = { landing() {
     const at = document.getElementById('pricing-preview'); if (!at || document.getElementById('sip-checker')) return;
-    at.insertAdjacentHTML('beforebegin', checkerHtml() + learnHtml()); run();
+    at.insertAdjacentHTML('beforebegin', checkerHtml() + learnHtml()); run(); learnSide();
     if (typeof v22InitReveal === 'function') v22InitReveal();
   } };
   R['sip-date-checker'] = () => landingAt('sip-checker');
