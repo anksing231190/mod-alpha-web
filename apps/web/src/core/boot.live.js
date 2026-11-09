@@ -12,7 +12,7 @@
     // an admin looking at the investor view: "Admin Console" instead of "Upgrade Plan"
     if (role === 'user' && S.user && S.user.role !== 'user') { const up = document.querySelector('.workspace-actions .v22-upgrade, .workspace-actions .upgrade-link'); if (up) up.outerHTML = `<a class="v22-role-chip ma-to-admin" href="#/admin/dashboard">${cic('shield', 20)} <span>Admin Console</span></a>`; } };
   (async () => {
-    app.innerHTML = '<div style="display:grid;place-items:center;height:var(--vh100,100vh)"><span class="v22-spin"></span></div>';
+    app.innerHTML = '<div style="display:grid;place-items:center;height:var(--vh100,100vh)"><span class="ma-sk-tag" role="status"><span class="v22-spin"></span>Loading…</span></div>';
     try { await Promise.all([loadPublicData(), loadSession()]); } catch (e) { console.error(e); notify('Could not reach the Mod Alpha API. Some data may be unavailable.'); }
     if (S.user) await MA_LIVE.refreshSip();   // session cookie known now → subscriber view of the SIP dates
     S.ready = true; route();

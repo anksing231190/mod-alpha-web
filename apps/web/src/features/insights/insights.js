@@ -147,7 +147,7 @@
     setTimeout(paintAdmin, 0);
     return `<div class="v22 v22-adm">${v22Head(T('Insights & Reels'), T('What users see in “Latest AI Insights” on their dashboard: Instagram reels and short text insights.'), `<button type="button" class="v22-grad-btn" data-ma-ins-new="instagram">${igGlyph} ${T('Add Instagram reel')}</button><button type="button" class="v22-outline-btn" data-ma-ins-new="text">${ic('bulb')} ${T('Add text insight')}</button>`, 'ADMIN · CONTENT')}
       <section class="v22-card ma-ins-how"><b>${T('How to add a reel')}</b><ol><li>${T('Post the reel on Mod Alpha’s public Instagram account (business or creator).')}</li><li>${T('On Instagram, tap ⋯ → Copy link.')}</li><li>${T('Click “Add Instagram reel”, paste the link, add a title, and publish.')}</li></ol><small>${T('The video stays on Instagram. If the reel is deleted, archived or the account turns private, it stops playing here — hide or delete the item.')}</small></section>
-      <div id="ma-ins-admin"><div class="v22-loading"><span class="v22-spin"></span></div></div></div>`;
+      <div id="ma-ins-admin">${window.MA_AI ? MA_AI.skel(3) : ''}</div></div>`;
   };
   // the editor (new or existing)
   function editor(kind, it) {
