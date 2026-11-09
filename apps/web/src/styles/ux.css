@@ -569,3 +569,5 @@ html[data-theme="light"] .v22-landing>#sip-checker{background-color:rgba(236,224
   html body header.public-topbar .public-nav{order:2;width:100%!important;display:flex!important;justify-content:center!important;gap:22px!important;padding:6px 0 4px!important;overflow-x:auto;scrollbar-width:none}
   html body header.public-topbar .public-nav a{font-size:14px!important}
 }
+/* same content width as Pricing / FAQ (.v22-plans, .v22-faq-grid: max 1720px, centred) */
+.ma-land-sec>*{width:100%;max-width:1720px;margin-left:auto;margin-right:auto}
