@@ -201,6 +201,7 @@
         { k: 'act', a: 'theme', icon: 'palette', label: light ? T('Switch to dark theme') : T('Switch to light theme'), words: 'theme dark light mode night day' },
         { k: 'act', a: 'lang', icon: 'globe', label: hi ? 'Switch to English' : 'हिन्दी में बदलें (Hindi)', words: 'language hindi english हिन्दी' },
         { k: 'act', a: 'chat', icon: 'chat', label: T('Open chat with Alpha'), words: 'chat alpha assistant ai help' },
+        { k: 'act', a: 'tour', icon: 'sliders', label: T('Take the quick tour'), words: 'tour help guide start onboarding' },
       ];
       if (funds[0] && window.MA_FUNDX) acts.unshift({ k: 'act', a: 'compare', id: funds[0].id, icon: 'brain', label: `${T('Compare')} ${funds[0].short || funds[0].name} ${T('with…')}`, words: '' });
       acts.filter((a) => !ql || a.a === 'compare' || (a.label + ' ' + a.words).toLowerCase().includes(ql)).forEach((a) => rows.push(Object.assign({ g: 'Actions', tag: T('Action') }, a)));
@@ -219,6 +220,7 @@
         if (r.a === 'theme') { if (window.MA_THEME) MA_THEME.set(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'); }
         else if (r.a === 'lang') { if (window.MA_I18N) MA_I18N.set(document.documentElement.dataset.lang === 'hi' ? 'en' : 'hi'); }
         else if (r.a === 'chat') { if (typeof v22OpenChat === 'function') v22OpenChat(); }
+        else if (r.a === 'tour') { if (window.MA_TOUR) MA_TOUR.start(); }
         else if (r.a === 'compare') { go('user/funds'); setTimeout(() => window.MA_FUNDX && MA_FUNDX.add(r.id), 80); }
       } else go(r.to);
     };

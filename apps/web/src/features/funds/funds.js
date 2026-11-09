@@ -45,6 +45,7 @@ function fundDetail(id){
  ${window.MA_FUNDBAR?MA_FUNDBAR.bar(f):''}
  <div class="v22-tabs" role="tablist">${[['overview','Overview'],['performance','Performance'],['nav','NAV History'],['ai','AI Insights'],['info','Fund Info']].map((t,i)=>`<button type="button" role="tab" data-tab="${t[0]}" class="${i===0?'active':''}">${t[0]==='ai'&&window.MA_AI?'<span class="ma-spark" aria-hidden="true">✦</span> ':''}${t[1]}</button>`).join('')}</div>
  <section class="v22-metrics">${metric(f.returns[5].toFixed(1)+'%',tm('5Y CAGR','cagr'),'pos')}${metric(f.returns[3].toFixed(1)+'%',tm('3Y CAGR','cagr'),'pos')}${metric(f.returns[1].toFixed(1)+'%','1Y Returns','pos')}${metric((f.sharpe||1.5).toFixed(1),tm('Sharpe Ratio','sharpe'),'pos-soft')}${metric(esc(f.riskLabel||'Moderate'),tm('Risk Level','risk'),'pos')}</section>
+ ${typeof maAsOf==='function'?`<p class="ma-asof-line">${ic('info')} Returns as of ${maAsOf()||'the latest NAV'} · NAV source: AMFI · Past performance does not guarantee future returns.</p>`:''}
  <section id="fund-tab-content">${fundTab(f,'overview')}</section></div>`;
 }
 

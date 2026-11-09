@@ -36,9 +36,10 @@
     clearTimeout(hideT);
     if (!card) { card = document.createElement('div'); card.className = 'ma-spc'; card.setAttribute('role', 'tooltip'); card.addEventListener('mouseenter', () => clearTimeout(hideT)); card.addEventListener('mouseleave', hide); document.body.appendChild(card); }
     if (card.dataset.id !== id) { card.innerHTML = html(f); card.dataset.id = id; }
-    const r = box.getBoundingClientRect(), w = 340;
-    let left = r.left + r.width / 2 - w / 2; left = Math.max(12, Math.min(innerWidth - w - 12, left));
-    const below = r.bottom + 230 < innerHeight;
+    const z = parseFloat(getComputedStyle(document.documentElement).zoom) || 1, q = box.getBoundingClientRect(); // rects are zoomed (85%), style values are not
+    const r = { left: q.left / z, top: q.top / z, bottom: q.bottom / z, width: q.width / z }, w = 340, W = innerWidth / z;
+    let left = r.left + r.width / 2 - w / 2; left = Math.max(12, Math.min(W - w - 12, left));
+    const below = r.bottom + 230 < innerHeight / z;
     card.style.left = left + 'px'; card.style.top = (below ? r.bottom + 10 : r.top - 10) + 'px'; card.classList.toggle('above', !below);
     card.classList.add('on'); box.setAttribute('aria-describedby', 'ma-spc');
   }

@@ -48,9 +48,10 @@
     if (!b || !h) return;
     const top = document.querySelector('.workspace-topbar'), main = document.querySelector('.main-area');
     // the top bar can slide away while scrolling: the fund bar then sits at the very top
-    const tb = Math.max(0, top ? top.getBoundingClientRect().bottom : 0), ml = main ? main.getBoundingClientRect().left : 0;
+    const z = parseFloat(getComputedStyle(document.documentElement).zoom) || 1; // rects are zoomed (85%), style values are not
+    const tb = Math.max(0, top ? top.getBoundingClientRect().bottom : 0) / z, ml = (main ? main.getBoundingClientRect().left : 0) / z;
     b.style.top = tb + 'px'; b.style.left = ml + 'px';
-    const show = h.getBoundingClientRect().bottom < tb + 4;
+    const show = h.getBoundingClientRect().bottom / z < tb + 4;
     if (show !== b.classList.contains('on')) { b.classList.toggle('on', show); b.setAttribute('aria-hidden', String(!show)); }
   }
   const queue = () => { if (!raf) raf = requestAnimationFrame(place); };

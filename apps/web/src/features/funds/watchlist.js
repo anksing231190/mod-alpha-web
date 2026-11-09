@@ -17,7 +17,7 @@
   function load() {
     if (!live() || loaded) return Promise.resolve();
     if (!loading) loading = MA_LIVE.API.get('/me/watchlist', null, { background: true, onUnauthorized: false })
-      .then((r) => { ids = new Set((r.items || []).map((x) => x.fund_id)); loaded = true; paint(); })
+      .then((r) => { ids = new Set((r.items || []).map((x) => x.fund_id)); loaded = true; paint(); if (window.maWatchlistRefresh) maWatchlistRefresh(); })
       .catch(() => { loading = null; });
     return loading;
   }
@@ -29,19 +29,19 @@
   }
   /** Bring every watch button on the page in line with the current state. */
   function paint() {
-    document.querySelectorAll('[data-ma-watch]').forEach((b) => { const on = ids.has(b.dataset.maWatch); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); b.innerHTML = label(on); });
+    document.querySelectorAll('.ma-watch[data-ma-watch]').forEach((b) => { const on = ids.has(b.dataset.maWatch); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); b.innerHTML = label(on); });
   }
   async function toggle(id) {
     const was = ids.has(id);
     if (was) ids.delete(id); else ids.add(id);
-    paint();
+    paint(); if (window.maWatchlistRefresh) maWatchlistRefresh();
     if (!live()) { saveLocal(); notify(was ? T('Removed from your watchlist.') : T('Added to your watchlist.')); return; }
     try {
       if (was) await MA_LIVE.API.del(`/me/watchlist/${encodeURIComponent(id)}`); else await MA_LIVE.API.post(`/me/watchlist/${encodeURIComponent(id)}`);
       notify(was ? T('Removed from your watchlist.') : T('Added to your watchlist.'));
     } catch (e) {
       if (was) ids.add(id); else ids.delete(id); // roll back
-      paint();
+      paint(); if (window.maWatchlistRefresh) maWatchlistRefresh();
       notify(T('Could not update your watchlist. Check your connection and try again.'));
     }
   }
@@ -54,7 +54,7 @@
   }, true);
   window.addEventListener('ma:logout', () => { loaded = false; loading = null; if (live()) ids = new Set(); });
   // fund page drawn → make sure the live list is known
-  new MutationObserver(() => { if (document.querySelector('[data-ma-watch]')) load(); }).observe(document.documentElement, { childList: true, subtree: true });
+  new MutationObserver(() => { if (document.querySelector('[data-ma-watch], .ma-watch-page')) load(); }).observe(document.documentElement, { childList: true, subtree: true });
 
-  window.MA_WATCH = { button, has: (id) => ids.has(id), toggle, paint };
+  window.MA_WATCH = { button, has: (id) => ids.has(id), list: () => [...ids], size: () => ids.size, toggle, paint, load };
 })();

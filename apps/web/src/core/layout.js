@@ -6,7 +6,7 @@
    ========================================================================== */
 
 /** User menu (id, glyph, label). */
-const U_NAV=[['overview','◈','Overview'],['funds','▦','Explore Funds'],['whatif','⌁','What If Calculator'],['sip','◷','MOD Alpha SIP'],['insights','✧','Mod Alpha AI'],['subscription','◇','Subscription'],['settings','⚙','Settings'],['help','?','Help & FAQ']];
+const U_NAV=[['overview','◈','Overview'],['funds','▦','Explore Funds'],['watchlist','☆','My Watchlist'],['whatif','⌁','What If Calculator'],['sip','◷','MOD Alpha SIP'],['insights','✧','Mod Alpha AI'],['subscription','◇','Subscription'],['settings','⚙','Settings'],['help','?','Help & FAQ']];
 
 /** Admin menu (id, glyph, label). */
 const A_NAV=[['dashboard','◈','Dashboard'],['users','♙','Users'],['subscriptions','◇','Subscriptions'],['sipdate','◷','SIP Date Configuration'],['data','▤','Data Management'],['notifications','♧','Notifications'],['methodology','✧','AI & Methodology'],['audit','≋','Audit Logs'],['settings','⚙','System Settings']];
@@ -27,7 +27,7 @@ function pageHead(title,desc,actions=''){return `<div class="page-head"><div><di
 function kpi(label,value,foot,icon='◈',trend=''){return `<div class="kpi-card"><div class="kpi-top"><span>${label}</span><i>${icon}</i></div><strong>${value}</strong><div class="kpi-foot">${trend?`<b class="trend">${trend}</b> `:''}${foot}</div></div>`}
 
 /** Draw a user screen (#/user/<page>) inside the shell. */
-function renderUserPage(page='overview',sub=''){let c='';switch(page){case'overview':c=userOverview();break;case'funds':c=fundExplorer();break;case'fund':c=fundDetail(sub||selectedFund);break;case'whatif':c=whatIf();break;case'sip':c=sipCompare();break;case'insights':c=insightsPage();break;case'subscription':c=subscriptionPage();break;case'settings':c=settingsPage();break;case'help':c=helpPage();break;default:c=userOverview()}shell('user',page==='fund'?'funds':page,c)}
+function renderUserPage(page='overview',sub=''){let c='';switch(page){case'overview':c=userOverview();break;case'funds':c=fundExplorer();break;case'fund':c=fundDetail(sub||selectedFund);break;case'whatif':c=whatIf();break;case'sip':c=sipCompare();break;case'insights':c=insightsPage();break;case'subscription':c=subscriptionPage();break;case'settings':c=settingsPage();break;case'help':c=helpPage();break;case'watchlist':c=typeof maWatchlistPage==='function'?maWatchlistPage():userOverview();break;default:c=userOverview()}shell('user',page==='fund'?'funds':page,c)}
 
 /** Draw an admin screen (#/admin/<page>) inside the shell. */
 function renderAdmin(page='dashboard'){let c='';switch(page){case'dashboard':c=adminDashboard();break;case'users':c=adminUsers();break;case'subscriptions':c=adminSubs();break;case'sipdate':c=adminSipDate();break;case'data':c=adminData();break;case'notifications':c=adminNotifications();break;case'methodology':c=adminMethodology();break;case'audit':c=adminAudit();break;case'settings':c=adminSettings();break;default:c=adminDashboard()}shell('admin',page,c)}
@@ -41,7 +41,7 @@ function wireCommon(){app.querySelector('#theme-select')?.addEventListener('chan
 const V22_ADMIN_NAV=[['dashboard','dash','Dashboard'],['users','users','User Management'],['subscriptions','card','Subscriptions'],['sipdate','calCheck','SIP Date Configuration'],['data','db','Data Management',[['data','NAV Data Upload'],['data#funds','Fund Management'],['data#categories','Category Management']]],['methodology','network','AI Models & Insights'],['notifications','bell','Notifications'],['settings','gear','System Settings'],['audit','file','Audit Logs']];
 
 /** User sidebar menu (id, icon, label). */
-const V22_USER_NAV=[['overview','dash','Overview'],['funds','grid','Explore Funds'],['whatif','trend','What If Calculator'],['sip','calendar','MOD Alpha SIP'],['subscription','crown','Subscription'],['settings','gear','Settings'],['help','help','Help & FAQ']];
+const V22_USER_NAV=[['overview','dash','Overview'],['funds','grid','Explore Funds'],['watchlist','star','My Watchlist'],['whatif','trend','What If Calculator'],['sip','calendar','MOD Alpha SIP'],['subscription','crown','Subscription'],['settings','gear','Settings'],['help','help','Help & FAQ']];
 
 /** Is the admin 'Data Management' sub-menu open? */
 let v22DataOpen=true;
