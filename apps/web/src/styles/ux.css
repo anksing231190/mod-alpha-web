@@ -1089,3 +1089,14 @@ html[data-theme="light"] .ma-tk-st.blue{color:#1d4ed8}html[data-theme="light"] .
   .v22-akpi-main small{font-size:12.5px!important}
   .v22-akpi-delta em{font-size:12px!important;padding:2px 8px!important}
 }
+
+/* desktop: the detail panel is exactly as tall as the content beside it (SIP checker results / Learn cards);
+   longer text scrolls inside the panel and its action button stays visible at the bottom */
+@media (min-width:1100px){
+  .ma-ck.has-side,.ma-split:not(.closed){align-items:stretch!important}
+  .ma-ck.has-side>.v22-card{height:100%;box-sizing:border-box}
+  #ma-ck-side,#ma-learn-side{position:relative;min-height:0}
+  #ma-ck-side>.ma-xp,#ma-learn-side>.ma-xp{position:absolute!important;inset:0;top:0!important;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;align-content:start}
+  #ma-ck-side .ma-xp-acts,#ma-learn-side .ma-xp-acts{position:sticky;bottom:0;margin-top:auto;background:linear-gradient(transparent,var(--ma-surf) 30%);padding-top:22px!important}
+}
+@media (min-width:1100px){.ma-ck.has-side>.ma-ck-form{align-content:start!important;justify-content:flex-start!important}}
