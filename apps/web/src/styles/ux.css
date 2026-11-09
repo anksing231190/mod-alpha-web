@@ -989,3 +989,103 @@ html[data-theme="light"] .ma-tk-st.blue{color:#1d4ed8}html[data-theme="light"] .
 .ma-refund-why label span{flex:1}
 .ma-refund-sum b.mono{font-size:12.5px;white-space:nowrap}
 .ma-bill-tabs button{flex:none!important;white-space:nowrap;padding:0 18px!important;height:42px}
+
+/* ======================================================================
+   PHONE VIEW (≤ 760 px): a lighter layout, not a squeezed desktop.
+   Fewer controls in the top bar, optional landing demos hidden, compact admin.
+   ====================================================================== */
+.ma-m-prefs{display:none}
+@media (max-width:760px){
+  /* top bar: menu · logo … bell · profile (theme / language live in the menu) */
+  .workspace-topbar .ma-theme-toggle,.workspace-topbar .ma-lang-toggle,.workspace-topbar .v22-upgrade,.workspace-topbar .upgrade-link,.workspace-topbar .v22-role-chip,.workspace-topbar .ma-usage-btn,.workspace-topbar .workspace-search{display:none!important}
+  .workspace-topbar .ma-m-menu,.workspace-topbar .ma-m-logo{position:static!important;flex:none}
+  .ma-m-prefs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 10px}
+  .ma-m-prefs button{display:flex;align-items:center;justify-content:center;gap:8px;height:42px;border-radius:12px;border:1px solid var(--ma-bd);background:var(--ma-surf2);color:var(--ma-tx);font:600 13.5px var(--v-font,Inter,sans-serif)}
+  .ma-m-prefs .v22-ic{width:16px;height:16px}.ma-m-prefs b{font-size:15px}
+
+  /* landing: keep the story, drop the optional demos and the activity pop-up */
+  #beat-the-ai,#timing,#ai-assistant,#public-activity-toast,.v22-toast-activity,[class*="activity-toast"]{display:none!important}
+  #learn .ma-learn-grid>:nth-child(n+4){display:none}
+  .v22-hero a,.v22-hero button{white-space:nowrap}
+  .v22-hero .v22-hero-ctas,.v22-hero [class*="cta"]{flex-wrap:wrap}
+
+  /* public fund page: logo + name on top, button full width */
+  .ma-pf-head{display:grid!important;grid-template-columns:auto 1fr;gap:12px}
+  .ma-pf-head>.v22-grad-btn{grid-column:1/-1;justify-content:center;width:100%}
+  .ma-pf-head h1{font-size:22px!important}
+
+  /* settings: account buttons stacked, full width */
+  .v22-sec-actions{display:grid!important;grid-template-columns:1fr;gap:8px}
+  .v22-sec-actions>*{width:100%;justify-content:center}
+
+  /* notifications: one scrolling row of filters, no duplicate category card */
+  .ma-nc-chips{flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+  .ma-nc-chips button{flex:none}
+  .ma-nc-cats,.ma-nc-sum{display:none!important}
+  .ma-nc-acts{display:grid!important;grid-template-columns:1fr 1fr;width:100%}
+  .ma-nc-acts>*{justify-content:center;font-size:13px!important;padding:0 8px!important}
+
+  /* any row of two main buttons: share the width */
+  .ma-chg-acts,.ma-tkd-acts,.ma-sys-acts,.ma-survey-acts{display:grid!important;grid-template-columns:1fr 1fr;gap:8px}
+  .ma-tkd-acts>:first-child{grid-column:1/-1}
+  .ma-chg-acts>*,.ma-tkd-acts>*,.ma-sys-acts>*,.ma-survey-acts>*{width:100%;justify-content:center;padding:0 10px!important;font-size:14px!important}
+
+  /* admin: compact page heads and 2-up summary cards */
+  .v22-adm .v22-phead{gap:10px}
+  .v22-adm .v22-phead-actions{width:100%;display:flex;flex-wrap:wrap;gap:8px}
+  .v22-adm .v22-phead-actions>*{flex:1 1 auto;justify-content:center}
+  .v22-adm .v22-phead-actions a[href*="template"],.v22-adm .v22-phead-actions a[download]:not(:last-child){display:none!important}
+  .v22-skpis{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important}
+  .v22-skpis>article{padding:12px!important;gap:8px!important;flex-direction:column;align-items:flex-start!important}
+  .v22-skpis .v22-skpi-ic .v22-cic{width:26px;height:26px}
+  .v22-skpis b{font-size:19px!important}.v22-skpis small{font-size:12px!important}.v22-skpis em{font-size:11.5px!important}
+  .v22-skpis article>svg:last-child,.v22-skpis .v22-skpi-bg{display:none}
+
+  /* admin billing: tabs share the width; payments as cards */
+  .ma-bill-tabs{display:grid!important;grid-template-columns:1fr 1fr;width:100%!important}
+  .ma-bill-tabs button{padding:0 8px!important;font-size:13px!important;justify-content:center}
+  .ma-bill-tools small{display:none}
+  .ma-bill-tbl thead{display:none}
+  .ma-bill-tbl,.ma-bill-tbl tbody{display:block}
+  .ma-bill-tbl tr{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:12px 2px;border-bottom:1px solid var(--ma-bd)}
+  .ma-bill-tbl td{display:block;padding:0!important;border:0!important;white-space:normal!important}
+  .ma-bill-tbl td:nth-child(1){grid-column:1;font-size:12px;color:var(--ma-mut);order:0}
+  .ma-bill-tbl td:nth-child(7){grid-column:2;grid-row:1;justify-self:end}
+  .ma-bill-tbl td:nth-child(2){grid-column:1/-1}
+  .ma-bill-tbl td:nth-child(3),.ma-bill-tbl td:nth-child(4){grid-column:1/-1;font-size:12.5px;color:var(--ma-sub)}
+  .ma-bill-tbl td:nth-child(5){grid-column:1;font-weight:700;text-align:left!important;font-size:15px}
+  .ma-bill-tbl td:nth-child(6){grid-column:2;text-align:right!important}
+  .ma-bill-tbl td:nth-child(8){grid-column:1/-1;text-align:left!important;margin-top:6px}
+  .ma-bill-tbl td:nth-child(8) .v22-row-btn{width:100%;justify-content:center}
+  .ma-bill-tbl-wrap{overflow:visible}
+  .ma-why-row{grid-template-columns:minmax(0,1fr) 30px 36px!important}
+  .ma-why-row i{grid-column:1/-1;grid-row:2}
+  .ma-refund-sum{grid-template-columns:1fr 1fr!important}
+
+  /* admin support: list first, a shorter list box */
+  .ma-inbox-left{max-height:420px!important}
+
+  /* admin settings: progress rows wrap their figures under the bar instead of off-screen */
+  .v22-adm [class*="progress"] [class*="row"],.v22-adm [class*="area"] li{flex-wrap:wrap}
+  .v22-adm table{font-size:13px}
+}
+@media (max-width:760px){
+  .workspace-topbar{justify-content:space-between!important}
+  .workspace-topbar .ma-m-lead{margin-right:auto}
+  .ma-m-prefs{margin:14px 0 0!important;padding-top:14px;border-top:1px solid var(--ma-bd)}
+  html body .v22-prof .v22-sec-actions{grid-template-columns:1fr!important}
+  html body .v22-prof .v22-sec-actions button{font-size:14px!important;padding:11px 8px!important}
+  .v22-akpis{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important}
+  .v22-akpis>.v22-akpi{padding:12px!important;min-width:0}
+  .v22-akpi b,.v22-akpi strong{font-size:19px!important}
+  .v22-akpi>svg:last-child,.v22-akpi [class*="ghost"],.v22-akpi [class*="bg-ic"]{display:none}
+  .ma-prog-row{grid-template-columns:1fr!important;gap:4px!important}
+  .ma-prog-row>*{min-width:0;max-width:100%}
+}
+@media (max-width:760px){
+  .v22-akpis>.v22-akpi{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:8px!important}
+  .v22-akpi .v22-tile.lg{width:34px!important;height:34px!important}.v22-akpi .v22-tile.lg .v22-ic{width:18px;height:18px}
+  .v22-akpi-ghost,.v22-akpi-delta span,.v22-akpi-prev{display:none!important}
+  .v22-akpi-main small{font-size:12.5px!important}
+  .v22-akpi-delta em{font-size:12px!important;padding:2px 8px!important}
+}

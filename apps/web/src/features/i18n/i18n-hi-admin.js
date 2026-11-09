@@ -5,7 +5,7 @@ Object.assign(window.MA_I18N_DICT, {
   /* ---------- admin navigation & headers ---------- */
   'Dashboard': 'डैशबोर्ड', 'User Management': 'यूज़र प्रबंधन', 'Subscriptions': 'सदस्यताएँ', 'SIP Date Configuration': 'SIP तारीख कॉन्फ़िगरेशन',
   'Data Management': 'डेटा प्रबंधन', 'NAV Data Upload': 'NAV डेटा अपलोड', 'Fund Management': 'फंड प्रबंधन', 'Category Management': 'श्रेणी प्रबंधन',
-  'AI Models & Insights': 'AI मॉडल और इनसाइट्स', 'System Settings': 'सिस्टम सेटिंग्स', 'Audit Logs': 'ऑडिट लॉग', 'Admin': 'एडमिन',
+  'AI Models & Methodology': 'AI मॉडल और कार्यप्रणाली', 'System Settings': 'सिस्टम सेटिंग्स', 'Audit Logs': 'ऑडिट लॉग', 'Admin': 'एडमिन',
   'ADMIN · USERS': 'एडमिन · यूज़र्स', 'ADMIN · BILLING': 'एडमिन · बिलिंग', 'ADMIN · DATA': 'एडमिन · डेटा', 'ADMIN · MESSAGING': 'एडमिन · मैसेजिंग',
   'ADMIN · METHODOLOGY': 'एडमिन · कार्यप्रणाली', 'ADMIN · SECURITY': 'एडमिन · सुरक्षा', 'ADMIN · SIP DATES': 'एडमिन · SIP तारीखें', 'ADMIN · SYSTEM': 'एडमिन · सिस्टम',
   'Guest admin preview': 'गेस्ट एडमिन प्रीव्यू', 'READ-ONLY DEMO': 'केवल-पढ़ने वाला डेमो',
