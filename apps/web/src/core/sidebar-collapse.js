@@ -24,7 +24,7 @@
       const label = side.querySelector('.side-label'); if (label) label.appendChild(b); else side.insertBefore(b, side.firstChild.nextSibling);
     }
     const on = mini();
-    b.innerHTML = ic(on ? 'chevR' : 'chevL');
+    b.innerHTML = ic('menu');
     b.setAttribute('aria-label', T(on ? 'Expand menu' : 'Collapse menu')); b.title = T(on ? 'Expand menu' : 'Collapse menu');
     b.setAttribute('aria-expanded', String(!on));
   }

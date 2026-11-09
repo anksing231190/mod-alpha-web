@@ -28,7 +28,7 @@ function v22SipResults(r){return `<div><span>Total Invested</span><b>${inr(r.inv
 function sipCompare(){
  const s=v22ParseDate(v22SipState.start),e=v22ParseDate(v22SipState.end),r=v22Sip(v22SipState.amount,s,e);
  return `<div class="v22 v22-sip">
- <header class="v22-title"><h1>MOD Alpha SIP vs Traditional SIP</h1><p>See how AI-selected investment dates can potentially improve your SIP returns.</p></header>
+ <header class="v22-title"><h1>MOD Alpha SIP vs Traditional SIP</h1></header>
  <section class="v22-three"><article class="v22-card v22-input-card"><label class="v22-label" for="sip-amount">Monthly SIP Amount</label><div class="v22-field"><span class="v22-rs">₹</span><input id="sip-amount" value="${v22SipState.amount.toLocaleString('en-IN')}" inputmode="numeric" aria-label="Monthly SIP amount"></div><div class="v22-opts">${[[5000,'5K'],[10000,'10K'],[25000,'25K'],[50000,'50K']].map(x=>`<button type="button" data-v22-sip="${x[0]}" class="${v22SipState.amount===x[0]?'active':''}">${x[1]}</button>`).join('')}</div></article>
  <article class="v22-card v22-input-card"><label class="v22-label" for="sip-start">Start Date</label>${v22DateField('sip-start',v22SipState.start,'')}</article>
  <article class="v22-card v22-input-card"><label class="v22-label" for="sip-end">End Date</label>${v22DateField('sip-end',v22SipState.end,'')}</article></section>

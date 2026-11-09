@@ -41,7 +41,7 @@ function wireCommon(){app.querySelector('#theme-select')?.addEventListener('chan
 const V22_ADMIN_NAV=[['dashboard','dash','Dashboard'],['users','users','User Management'],['subscriptions','card','Subscriptions'],['sipdate','calCheck','SIP Date Configuration'],['data','db','Data Management',[['data','NAV Data Upload'],['data#funds','Fund Management'],['data#categories','Category Management']]],['methodology','network','AI Models & Insights'],['notifications','bell','Notifications'],['settings','gear','System Settings'],['audit','file','Audit Logs']];
 
 /** User sidebar menu (id, icon, label). */
-const V22_USER_NAV=[['overview','dash','Overview'],['funds','grid','Explore Funds'],['watchlist','star','My Watchlist'],['whatif','trend','What If Calculator'],['sip','calendar','MOD Alpha SIP'],['subscription','crown','Subscription'],['settings','gear','Settings'],['help','help','Help & FAQ']];
+const V22_USER_NAV=[['overview','dash','Overview'],['funds','compass','Explore Funds'],['watchlist','star','My Watchlist'],['whatif','trend','What If Calculator'],['sip','calendar','MOD Alpha SIP'],['subscription','crown','Subscription'],['settings','gear','Settings'],['help','help','Help & FAQ']];
 
 /** Is the admin 'Data Management' sub-menu open? */
 let v22DataOpen=true;

@@ -844,3 +844,56 @@ html[data-theme="light"] .ma-bsel-pop{background:#fffaf1}
 .ma-bsel-pop li[hidden]{display:none!important}
 .ma-nc-open{border:0;background:none;padding:0;cursor:pointer;font-family:inherit}
 .ma-pl.app.wm{width:46px;border-radius:8px}.ma-pl.app.wm b{font-size:12px;letter-spacing:-.02em}
+
+/* ---------- alignment fixes (v24.1) ---------- */
+.ma-pwa>.ma-pwa-acts{flex:none!important;margin-left:auto}
+.ma-survey-acts{align-items:center}
+.ma-survey-acts>*{height:46px!important;min-height:46px;padding:0 20px!important;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;margin:0!important;line-height:1}
+.ma-nc-grid{align-items:start}
+.ma-nc-list>.ma-nc-day:first-child{margin-top:0}
+.ma-nc-side{margin-top:26px}
+.v22-chat-note:empty{display:none}
+/* the collapse control is a menu (☰) icon */
+.sidebar .side-label .ma-side-toggle .v22-ic{width:17px;height:17px}
+
+/* ---------- one loading size everywhere = the Insights & Reels loader: the 34px AI orb ---------- */
+.ma-sk-tag{gap:12px!important;font-size:14px!important;color:var(--ma-sub)!important;margin-bottom:14px}
+.ma-sk-tag .ma-orb,.ma-sk-tag .v22-spin,.v22-loading>.v22-spin,.ma-orb-load .ma-orb,.ma-boot .ma-orb{width:34px!important;height:34px!important}
+.v22-loading:has(>.v22-spin){gap:14px!important;padding:26px 4px!important}
+.v22-loading:has(>.v22-spin) b,.ma-orb-load small{font-size:14px!important;color:var(--ma-sub)!important}
+.ma-orb-load{gap:12px!important;font-size:14px!important;padding:18px 4px!important}
+/* inside a chat bubble the orb stays small so the bubble keeps its size */
+.v22-bubble .ma-orb,.v22-bubble .ma-orb-load .ma-orb{width:20px!important;height:20px!important}
+.v22-bubble .ma-orb-load{padding:2px 0!important}
+
+/* ---------- admin: plan entitlements editor (features/admin/subscriptions/entitlements-editor.js) ---------- */
+.ma-ent-src{display:none!important}
+.ma-ent{display:grid;gap:10px;margin-top:4px}
+.ma-ent-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.ma-ent-head b{font-size:14px;color:var(--ma-tx)}.ma-ent-count{font-size:12px;color:var(--ma-mut)}
+.ma-ent-list{list-style:none;margin:0;padding:6px;display:grid;gap:4px;border-radius:14px;border:1px solid var(--ma-bd);background:var(--ma-surf2)}
+.ma-ent-row{display:flex;align-items:center;gap:10px;padding:4px 6px 4px 10px;border-radius:10px}
+.ma-ent-row:hover,.ma-ent-row:focus-within{background:var(--ma-sel)}
+.ma-ent-ck{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:rgba(16,185,129,.16);color:var(--ma-g)}.ma-ent-ck .v22-ic{width:13px;height:13px;stroke-width:2.6}
+.ma-ent-txt{flex:1;min-width:0;height:36px;padding:0 10px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--ma-tx);font:500 14px var(--v-font,Inter,sans-serif)}
+.ma-ent-txt:hover{border-color:var(--ma-bd)}.ma-ent-txt:focus{border-color:var(--ma-c);background:var(--ma-surf);outline:none}
+.ma-ent-btns{display:flex;gap:2px;opacity:.55;transition:opacity .15s}.ma-ent-row:hover .ma-ent-btns,.ma-ent-row:focus-within .ma-ent-btns{opacity:1}
+.ma-ent-btns button{width:30px;height:30px;border:0;border-radius:8px;background:none;color:var(--ma-sub);display:grid;place-items:center;cursor:pointer}
+.ma-ent-btns button:hover:not(:disabled){background:var(--ma-surf);color:var(--ma-tx)}.ma-ent-btns button.del:hover{color:#f43f5e}
+.ma-ent-btns button:disabled{opacity:.3;cursor:default}.ma-ent-btns .v22-ic{width:15px;height:15px}
+.ma-ent-empty{padding:12px;font-size:13px;color:var(--ma-mut)}
+.ma-ent-add{display:flex;align-items:center;gap:8px;padding:4px 4px 4px 12px;border-radius:12px;border:1px dashed var(--ma-bd)}
+.ma-ent-add>span{color:var(--ma-c);display:grid}.ma-ent-add>span .v22-ic{width:16px;height:16px}
+.ma-ent-add input{flex:1;min-width:0;height:38px;border:0;background:transparent;color:var(--ma-tx);font:14px var(--v-font,Inter,sans-serif);outline:none}
+.ma-ent-add .v22-outline-btn{height:36px;padding:0 16px}
+.ma-ent-sugg{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.ma-ent-sugg small{font-size:12px;color:var(--ma-mut);margin-right:2px}
+.ma-ent-sugg button{padding:5px 10px;border-radius:999px;border:1px solid var(--ma-bd);background:none;color:var(--ma-sub);font:500 12.5px var(--v-font,Inter,sans-serif);cursor:pointer}.ma-ent-sugg button:hover{border-color:var(--ma-c);color:var(--ma-tx)}
+.ma-lim-head{margin-top:10px}
+.ma-lim-grid{display:grid!important;grid-template-columns:1fr 1fr!important;gap:12px!important}
+.ma-lim{display:grid;gap:8px;padding:12px 14px;border-radius:14px;border:1px solid var(--ma-bd);background:var(--ma-surf2)}
+.ma-lim>b{font-size:13px;color:var(--ma-sub);font-weight:600}
+.ma-lim-row{display:flex;align-items:center;gap:12px}
+.ma-lim-n{width:110px;height:40px;padding:0 12px;border-radius:10px;border:1px solid var(--ma-bd);background:var(--ma-surf);color:var(--ma-tx);font:600 15px var(--v-font,Inter,sans-serif)}
+.ma-lim-n:disabled{opacity:.55}
+.ma-lim-unl{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ma-sub);cursor:pointer}.ma-lim-unl input{width:18px;height:18px;accent-color:#8b5cf6}
+@media (max-width:600px){.ma-lim-grid{grid-template-columns:1fr!important}}

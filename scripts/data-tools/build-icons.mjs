@@ -25,6 +25,7 @@ const OUTLINE = {
   shield: 'shield-check', mail: 'mail', msg: 'message-square', bolt: 'zap', layers: 'layers', play: 'play', spark: 'sparkles',
   robot: 'bot', logout: 'log-out', sort: 'arrow-up-down', trophy: 'trophy', sliders: 'sliders-horizontal', mic: 'mic',
   wallet: 'wallet', help: 'circle-help', swap: 'arrow-left-right', download: 'download', plug: 'plug',
+  menu: 'menu', compass: 'compass',
 };
 // cic(name): our name → [Lucide name, tint]
 const TILE = {
