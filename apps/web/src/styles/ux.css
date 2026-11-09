@@ -1118,3 +1118,12 @@ html[data-theme="light"] .ma-tk-st.blue{color:#1d4ed8}html[data-theme="light"] .
 .v22-pc .v22-fl input{height:46px}
 .v22-pc .ma-lim-grid{grid-template-columns:1fr 1fr!important}
 .ma-lim-unl{flex-direction:row!important;white-space:nowrap}.ma-lim-row{flex-wrap:nowrap}.ma-lim-n{flex:1;min-width:70px;width:auto!important}
+/* pricing dialog: the AI-limit boxes always fit inside the left column */
+.v22-pc>*{min-width:0}
+.v22-pc .ma-lim-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;min-width:0;width:100%;overflow:hidden}
+.v22-pc .ma-lim{min-width:0;box-sizing:border-box}
+.v22-pc .ma-lim-row{display:flex!important;flex-direction:row!important;align-items:center;gap:10px;min-width:0}
+.v22-pc .ma-lim-n{flex:1 1 0;min-width:0!important;width:0!important}
+.v22-pc .ma-lim-unl{display:inline-flex!important;flex-direction:row!important;align-items:center;gap:6px;flex:none;margin:0!important}
+.v22-pc .ma-lim-unl input{margin:0!important}
+@media (min-width:900px) and (max-width:1250px){.v22-pc .ma-lim-grid{grid-template-columns:1fr!important}}
