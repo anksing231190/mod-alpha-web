@@ -634,3 +634,5 @@ button.ma-ck-row.ma{cursor:default}button.ma-ck-row.ma:hover{background:transpar
 @media (max-width:1099px){.ma-split .ma-learn-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (max-width:900px){.ma-split .ma-learn-grid{grid-template-columns:1fr 1fr}}
 @media (max-width:600px){.ma-split .ma-learn-grid{grid-template-columns:1fr}}
+/* landing: no small pill labels above section titles ("TRY IT YOURSELF", "LEARN", …) */
+.v22-landing .v22-eyebrow,.v22-landing .eyebrow{display:none!important}
