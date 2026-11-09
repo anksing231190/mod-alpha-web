@@ -17,7 +17,7 @@
     const s = String(m).toLowerCase();
     if (/could not|couldn’t|can't|cannot|failed|error|invalid|incorrect|wrong|denied|declined|expired|try again/.test(s)) return 'error';
     if (/limit|only |up to|remove one|first|stay off|not available|required|please /.test(s)) return 'warning';
-    if (/saved|added|removed from|activated|active|sent|updated|done|✓|copied|success|thank|scheduled|undone|verified|upgraded|turned on|alerts are on|signed out|selected|चुनी/.test(s)) return 'success';
+    if (/saved|added|removed from|activated|active|sent|updated|done|✓|copied|success|thank|scheduled|undone|verified|upgraded|turned on|alerts are on|signed out|selected|issued|status changed|चुनी/.test(s)) return 'success';
     return 'info';
   }
   function host() {

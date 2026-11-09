@@ -92,6 +92,18 @@ export default async function content(app: FastifyInstance) {
     const r = await db.query(`SELECT number, topic, message, status, reply, replied_at, created_at, updated_at FROM support_tickets WHERE user_id=$1 ORDER BY created_at DESC LIMIT 50`, [u.id]);
     return { items: r.rows };
   });
+  // GET /admin/support/tickets?status=&q= — the support inbox: open requests first, then newest, with counts per status.
+  app.get('/admin/support/tickets', async (req) => {
+    requireAdmin(req);
+    const qy = parse(z.object({ status: z.enum(['Open', 'In progress', 'Answered', 'Closed']).optional(), q: z.string().trim().max(80).optional() }), req.query);
+    const where: string[] = [], args: unknown[] = [];
+    if (qy.status) { args.push(qy.status); where.push(`t.status=$${args.length}`); }
+    if (qy.q) { args.push(`%${qy.q}%`); where.push(`(t.number ILIKE $${args.length} OR t.email ILIKE $${args.length} OR t.topic ILIKE $${args.length} OR t.message ILIKE $${args.length} OR u.full_name ILIKE $${args.length})`); }
+    const items = (await db.query(`SELECT t.number, t.email, t.topic, t.message, t.status, t.reply, t.replied_at, t.created_at, t.updated_at, u.full_name, u.id AS user_id
+      FROM support_tickets t LEFT JOIN users u ON u.id=t.user_id ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY (t.status IN ('Open','In progress')) DESC, t.created_at DESC LIMIT 200`, args)).rows;
+    const counts = Object.fromEntries((await db.query(`SELECT status, count(*)::int n FROM support_tickets GROUP BY status`)).rows.map((r) => [r.status, r.n]));
+    return { items, counts };
+  });
   // PATCH /admin/support/tickets/:number — set the status and/or reply (the reply is also emailed to the person).
   app.patch('/admin/support/tickets/:number', async (req) => {
     requireAdmin(req);
@@ -99,7 +111,11 @@ export default async function content(app: FastifyInstance) {
     const b = parse(z.object({ status: z.enum(['Open', 'In progress', 'Answered', 'Closed']).optional(), reply: z.string().trim().min(2).max(4000).optional() }), req.body);
     const r = await db.query(`UPDATE support_tickets SET status=coalesce($2, CASE WHEN $3::text IS NOT NULL THEN 'Answered' ELSE status END), reply=coalesce($3, reply), replied_at=CASE WHEN $3::text IS NOT NULL THEN now() ELSE replied_at END, updated_at=now() WHERE number=$1 RETURNING number, email, topic, status, reply`, [number, b.status ?? null, b.reply ?? null]);
     if (!r.rows[0]) throw notFound('Ticket not found');
-    if (b.reply) await providers.email.send({ to: r.rows[0].email, subject: `Re: ${r.rows[0].topic} (${number})`, text: b.reply });
+    if (b.reply) {
+      await providers.email.send({ to: r.rows[0].email, subject: `Re: ${r.rows[0].topic} (${number})`, text: b.reply });
+      // the person also sees it in the app (bell + Help → My requests)
+      await db.query(`INSERT INTO notifications (user_id, kind, title, body, link) SELECT user_id, 'account', $2, $3, '#/user/help' FROM support_tickets WHERE number=$1 AND user_id IS NOT NULL`, [number, `Reply to your request ${number}`, b.reply.slice(0, 180)]);
+    }
     await audit(db, req, { action: 'SUPPORT_TICKET_UPDATED', category: 'Account', resource: number, meta: { status: r.rows[0].status } });
     return { ticket: r.rows[0] };
   });

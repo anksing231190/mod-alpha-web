@@ -327,6 +327,23 @@ describe('plan changes (docs/29): prorated upgrade, scheduled downgrade, credit 
     const pdf = await c.get(`/billing/credit-notes/${cn.id}/pdf`);
     expect(pdf.headers['content-type']).toContain('application/pdf');
     expect((await client(app).get(`/billing/credit-notes/${cn.id}`)).statusCode).toBe(401);
+    // admin screens: payments list (with the credit note), cancellation reasons, support inbox
+    const pays = (await a.get('/admin/payments?q=changer@example.com')).json();
+    const up = pays.items.find((x: any) => x.id === pay.id);
+    expect(up).toMatchObject({ kind: 'upgrade', plan_id: 'Pro' }); expect(Number(up.refunded_inr)).toBe(50); expect(up.credit_notes[0].number).toBe(rf.creditNote.number);
+    expect(pays.month.refunded).toBeGreaterThanOrEqual(50);
+    await c.post(`/billing/subscriptions/${co.subscriptionId}/cancel`, { reason: 'too_expensive', comment: 'Bit pricey for me' });
+    const can = (await a.get('/admin/cancellations?days=30')).json();
+    expect(can.reasons.find((r: any) => r.reason === 'too_expensive').n).toBeGreaterThanOrEqual(1);
+    expect(can.latest.find((x: any) => x.email === 'changer@example.com')).toMatchObject({ reason: 'too_expensive', comment: 'Bit pricey for me' });
+    const sent = (await c.post('/support/tickets', { email: 'changer@example.com', topic: 'Subscription', message: 'Why was I charged twice this month?' })).json();
+    const inbox = (await a.get('/admin/support/tickets?status=Open')).json();
+    expect(inbox.items.find((t: any) => t.number === sent.number)).toMatchObject({ full_name: 'Plan Changer', status: 'Open' });
+    expect(inbox.counts.Open).toBeGreaterThanOrEqual(1);
+    await a.patch(`/admin/support/tickets/${sent.number}`, { reply: 'You were charged once; the second line was a pending authorisation.' });
+    expect((await c.get('/me/notifications')).json().items.some((n: any) => n.title.includes(sent.number))).toBe(true);
+    // users get 403 on every admin screen
+    for (const u of ['/admin/payments', '/admin/cancellations', '/admin/support/tickets']) expect((await c.get(u)).statusCode).toBe(403);
   });
 });
 

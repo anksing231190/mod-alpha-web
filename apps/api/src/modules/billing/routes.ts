@@ -270,9 +270,33 @@ export default async function billing(app: FastifyInstance) {
     await audit(db, req, { action: 'PLAN_CONFIGURATION_UPDATED', category: 'Configuration', resource: id, meta: b });
     return { plan: planView(r.rows[0]) };
   });
-  // Super admin: refund a payment through the gateway and record it.
-  app.post('/admin/payments/:id/refund', async (req) => {
+  // GET /admin/payments?q=&status= — payments with their invoice, credit notes and what can still be refunded.
+  app.get('/admin/payments', async (req) => {
     requireAdmin(req);
+    const qy = parse(z.object({ q: z.string().trim().max(80).optional(), status: z.enum(['captured', 'refunded', 'failed']).optional() }), req.query);
+    const where = [`p.status IN ('captured','refunded','failed')`], args: unknown[] = [];
+    if (qy.status) { args.push(qy.status); where.push(`p.status=$${args.length}`); }
+    if (qy.q) { args.push(`%${qy.q}%`); where.push(`(u.email ILIKE $${args.length} OR u.full_name ILIKE $${args.length} OR i.number ILIKE $${args.length} OR p.provider_payment_id ILIKE $${args.length})`); }
+    const items = (await db.query(`SELECT p.id, p.amount_inr, p.refunded_inr, p.status, p.kind, p.paid_on, p.created_at, p.provider_payment_id, s.plan_id, s.billing_cycle, u.full_name, u.email, i.number AS invoice_number,
+        (SELECT json_agg(json_build_object('number', c.number, 'amount', c.amount_inr, 'reason', c.reason, 'issued_at', c.issued_at) ORDER BY c.issued_at) FROM credit_notes c WHERE c.payment_id=p.id) AS credit_notes
+      FROM payments p LEFT JOIN users u ON u.id=p.user_id LEFT JOIN subscriptions s ON s.id=p.subscription_id LEFT JOIN invoices i ON i.payment_id=p.id
+      WHERE ${where.join(' AND ')} ORDER BY coalesce(p.paid_on, p.created_at::date) DESC, p.created_at DESC LIMIT 200`, args)).rows;
+    const month = (await db.query(`SELECT coalesce(sum(amount_inr) FILTER (WHERE status IN ('captured','refunded')),0)::float gross, coalesce(sum(refunded_inr),0)::float refunded, count(*) FILTER (WHERE refunded_inr>0)::int refunds FROM payments WHERE paid_on >= date_trunc('month', CURRENT_DATE)`)).rows[0];
+    return { items, month };
+  });
+  // GET /admin/cancellations?days=90 — why people cancel: counts per survey reason and the latest comments.
+  app.get('/admin/cancellations', async (req) => {
+    requireAdmin(req);
+    const { days } = parse(z.object({ days: z.coerce.number().int().min(7).max(365).default(90) }), req.query);
+    const base = `FROM subscriptions s JOIN users u ON u.id=s.user_id WHERE (s.cancel_at_period_end OR s.status='Cancelled') AND s.updated_at >= now() - make_interval(days => $1::int)`;
+    const reasons = (await db.query(`SELECT coalesce(s.cancel_reason,'no_answer') reason, count(*)::int n ${base} GROUP BY 1 ORDER BY 2 DESC`, [days])).rows;
+    const latest = (await db.query(`SELECT s.id, s.plan_id, s.billing_cycle, s.cancel_reason reason, s.cancel_comment comment, s.renewal_date, s.status, s.cancel_at_period_end, s.updated_at, u.full_name, u.email ${base} ORDER BY s.updated_at DESC LIMIT 30`, [days])).rows;
+    const active = (await db.query(`SELECT count(*)::int n FROM subscriptions WHERE status='Active'`)).rows[0].n;
+    return { days, reasons, latest, total: reasons.reduce((a: number, r: any) => a + r.n, 0), active };
+  });
+  // Super admin only: refund a payment through the gateway; issues a GST credit note.
+  app.post('/admin/payments/:id/refund', async (req) => {
+    requireAdmin(req, true);
     const b = parse(z.object({ amountInr: z.number().positive(), reason: z.string().min(3) }), req.body);
     const p = (await db.query('SELECT * FROM payments WHERE id=$1', [(req.params as any).id])).rows[0];
     if (!p || p.status !== 'captured') throw notFound('Captured payment not found');
