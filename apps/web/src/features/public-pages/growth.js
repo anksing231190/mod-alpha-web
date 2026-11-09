@@ -1,11 +1,13 @@
 /* ==========================================================================
-   Feature: public growth pages (no sign-in needed)
-   • #/sip-date-checker — free tool: pick a fund, a monthly amount and 3 / 5 / 10 years; see what a SIP on the
+   Feature: public growth content (no sign-in needed)
+   • SIP date checker — a section on the landing page (#sip-checker), free tool: pick a fund, a monthly amount and 3 / 5 / 10 years; see what a SIP on the
      1st, 5th, 10th, 15th, 20th, 25th or 28th would be worth today (bought at the first NAV on/after that day
      each month), the best and worst fixed dates, and Mod Alpha's date as a blurred teaser with "Sign up free".
    • #/f/<fundId> — public fund page: key numbers, NAV chart, health score, SIP-date teaser, link to the checker.
-   • #/learn and #/learn/<slug> — short articles (SIP basics, CAGR, why the date matters…) with related reads.
-   The top bar gets "Learn" and "SIP checker". NAV: the demo dataset, or GET /funds/:id/nav (live).
+   • Learn — a section on the landing page (#learn) with article cards; #/learn/<slug> opens an article.
+   renderLanding() calls MA_GROWTH.landing() to insert both sections before Pricing. The top bar gets
+   "SIP checker" and "Learn", scrolling to them. Old links (#/sip-date-checker, #/learn, #/pricing, #/faq)
+   open the landing page at that section (landingAt() in core/router.js). NAV: the demo dataset, or GET /funds/:id/nav (live).
    Styles: src/styles/ux.css
    ========================================================================== */
 (function () {
@@ -24,7 +26,7 @@
   /* ---------- top bar links ---------- */
   if (typeof topbar === 'function') {
     const base = topbar;
-    topbar = function (publicMode) { const h = base.apply(this, arguments); return publicMode ? h.replace('<a href="#/faq">FAQ</a>', `<a href="#/sip-date-checker">${T('SIP checker')}</a><a href="#/learn">${T('Learn')}</a><a href="#/faq">FAQ</a>`) : h; };
+    topbar = function (publicMode) { const h = base.apply(this, arguments); return publicMode ? h.replace('<a href="#/landing" data-public-scroll="pricing-preview">', `<a href="#/landing" data-public-scroll="sip-checker">${T('SIP checker')}</a><a href="#/landing" data-public-scroll="learn">${T('Learn')}</a><a href="#/landing" data-public-scroll="pricing-preview">`) : h; };
   }
 
   /* ---------- SIP date checker ---------- */
@@ -44,16 +46,15 @@
     }
     return { value: units * n.v[L], paid };
   }
-  function checkerShell() {
+  function checkerHtml() {
     const F = funds(); if (!ck.fund && F.length) ck.fund = F[0].id;
-    page(`<section class="ma-grow-hero"><span class="v22-eyebrow">${T('FREE TOOL')}</span><h1>${T('Does your SIP date matter?')}</h1><p>${T('Pick a fund and see what the same monthly SIP would be worth today on different dates of the month. Real NAV history, no sign-up.')}</p></section>
-      <section class="ma-ck"><div class="v22-card ma-ck-form">
+    return `<section class="v22 ma-land-sec" id="sip-checker" data-v22-reveal><div class="v22-sec-head"><span class="v22-eyebrow">${T('FREE TOOL')}</span><h2>${T('Does your SIP date matter?')}</h2><p>${T('Pick a fund and see what the same monthly SIP would be worth today on different dates of the month. Real NAV history, no sign-up.')}</p></div>
+      <div class="ma-ck"><div class="v22-card ma-ck-form">
         <label class="v22-fl">${T('Fund')}<span class="v22-select"><select id="ma-ck-fund">${F.map((f) => `<option value="${esc(f.id)}" ${f.id === ck.fund ? 'selected' : ''}>${esc(f.name)}</option>`).join('')}</select>${ic('chevDown')}</span></label>
         <div class="v22-fl">${T('Monthly SIP')}<div class="v22-seg-pills wrap">${[1000, 5000, 10000, 25000].map((a) => `<button type="button" class="${ck.amount === a ? 'active' : ''}" data-ma-ck-amt="${a}">${money(a)}</button>`).join('')}</div></div>
         <div class="v22-fl">${T('Over the last')}<div class="v22-seg-pills wrap">${[3, 5, 10].map((y) => `<button type="button" class="${ck.years === y ? 'active' : ''}" data-ma-ck-yrs="${y}">${y} ${T('years')}</button>`).join('')}</div></div>
-      </div><div class="v22-card ma-ck-out" id="ma-ck-out">${window.MA_AI ? MA_AI.skelBlock(260) : ''}</div></section>
-      <p class="v22-note ma-grow-note">${T('Illustrative backtest on historical NAV: the SIP buys at the first NAV on or after the chosen day each month. Past performance does not guarantee future returns. Not investment advice.')}</p>`, T('SIP date checker'));
-    run();
+      </div><div class="v22-card ma-ck-out" id="ma-ck-out">${window.MA_AI ? MA_AI.skelBlock(260) : ''}</div></div>
+      <p class="v22-note ma-grow-note">${T('Illustrative backtest on historical NAV: the SIP buys at the first NAV on or after the chosen day each month. Past performance does not guarantee future returns. Not investment advice.')}</p></section>`;
   }
   async function run() {
     const out = document.getElementById('ma-ck-out'); if (!out) return;
@@ -102,10 +103,9 @@
     ['kyc-for-investing', 'Getting started', 'KYC for mutual funds: what you need', '3 min', ['KYC (Know Your Customer) is a one-time identity check required by SEBI. You need your PAN, and Aadhaar-based verification through DigiLocker in most cases.', 'Once your KYC is registered with a KRA, any fund house or platform can use it; you do not repeat it.', 'Mod Alpha asks for KYC only before your first paid plan, through an approved verification partner.']],
   ];
   const art = (s) => ART.find((a) => a[0] === s);
-  function learnHub() {
-    page(`<section class="ma-grow-hero"><span class="v22-eyebrow">${T('LEARN')}</span><h1>${T('Invest with more confidence')}</h1><p>${T('Short, plain-language guides to SIPs, returns and choosing funds.')}</p></section>
-      <section class="ma-learn-grid">${ART.map(([s, c, t, m, p], i) => `<a class="v22-card ma-learn-card" href="#/learn/${s}"><span class="ma-learn-c">${esc(T(c))} · ${m}</span><b>${esc(T(t))}</b><p>${esc(T(p[0]).slice(0, 130))}…</p><span class="ma-learn-go">${T('Read')} ${ic('arrowR')}</span></a>`).join('')}</section>
-      <section class="v22-card ma-learn-tool"><div><b>${T('Try it on a real fund')}</b><p>${T('See how much the SIP date changed the result over the last 5 years.')}</p></div><a class="v22-grad-btn" href="#/sip-date-checker">${T('Open the SIP date checker')} ${ic('arrowR')}</a></section>`, T('Learn'));
+  function learnHtml() {
+    return `<section class="v22 ma-land-sec" id="learn" data-v22-reveal><div class="v22-sec-head"><span class="v22-eyebrow">${T('LEARN')}</span><h2>${T('Invest with more confidence')}</h2><p>${T('Short, plain-language guides to SIPs, returns and choosing funds.')}</p></div>
+      <div class="ma-learn-grid">${ART.map(([s, c, t, m, p], i) => `<a class="v22-card ma-learn-card" href="#/learn/${s}"><span class="ma-learn-c">${esc(T(c))} · ${m}</span><b>${esc(T(t))}</b><p>${esc(T(p[0]).slice(0, 130))}…</p><span class="ma-learn-go">${T('Read')} ${ic('arrowR')}</span></a>`).join('')}</div></section>`;
   }
   function article(slug) {
     const a = art(slug); if (!a) { if (window.MA_SYS) MA_SYS.notFoundPage(); return; }
@@ -118,7 +118,13 @@
   }
 
   const R = (window.MA_ROUTES = window.MA_ROUTES || {});
-  R['sip-date-checker'] = () => checkerShell();
+  /** Called by renderLanding(): the checker and Learn sit on the landing page, before pricing. */
+  window.MA_GROWTH = { landing() {
+    const at = document.getElementById('pricing-preview'); if (!at || document.getElementById('sip-checker')) return;
+    at.insertAdjacentHTML('beforebegin', checkerHtml() + learnHtml()); run();
+    if (typeof v22InitReveal === 'function') v22InitReveal();
+  } };
+  R['sip-date-checker'] = () => landingAt('sip-checker');
   R.f = (p) => fundPage(decodeURIComponent(p[1] || ''));
-  R.learn = (p) => (p[1] ? article(p[1]) : learnHub());
+  R.learn = (p) => (p[1] ? article(p[1]) : landingAt('learn'));
 })();

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Feature: public pages (#/pricing, #/faq) and the public footer
+   Feature: pricing / FAQ blocks (shown on the landing page; #/pricing and #/faq scroll there) and the public footer
    ========================================================================== */
 
 /** Public footer: brand, links, disclaimer, social links. */

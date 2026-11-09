@@ -158,7 +158,8 @@ function v22Features(){
 function renderLanding(){renderLandingBase();
  const feat=document.getElementById('features');if(feat)feat.outerHTML=v22Features();
  const pp=document.getElementById('pricing-preview');if(pp)pp.innerHTML=pricingSection(true);
- const fq=document.getElementById('faq-preview');if(fq)fq.outerHTML=v22Faq();
+ const fq=document.getElementById('faq-preview');if(fq)fq.outerHTML=v22Faq(true);
+ if(window.MA_GROWTH)MA_GROWTH.landing();
  document.querySelector('.v22-how-replay')?.remove();
  v22FitFibers();
  // faint version of the login-page particle animation behind the whole landing page

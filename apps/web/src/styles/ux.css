@@ -552,3 +552,20 @@ html[data-theme="light"] .v22-outline-btn.danger,html[data-theme="light"] .ma-de
 @media (max-width:1100px){.ma-pf-kpis{grid-template-columns:repeat(3,1fr)}}
 @media (max-width:900px){.ma-ck,.ma-pf-two{grid-template-columns:1fr}.ma-learn-grid,.ma-learn-grid.sm{grid-template-columns:1fr 1fr}}
 @media (max-width:600px){.ma-ck-row{grid-template-columns:96px minmax(0,1fr) 92px;font-size:13px}.ma-ck-sum{grid-template-columns:1fr}.ma-learn-grid,.ma-learn-grid.sm{grid-template-columns:1fr}.ma-pf-kpis{grid-template-columns:1fr 1fr}}
+
+/* SIP checker + Learn as landing-page sections (features/public-pages/growth.js → MA_GROWTH.landing) */
+.ma-land-sec{padding:80px 3.5% 70px;display:grid;gap:22px;scroll-margin-top:70px}
+.ma-land-sec>.v22-sec-head{margin-bottom:6px}
+.v22-landing>#sip-checker{background-color:rgba(14,24,60,.55)}
+html[data-theme="light"] .v22-landing>#sip-checker{background-color:rgba(236,224,203,.55)}
+@media (max-width:760px){.ma-land-sec{padding:56px 16px}}
+.public-nav a{white-space:nowrap}
+@media (min-width:761px) and (max-width:1439px){.public-topbar .public-nav{gap:clamp(12px,1.6vw,26px)!important}.public-topbar .public-nav a{font-size:clamp(13px,1.1vw,15px)!important}}
+/* 601–1099px: seven links don't fit beside the logo, so they move to a second row (≤600px already does this) */
+@media (min-width:601px) and (max-width:1099px){
+  html body header.public-topbar{display:flex!important;flex-wrap:wrap!important;align-items:center!important;height:auto!important;min-height:0!important;padding:10px 4% 6px!important;gap:6px 12px!important}
+  html body header.public-topbar .brand{flex:none!important;width:auto!important;order:0}
+  html body header.public-topbar .public-actions{order:1;margin-left:auto!important;flex:none!important;width:auto!important}
+  html body header.public-topbar .public-nav{order:2;width:100%!important;display:flex!important;justify-content:center!important;gap:22px!important;padding:6px 0 4px!important;overflow-x:auto;scrollbar-width:none}
+  html body header.public-topbar .public-nav a{font-size:14px!important}
+}
