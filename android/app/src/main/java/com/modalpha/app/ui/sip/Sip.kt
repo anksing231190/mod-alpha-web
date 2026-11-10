@@ -345,6 +345,15 @@ fun ReminderSheet(day: Int?, onDone: () -> Unit) {
             ListRow(Icons.Outlined.Email, "Email", nav.user.email, trailing = { MaSwitch(q.email) { p = q.copy(email = it) } })
             ListRow(Icons.Outlined.CalendarMonth, "Every month", "Remind me before each month's best date", trailing = { MaSwitch(q.sipReminder) { p = q.copy(sipReminder = it) } })
             ListRow(Icons.Outlined.NotificationsNone, "New date published", "Tell me when next month's date is out", trailing = { MaSwitch(q.datePublished) { p = q.copy(datePublished = it) } })
+            Caption("Heads-up on the morning of the date", Modifier.padding(top = 18.dp, bottom = 4.dp))
+            Text("If a fund on your watchlist moved this much at the last NAV, we tell you at about 8 am.", color = Ma.c.muted, fontSize = 12.sp)
+            VSpace(8.dp)
+            val ctx = androidx.compose.ui.platform.LocalContext.current
+            val ap = remember { com.modalpha.app.data.AppPrefs(ctx) }
+            var navPct by remember { mutableStateOf(ap.navAlertPct) }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(0 to "Off", 1 to "1%", 2 to "2%", 3 to "3%").forEach { (v, l) -> Opt(l, navPct == v) { navPct = v; ap.navAlertPct = v } }
+            }
             VSpace(14.dp)
             GradientButton("Save reminder", {
                 saving = true

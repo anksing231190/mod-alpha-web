@@ -87,6 +87,8 @@ import com.modalpha.app.ui.theme.Ma
 @Composable
 fun LoginScreen(vm: LoginViewModel, onBack: (() -> Unit)? = null) {
     val s by vm.state.collectAsStateWithLifecycle()
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    androidx.compose.runtime.LaunchedEffect(Unit) { if (vm.appHash == null) vm.appHash = appSmsHash(ctx) }
     Box(Modifier.fillMaxSize().background(Ma.c.bg)) {
         // dark brand panel at the top, the form card overlaps it
         Box(
@@ -208,6 +210,9 @@ private fun EnterStep(s: LoginState, vm: LoginViewModel) {
 @Composable
 private fun OtpStep(s: LoginState, vm: LoginViewModel) {
     val focus = remember { FocusRequester() }
+    ListenForSmsCode(s.sentTo) { vm.onAutoCode(it) }      // fills the boxes when the SMS arrives
+    // gold bar under the boxes: one step per digit, flashes when all six are in
+    val progress by androidx.compose.animation.core.animateFloatAsState(s.code.length / 6f, androidx.compose.animation.core.tween(220), label = "otp")
     LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
     Column {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -237,6 +242,12 @@ private fun OtpStep(s: LoginState, vm: LoginViewModel) {
                 }
             },
         )
+        VSpace(10.dp)
+        Box(Modifier.fillMaxWidth().height(5.dp).clip(RoundedCornerShape(3.dp)).background(Ma.c.line)) {
+            Box(Modifier.fillMaxWidth(progress).height(5.dp).clip(RoundedCornerShape(3.dp))
+                .background(androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(com.modalpha.app.ui.components.Gold, com.modalpha.app.ui.components.GoldDeep))))
+        }
+        if (s.autoRead) { VSpace(8.dp); Text("✓ Code read from your SMS", color = Ma.c.up, fontSize = 13.sp, fontWeight = FontWeight.SemiBold) }
         if (s.hintCode != null) {
             VSpace(10.dp)
             Text("Test code: ${s.hintCode}", color = Ma.c.warn, style = MaterialTheme.typography.bodySmall)

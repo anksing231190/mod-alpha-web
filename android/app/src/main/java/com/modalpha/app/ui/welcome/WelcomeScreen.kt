@@ -75,6 +75,7 @@ private val slides = listOf(
 fun WelcomeScreen(
     onLogin: () -> Unit, onSignup: () -> Unit, onDemo: () -> Unit,
     autoPlay: Boolean = true, returningName: String? = null, lastDay: Int? = null, lastMonth: String? = null, startSlide: Int = 0, lastYm: String? = null,
+    notice: String? = null, onNoticeShown: () -> Unit = {},
 ) {
     val c = Ma.c
     var i by remember { mutableIntStateOf(startSlide) }
@@ -121,6 +122,12 @@ fun WelcomeScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { slides.indices.forEach { k -> Box(Modifier.height(5.dp).width(if (k == i) 22.dp else 6.dp).clip(CircleShape).background(if (k == i) c.accent else c.line)) } }
             }
             Spacer(Modifier.weight(1f))
+            // "You were signed out on another device" etc. — shown once, above the buttons
+            if (notice != null) {
+                LaunchedEffect(notice) { delay(8000); onNoticeShown() }
+                Text(notice, Modifier.fillMaxWidth().padding(bottom = 10.dp).clip(RoundedCornerShape(12.dp)).background(c.warn.copy(alpha = .12f)).padding(horizontal = 12.dp, vertical = 9.dp),
+                    color = c.text, fontSize = 13.sp, textAlign = TextAlign.Center)
+            }
             GradientButton("Log in", onLogin, brush = c.accentBrush)
             VSpace(10.dp)
             Box(Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(14.dp)).background(c.surface).border(1.dp, c.line, RoundedCornerShape(14.dp)).clickable(role = Role.Button, onClick = onSignup), contentAlignment = Alignment.Center) {

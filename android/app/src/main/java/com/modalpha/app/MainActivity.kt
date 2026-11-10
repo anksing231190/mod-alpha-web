@@ -42,6 +42,8 @@ class MainActivity : FragmentActivity() {
         // top panel and tab bar are dark in both themes → light status / navigation bar icons
         enableEdgeToEdge(SystemBarStyle.dark(Color.TRANSPARENT), SystemBarStyle.dark(Color.TRANSPARENT))
         val bio = Biometrics(available = session.biometricAvailable, prompt = ::prompt)
+        handleOpen(intent)
+        runCatching { com.modalpha.app.data.NavAlert.schedule(this) }     // daily morning check on the SIP date
         setContent {
             val state by session.state.collectAsStateWithLifecycle()
             val theme by session.theme.collectAsStateWithLifecycle()
@@ -57,10 +59,17 @@ class MainActivity : FragmentActivity() {
         p.authenticate(BiometricPrompt.PromptInfo.Builder().setTitle(title).setSubtitle("Mod Alpha").setAllowedAuthenticators(auth).build())
     }
 
-    override fun onStop() { super.onStop(); stoppedAt = SystemClock.elapsedRealtime() }
+    override fun onNewIntent(intent: android.content.Intent) { super.onNewIntent(intent); handleOpen(intent) }
+    private fun handleOpen(i: android.content.Intent?) {
+        i?.getStringExtra(com.modalpha.app.data.NavAlert.EXTRA_FUND)?.let { (application as ModAlphaApp).openFund.value = it; i.removeExtra(com.modalpha.app.data.NavAlert.EXTRA_FUND) }
+    }
+
+    override fun onStop() { super.onStop(); stoppedAt = SystemClock.elapsedRealtime(); session.stopWatching() }
     override fun onStart() {
         super.onStart()
         // locked again after 5 minutes in the background (like banking apps)
         if (stoppedAt > 0 && SystemClock.elapsedRealtime() - stoppedAt > 5 * 60_000) session.lockIfEnabled()
+        // check the session now and every minute while open: signed out elsewhere → back to the welcome screen
+        session.startWatching()
     }
 }

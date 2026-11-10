@@ -41,6 +41,10 @@ class LiveRepository(context: Context, private val baseUrl: String) : Repository
         .build()
     private val json = Json { ignoreUnknownKeys = true }
     private val api = baseUrl.trimEnd('/') + "/api/v1"
+    private val ended = kotlinx.coroutines.flow.MutableSharedFlow<String>(extraBufferCapacity = 1)
+    override val sessionEnded: kotlinx.coroutines.flow.Flow<String> = ended
+    /** Sign-in calls answer 401 for a wrong code or password; only other calls mean "this session is over". */
+    private fun isEntry(path: String) = listOf("/auth/refresh", "/auth/login", "/auth/otp/", "/auth/signup", "/auth/logout", "/auth/admin").any { path.startsWith(it) }
 
     private suspend fun call(method: String, path: String, body: JsonObject? = null, retry: Boolean = true): JsonObject = withContext(Dispatchers.IO) {
         val rb = body?.toString()?.toRequestBody("application/json".toMediaType())
@@ -50,8 +54,12 @@ class LiveRepository(context: Context, private val baseUrl: String) : Repository
         res.use { r ->
             val text = r.body?.string().orEmpty()
             val obj = runCatching { json.parseToJsonElement(text).jsonObject }.getOrElse { JsonObject(emptyMap()) }
-            if (r.code == 401 && retry && !path.startsWith("/auth/")) {
-                if (refresh()) return@withContext call(method, path, body, retry = false)
+            if (r.code == 401 && !isEntry(path)) {
+                if (retry && refresh()) return@withContext call(method, path, body, retry = false)
+                // the refresh token was refused too: this device was signed out (elsewhere, or timed out)
+                val msg = ((obj["error"] as? JsonObject).str("message")) ?: "You were signed out. Please log in again."
+                if (jar.hasSession()) { jar.clear(); ended.tryEmit(msg) }
+                throw ApiException(msg, 401, "SESSION_ENDED")
             }
             if (!r.isSuccessful) {
                 val err = obj["error"] as? JsonObject
@@ -70,8 +78,8 @@ class LiveRepository(context: Context, private val baseUrl: String) : Repository
 
     override suspend fun restore(): User? = if (!jar.hasSession()) null else runCatching { call("GET", "/auth/me").toUser() }.getOrNull()
 
-    override suspend fun sendOtp(mobile: String, signup: Boolean): OtpSent {
-        val r = call("POST", "/auth/otp/send", buildJsonObject { put("mobile", mobile); put("intent", if (signup) "signup" else "login") })
+    override suspend fun sendOtp(mobile: String, signup: Boolean, appHash: String?): OtpSent {
+        val r = call("POST", "/auth/otp/send", buildJsonObject { put("mobile", mobile); put("intent", if (signup) "signup" else "login"); if (appHash != null) put("appHash", appHash) })
         return OtpSent(r.int("expiresIn") ?: 600, r.str("devCode"))
     }
 
@@ -344,6 +352,11 @@ class LiveRepository(context: Context, private val baseUrl: String) : Repository
             num("fixedValue")?.toLong() ?: 0, num("modAlphaValue")?.toLong() ?: 0, num("extra")?.toLong() ?: 0, pts)
     }
 
+    override suspend fun checkSession(): Boolean = runCatching { call("GET", "/auth/session"); true }.getOrElse { (it as? ApiException)?.status != 401 }
+    override suspend fun logoutAll(): Int {
+        val n = call("POST", "/auth/logout-all").int("sessionsEnded") ?: 1
+        jar.clear(); return n
+    }
     override suspend fun logout() {
         runCatching { call("POST", "/auth/logout", retry = false) }
         jar.clear()

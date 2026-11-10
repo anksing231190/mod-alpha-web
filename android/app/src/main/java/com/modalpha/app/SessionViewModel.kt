@@ -41,7 +41,22 @@ class SessionViewModel(
     val lastBestMonth get() = prefs.lastBestMonth
     fun rememberBest(day: Int, month: String) { prefs.lastBestDay = day; prefs.lastBestMonth = month }
 
+    /** Shown once on the welcome screen after the server ended this session ("signed out on another device"). */
+    private val _notice = MutableStateFlow<String?>(null)
+    val notice: StateFlow<String?> = _notice
+    fun noticeShown() { _notice.value = null }
+
     init {
+        // the server ended this device's session → straight back to the welcome screen (the name is kept for "Welcome back")
+        viewModelScope.launch {
+            live.sessionEnded.collect { msg ->
+                if (_state.value is Session.SignedIn && (_state.value as Session.SignedIn).repo.isDemo) return@collect
+                if (_state.value is Session.SignedIn || _state.value is Session.Locked) {
+                    prefs.biometric = false; prefs.biometricAsked = false
+                    _notice.value = msg; _state.value = Session.SignedOut
+                }
+            }
+        }
         viewModelScope.launch {
             val u = runCatching { live.restore() }.getOrNull()
             _state.value = when {
@@ -75,6 +90,30 @@ class SessionViewModel(
     }
 
     fun setTheme(t: AppTheme) { prefs.theme = t; _theme.value = t }
+
+    private var watch: kotlinx.coroutines.Job? = null
+    /** While the app is open: check the session now and every minute, so "log out of all devices" reaches this phone quickly. */
+    fun startWatching() {
+        watch?.cancel()
+        watch = viewModelScope.launch {
+            while (true) {
+                val s = _state.value
+                if ((s is Session.SignedIn && !s.repo.isDemo) || s is Session.Locked) live.checkSession()
+                kotlinx.coroutines.delay(60_000)
+            }
+        }
+    }
+    fun stopWatching() { watch?.cancel(); watch = null }
+
+    /** "Log out of all devices": ends every session of this user (phones, tablets, browsers), then this one. */
+    fun logoutAll(onError: (String) -> Unit) {
+        val s = _state.value as? Session.SignedIn ?: return
+        viewModelScope.launch {
+            runCatching { s.repo.logoutAll() }
+                .onSuccess { n -> prefs.biometric = false; prefs.biometricAsked = false; _notice.value = "Signed out of $n session${if (n == 1) "" else "s"} on all devices."; _state.value = Session.SignedOut }
+                .onFailure { onError(it.message ?: "Couldn't sign out of all devices") }
+        }
+    }
 
     fun logout() {
         val repo = when (val s = _state.value) { is Session.SignedIn -> s.repo; is Session.Locked -> live; else -> return }

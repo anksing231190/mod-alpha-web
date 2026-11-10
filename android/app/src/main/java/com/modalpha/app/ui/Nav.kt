@@ -8,7 +8,7 @@ import com.modalpha.app.data.User
 
 /** Screens opened on top of the tabs (back arrow / system back pops them). */
 sealed interface Route {
-    data class Fund(val id: String) : Route
+    data class Fund(val id: String, val period: String = "5Y") : Route
     data class WhatIf(val fundId: String? = null) : Route
     data class Compare(val a: String? = null, val b: String? = null) : Route
     data object Insights : Route

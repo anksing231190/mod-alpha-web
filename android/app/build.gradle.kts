@@ -77,6 +77,8 @@ dependencies {
     implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.fragment:fragment-ktx:1.8.5")
+    implementation("com.google.android.gms:play-services-auth-api-phone:18.1.0")   // SMS Retriever: read the OTP without SMS permission
+    implementation("androidx.work:work-runtime-ktx:2.10.0")                        // daily NAV check on the SIP date
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")

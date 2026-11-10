@@ -9,11 +9,18 @@ interface Repository {
     val isDemo: Boolean
     /** The saved session's user, or null when signed out. */
     suspend fun restore(): User?
-    suspend fun sendOtp(mobile: String, signup: Boolean): OtpSent
+    /** `appHash`: this app's SMS Retriever hash, so the SMS ends with it and the code can be read automatically. */
+    suspend fun sendOtp(mobile: String, signup: Boolean, appHash: String? = null): OtpSent
     suspend fun verifyOtp(mobile: String, code: String, signup: Boolean): User
     suspend fun loginWithEmail(email: String, password: String): User
     suspend fun home(): HomeData
     suspend fun logout()
+    /** Fires (with a reason) when the server ends this device's session: signed out on another device, timed out. */
+    val sessionEnded: kotlinx.coroutines.flow.Flow<String> get() = kotlinx.coroutines.flow.emptyFlow()
+    /** Asks the server whether this device's session is still open (refreshing it if needed). */
+    suspend fun checkSession(): Boolean = true
+    /** Ends every session of this user on all devices; returns how many were ended. */
+    suspend fun logoutAll(): Int { logout(); return 1 }
 
     // Explore
     suspend fun funds(): List<Fund>

@@ -23,7 +23,7 @@ class DemoRepository(private val latencyMs: Long = 450) : Repository {
 
     override suspend fun restore(): User? = current?.user
 
-    override suspend fun sendOtp(mobile: String, signup: Boolean): OtpSent {
+    override suspend fun sendOtp(mobile: String, signup: Boolean, appHash: String?): OtpSent {
         delay(latencyMs)
         if (!signup && mobile !in accounts) throw ApiException("No Mod Alpha account uses this mobile number. Create an account first.", 404, "no_account")
         return OtpSent(600, DEMO_CODE)

@@ -23,6 +23,16 @@ class AppPrefs(context: Context) {
     var lastBestMonth: String?
         get() = p.getString("last_best_month", null)
         set(v) = p.edit().putString("last_best_month", v).apply()
+    /** Morning NAV alert on the SIP date: minimum move in % (0 = off). */
+    var navAlertPct: Int
+        get() = p.getInt("nav_alert_pct", 2)
+        set(v) = p.edit().putInt("nav_alert_pct", v).apply()
+    var lastNavAlert: String?
+        get() = p.getString("last_nav_alert", null)
+        set(v) = p.edit().putString("last_nav_alert", v).apply()
+    var notifAsked: Boolean
+        get() = p.getBoolean("notif_asked", false)
+        set(v) = p.edit().putBoolean("notif_asked", v).apply()
     var lastName: String?
         get() = p.getString("last_name", null)
         set(v) = p.edit().putString("last_name", v).apply()

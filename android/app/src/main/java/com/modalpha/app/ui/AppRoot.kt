@@ -143,8 +143,10 @@ fun AppRoot(state: Session, session: SessionViewModel, bio: Biometrics) {
 private fun SignedOut(session: SessionViewModel) {
     var page by rememberSaveable { mutableStateOf("welcome") }          // welcome | login | signup
     val vm: LoginViewModel = viewModel(key = "login", factory = factory { LoginViewModel(session::repoFor, session::signedIn) })
+    val notice by session.notice.collectAsStateWithLifecycle()
     when (page) {
         "welcome" -> WelcomeScreen(
+            notice = notice, onNoticeShown = session::noticeShown,
             onLogin = { vm.setSignup(false); page = "login" },
             onSignup = { vm.setSignup(true); page = "login" },
             onDemo = { vm.tryDemo(); page = "login" },
@@ -183,6 +185,19 @@ fun MainTabs(user: User, repo: Repository, session: SessionViewModel, bio: Biome
         val d = (homeState as? com.modalpha.app.ui.home.HomeState.Ready)?.data
         if (d != null && !repo.isDemo && !d.locked) d.sip?.let { s -> s.day?.let { session.rememberBest(it, s.month) } }
     }
+    // opened from the morning NAV alert → that fund, last month on the checkered chart
+    val app = androidx.compose.ui.platform.LocalContext.current.applicationContext as? com.modalpha.app.ModAlphaApp
+    if (app != null) {
+        val fundToOpen by app.openFund.collectAsStateWithLifecycle()
+        LaunchedEffect(fundToOpen) { fundToOpen?.let { nav.push(Route.Fund(it, "1M")); app.openFund.value = null } }
+    }
+    // ask once for notification permission (Android 13+), for the reminder and the NAV heads-up
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val askNotif = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { }
+    LaunchedEffect(repo.isDemo) {
+        val ap = com.modalpha.app.data.AppPrefs(ctx)
+        if (!repo.isDemo && android.os.Build.VERSION.SDK_INT >= 33 && !ap.notifAsked) { ap.notifAsked = true; askNotif.launch(android.Manifest.permission.POST_NOTIFICATIONS) }
+    }
     androidx.activity.compose.BackHandler(enabled = stack.isNotEmpty()) { nav.pop() }
     androidx.activity.compose.BackHandler(enabled = stack.isEmpty() && tab.value != Tab.Home) { tab.value = Tab.Home }
     CompositionLocalProvider(LocalNav provides nav) {
@@ -216,7 +231,7 @@ fun MainTabs(user: User, repo: Repository, session: SessionViewModel, bio: Biome
                 Box(Modifier.fillMaxSize().background(Ma.c.bg)) {
                     androidx.compose.runtime.key(stack.size, r) {
                         when (r) {
-                            is Route.Fund -> FundScreen(r.id)
+                            is Route.Fund -> FundScreen(r.id, r.period)
                             is Route.WhatIf -> WhatIfScreen(r.fundId)
                             is Route.Compare -> CompareScreen(r.a, r.b)
                             Route.Insights -> InsightsScreen()

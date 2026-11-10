@@ -261,11 +261,11 @@ fun SearchField(value: String, onChange: (String) -> Unit, hint: String, modifie
 /* ============================== Fund detail ============================== */
 
 @Composable
-fun FundScreen(id: String) {
+fun FundScreen(id: String, startPeriod: String = "5Y") {
     val nav = LocalNav.current
     val scope = rememberCoroutineScope()
     val fund = rememberLoad(id) { nav.repo.fund(id) }
-    var period by rememberSaveable { mutableStateOf("5Y") }
+    var period by rememberSaveable { mutableStateOf(startPeriod) }
     val navPts = rememberLoad(id to period) { nav.repo.nav(id, period) }
     val cmp = rememberLoad(id) { nav.repo.sipCompare(id, 10000, "2021-01-01") }
     var watched by remember { mutableStateOf<Boolean?>(null) }

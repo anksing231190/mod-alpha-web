@@ -142,6 +142,12 @@ fun YouTab(session: SessionViewModel, bio: Biometrics, bottomPad: Dp, onBack: ((
     val theme by session.theme.collectAsStateWithLifecycle()
     var bioOn by remember { mutableStateOf(session.biometricOn) }
     var themeSheet by remember { mutableStateOf(false) }
+    var askAll by remember { mutableStateOf(false) }
+    if (askAll) AlertDialog({ askAll = false }, containerColor = Ma.c.surface,
+        title = { Text("Log out of all devices?") },
+        text = { Text("This ends your Mod Alpha sessions on every phone, tablet and computer, including this one. You'll need to log in again.", color = Ma.c.sub) },
+        confirmButton = { TextButton({ askAll = false; session.logoutAll { nav.toast(it) } }) { Text("Log out everywhere", color = Ma.c.down, fontWeight = FontWeight.SemiBold) } },
+        dismissButton = { TextButton({ askAll = false }) { Text("Cancel", color = Ma.c.muted) } })
     val (sub, planName) = (plan.res as? Res.Ok)?.value ?: (null to "…")
     val k = (kyc.res as? Res.Ok)?.value
     val open = (tickets.res as? Res.Ok)?.value?.count { it.status != "Closed" && it.status != "Answered" } ?: 0
@@ -203,6 +209,8 @@ fun YouTab(session: SessionViewModel, bio: Biometrics, bottomPad: Dp, onBack: ((
                 { ListRow(Icons.AutoMirrored.Outlined.HelpOutline, "Help & my requests", onClick = { nav.push(Route.Help) }) { if (open > 0) Tag("$open open", Tone.Blue); Chevron() } },
             ))
             OutlineButton("Log out", session::logout, Modifier.fillMaxWidth(), color = Ma.c.down, icon = Icons.AutoMirrored.Outlined.Logout)
+            if (!nav.repo.isDemo) Text("Log out of all devices", Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { askAll = true }.padding(10.dp),
+                color = Ma.c.muted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
         }
     }
     if (themeSheet) ModalBottomSheet({ themeSheet = false }, containerColor = Ma.c.surface) {

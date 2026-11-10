@@ -70,6 +70,16 @@ describe('auth', () => {
     const sms = await db.query(`SELECT body FROM mock_outbox WHERE channel='sms' ORDER BY id DESC LIMIT 1`);
     expect(sms.rows[0].body).toContain(s.devCode);
   });
+
+  it('ends the OTP SMS with the Android app hash when the app sends one (SMS Retriever)', async () => {
+    const c = client(app);
+    const bad = await c.post('/auth/otp/send', { mobile: '98765 43210', appHash: 'not a hash!' });
+    expect(bad.statusCode).toBe(400);
+    const s = (await c.post('/auth/otp/send', { mobile: '98765 43210', appHash: 'FA+9qCX9VSu' })).json();
+    const sms = await db.query(`SELECT body FROM mock_outbox WHERE channel='sms' ORDER BY id DESC LIMIT 1`);
+    expect(sms.rows[0].body).toContain(s.devCode);
+    expect(sms.rows[0].body.trim().endsWith('FA+9qCX9VSu')).toBe(true);
+  });
   it('resets a password via the emailed token', async () => {
     const c = client(app);
     await c.post('/auth/password/forgot', { email: 'riya@example.com' });

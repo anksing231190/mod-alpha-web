@@ -9,4 +9,6 @@ import com.modalpha.app.data.Repository
 class ModAlphaApp : Application() {
     val live: Repository by lazy { LiveRepository(this, BuildConfig.API_BASE_URL) }
     val demo: Repository by lazy { DemoRepository() }
+    /** Fund to open after a notification tap (MainTabs picks it up and opens the fund). */
+    val openFund = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
 }

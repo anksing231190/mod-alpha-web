@@ -32,6 +32,7 @@ data class LoginState(
     val challenge: com.modalpha.app.data.AdminChallenge? = null,
     val emailCode: String = "",
     val smsCode: String = "",
+    val autoRead: Boolean = false,      // the code was read from the SMS (SMS Retriever)
 )
 
 /**
@@ -58,6 +59,16 @@ class LoginViewModel(
     fun onPassword(v: String) = _s.update { it.copy(password = v, error = null) }
     fun changeNumber() = _s.update { it.copy(step = LoginStep.Enter, code = "", error = null) }
 
+    /** Set by the login screen: this app's SMS Retriever hash (null if it can't be worked out). */
+    var appHash: String? = null
+
+    /** A code read from the incoming SMS: fill the boxes and verify. */
+    fun onAutoCode(code: String) {
+        if (_s.value.step != LoginStep.Otp || _s.value.busy) return
+        _s.update { it.copy(autoRead = true) }
+        onCode(code)
+    }
+
     fun onCode(v: String) {
         val d = v.filter { it.isDigit() }.take(6)
         _s.update { it.copy(code = d, error = null) }
@@ -74,8 +85,8 @@ class LoginViewModel(
     fun sendOtp() {
         val m = normaliseMobile(_s.value.mobile) ?: return _s.update { it.copy(error = "Enter a valid 10-digit Indian mobile number") }
         run {
-            val r = repoFor(demo).sendOtp(m, _s.value.signup)
-            _s.update { it.copy(step = LoginStep.Otp, sentTo = m, code = "", hintCode = r.devCode) }
+            val r = repoFor(demo).sendOtp(m, _s.value.signup, appHash)
+            _s.update { it.copy(step = LoginStep.Otp, sentTo = m, code = "", hintCode = r.devCode, autoRead = false) }
             startTimer()
         }
     }

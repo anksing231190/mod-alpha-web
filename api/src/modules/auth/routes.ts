@@ -61,14 +61,16 @@ export default async function auth(app: FastifyInstance) {
   // `intent`: 'login' (the Login screen) only works for an existing account; 'signup' (Create account) may create one.
   const NO_ACCOUNT = (what: string) => new HttpError(404, 'no_account', `No Mod Alpha account uses this ${what}. Create an account first.`);
   app.post('/auth/otp/send', strict, async (req) => {
-    const b = parse(z.object({ mobile, purpose: z.enum(['login', 'verify']).default('login'), intent: z.enum(['login', 'signup']).default('login') }), req.body);
+    // appHash: the Android app's 11-character SMS Retriever hash. When present, it ends the SMS so the app can read the code itself.
+    const b = parse(z.object({ mobile, purpose: z.enum(['login', 'verify']).default('login'), intent: z.enum(['login', 'signup']).default('login'), appHash: z.string().regex(/^[A-Za-z0-9+/]{11}$/).optional() }), req.body);
     if (b.purpose === 'login' && b.intent === 'login' && !(await db.query('SELECT 1 FROM users WHERE mobile=$1 AND deleted_at IS NULL', [b.mobile])).rows[0]) throw NO_ACCOUNT('mobile number');
     const recent = await db.query(`SELECT count(*)::int n FROM otp_codes WHERE target=$1 AND created_at > now() - interval '1 hour'`, [b.mobile]);
     if (recent.rows[0].n >= 5) throw tooMany('Too many OTP requests. Try again in an hour.');
     const code = String(crypto.randomInt(100000, 1000000));
     await db.query(`INSERT INTO otp_codes (target, purpose, code_hash, expires_at) VALUES ($1,$2,$3, now() + interval '10 minutes')`, [b.mobile, b.purpose, sha256(code)]);
-    await providers.sms.send({ to: b.mobile, text: `${code} is your Mod Alpha verification code. It expires in 10 minutes.`, templateId: cfg.MSG91_OTP_TEMPLATE_ID, vars: { otp: code } });
-    return { sent: true, expiresIn: 600, ...(providers.sms.name === 'mock' && cfg.APP_ENV !== 'prod' ? { devCode: code } : {}) };
+    const text = `${code} is your Mod Alpha verification code. It expires in 10 minutes.` + (b.appHash ? `\n${b.appHash}` : '');
+    await providers.sms.send({ to: b.mobile, text, templateId: cfg.MSG91_OTP_TEMPLATE_ID, vars: { otp: code, ...(b.appHash ? { hash: b.appHash } : {}) } });
+    return { sent: true, expiresIn: 600, ...(providers.sms.name === 'mock' && cfg.APP_ENV !== 'prod' ? { devCode: code, devText: text } : {}) };
   });
 
   // Check the latest unused code for this number: expiry, max 5 attempts, then mark it used.
