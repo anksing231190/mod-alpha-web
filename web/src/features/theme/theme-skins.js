@@ -2,7 +2,7 @@
    Feature: theme picker — three looks
      Midnight  (dark, the original)                         data-theme="dark"
      Sand      (cream & beige)                              data-theme="light"
-     Espresso  (Sand's cream pages, brown sidebar, top bar,  data-theme="light" data-skin="duo"   → theme-skins.css
+     Espresso  (DEFAULT for new visitors — Sand's cream pages, brown sidebar, top bar,  data-theme="light" data-skin="duo"   → theme-skins.css
                 footer and phone tab bar)
      Graphite  (charcoal sidebar / top bar, white pages;  theme-graphite.generated.css)         data-theme="light" data-skin="slate"
    The skin is stored in localStorage 'mod-alpha-skin' (applied before first paint by index.html).
