@@ -27,7 +27,7 @@ import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.Fingerprint
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.SupportAgent
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -157,9 +157,9 @@ private fun SignedOut(session: SessionViewModel) {
 enum class Tab(val label: String, val icon: ImageVector?) {
     Home("Home", Icons.Outlined.Home),
     Explore("Explore", Icons.Outlined.Explore),
-    Ask("Ask", null),                       // the α button in the middle
+    Ask("Ask", null),                       // the α mark, drawn like the other icons
     Calendar("Calendar", Icons.Outlined.CalendarMonth),
-    You("You", Icons.Outlined.Person),
+    Support("Support", Icons.Outlined.SupportAgent),
 }
 
 @Composable
@@ -200,13 +200,16 @@ fun MainTabs(user: User, repo: Repository, session: SessionViewModel, bio: Biome
                             setReminder = { d -> nav.remindMe(d) },
                             whyDate = { tab.value = Tab.Calendar },
                             openFund = { id -> nav.push(Route.Fund(id)) },
+                            openProfile = { nav.push(Route.Profile) },
+                            openWhatIf = { nav.push(Route.WhatIf()) },
+                            logout = session::logout,
                         ),
                         inner,
                     )
                     Tab.Explore -> ExploreTab(bottom)
                     Tab.Ask -> AskTab(chat, bottom)
                     Tab.Calendar -> CalendarTab(bottom)
-                    Tab.You -> YouTab(session, bio, bottom)
+                    Tab.Support -> HelpScreen(asTab = true, bottomPad = bottom)
                 }
             }
             stack.lastOrNull()?.let { r ->
@@ -224,6 +227,7 @@ fun MainTabs(user: User, repo: Repository, session: SessionViewModel, bio: Biome
                             is Route.Success -> SuccessScreen(r.planId, r.cycle, r.amount, r.method)
                             Route.Subscription -> SubscriptionScreen()
                             Route.Help -> HelpScreen()
+                            Route.Profile -> YouTab(session, bio, 0.dp, onBack = nav::pop)
                         }
                     }
                 }
@@ -250,25 +254,17 @@ fun TabsScaffold(tab: Tab, onTab: (Tab) -> Unit, snack: SnackbarHostState, conte
                 ) {
                     Tab.entries.forEach { t ->
                         val on = t == tab
-                        if (t.icon == null) Spacer(Modifier.width(64.dp))
-                        else Column(
+                        Column(
                             Modifier.width(62.dp).clip(RoundedCornerShape(12.dp)).clickable(role = Role.Tab) { onTab(t) }.padding(vertical = 6.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
-                            Icon(t.icon, null, tint = if (on) Ma.c.hi else Ma.c.chromeMuted, modifier = Modifier.size(23.dp))
+                            if (t.icon != null) Icon(t.icon, null, tint = if (on) Ma.c.hi else Ma.c.chromeMuted, modifier = Modifier.size(23.dp))
+                            else Image(painterResource(R.drawable.brand_mark), null, Modifier.size(23.dp), alpha = if (on) 1f else .75f)   // α: same size as the other icons
                             VSpace(3.dp)
                             Text(t.label, color = if (on) Color.White else Ma.c.chromeMuted, fontSize = 10.5.sp, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal)
                         }
                     }
                 }
-                val askOn = tab == Tab.Ask
-                Box(
-                    Modifier.align(Alignment.TopCenter).offset(y = (-16).dp).size(60.dp)
-                        .shadow(16.dp, CircleShape, spotColor = Ma.c.hi).clip(CircleShape)
-                        .background(Brush.radialGradient(listOf(Ma.c.mesh1, Ma.c.chrome2)))
-                        .border(2.5.dp, if (askOn) Ma.c.gold else Ma.c.gold.copy(alpha = .55f), CircleShape).clickable(role = Role.Tab) { onTab(Tab.Ask) },
-                    contentAlignment = Alignment.Center,
-                ) { Image(painterResource(R.drawable.brand_mark), "Ask Mod Alpha", Modifier.size(32.dp)) }
             }
         },
     ) { pad ->

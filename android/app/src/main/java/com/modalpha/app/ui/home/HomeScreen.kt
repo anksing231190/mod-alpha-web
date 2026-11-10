@@ -23,6 +23,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.automirrored.outlined.ShowChart
+import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material.icons.outlined.NotificationsNone
@@ -86,6 +93,9 @@ class HomeActions(
     val setReminder: (Int) -> Unit = {},
     val whyDate: () -> Unit = {},
     val openFund: (String) -> Unit = {},
+    val openProfile: () -> Unit = {},
+    val openWhatIf: () -> Unit = {},
+    val logout: () -> Unit = {},
 )
 
 @Composable
@@ -115,6 +125,7 @@ fun HomeContent(d: HomeData, refreshing: Boolean, onRefresh: () -> Unit, actions
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = contentPadding.calculateBottomPadding() + 16.dp)) {
             item { Hero(d, today, actions) }
             d.compare?.let { item { EdgeCard(it, Modifier.padding(start = 18.dp, end = 18.dp, top = 14.dp)) } }
+            item { WhatIfCard(actions.openWhatIf, Modifier.padding(start = 18.dp, end = 18.dp, top = 14.dp)) }
             item { Watchlist(d.watchlist, actions) }
         }
     }
@@ -126,18 +137,31 @@ private fun Hero(d: HomeData, today: LocalDate, actions: HomeActions) {
     val sip = d.sip
     MeshHero {
         // greeting row
+        var askLogout by remember { mutableStateOf(false) }
+        if (askLogout) AlertDialog({ askLogout = false }, containerColor = c.surface,
+            title = { Text("Log out?") }, text = { Text("You'll need your phone or email to sign in again.", color = c.sub) },
+            confirmButton = { TextButton({ askLogout = false; actions.logout() }) { Text("Log out", color = c.down, fontWeight = FontWeight.SemiBold) } },
+            dismissButton = { TextButton({ askLogout = false }) { Text("Cancel", color = c.muted) } })
         Row(Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+          // avatar + name open the profile
+          Row(Modifier.weight(1f).clip(RoundedCornerShape(14.dp)).clickable(onClickLabel = "Open profile", onClick = actions.openProfile).padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(40.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Color(0xFF60A5FA), Color(0xFF8B5CF6)))), contentAlignment = Alignment.Center) {
                 Text(d.user.initial, color = Color.White, fontWeight = FontWeight.Black, fontSize = 17.sp)
             }
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
                 Text(d.user.firstName, color = c.chromeText, fontSize = 18.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text("View profile ›", color = c.chromeMuted, fontSize = 11.sp)
             }
+          }
             if (d.plan != "Free") { GhostChip(d.plan.uppercase(), gold = true); Spacer(Modifier.width(8.dp)) }
             Box(Modifier.size(40.dp).clip(RoundedCornerShape(13.dp)).background(c.surface).border(1.dp, c.line, RoundedCornerShape(13.dp)).clickable(onClick = actions.openNotifications), contentAlignment = Alignment.Center) {
                 Icon(Icons.Outlined.NotificationsNone, "Notifications, ${d.unread} unread", tint = c.text, modifier = Modifier.size(20.dp))
                 if (d.unread > 0) Box(Modifier.align(Alignment.TopEnd).offset((-7).dp, 7.dp).size(8.dp).clip(CircleShape).background(Color(0xFFF43F5E)))
+            }
+            Spacer(Modifier.width(8.dp))
+            Box(Modifier.size(40.dp).clip(RoundedCornerShape(13.dp)).background(c.surface).border(1.dp, c.line, RoundedCornerShape(13.dp)).clickable(onClickLabel = "Log out") { askLogout = true }, contentAlignment = Alignment.Center) {
+                Icon(Icons.AutoMirrored.Outlined.Logout, "Log out", tint = c.down, modifier = Modifier.size(19.dp))
             }
         }
         // date + confidence
@@ -201,6 +225,26 @@ private fun Hero(d: HomeData, today: LocalDate, actions: HomeActions) {
                 }
             }
         }
+    }
+}
+
+/** "What if" entry on Home: opens the lump sum / SIP calculator on real NAV history. */
+@Composable
+private fun WhatIfCard(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val c = Ma.c
+    Row(
+        modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(c.surface).border(1.dp, c.line, RoundedCornerShape(20.dp)).clickable(onClick = onClick).padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(c.accent.copy(alpha = .1f)), contentAlignment = Alignment.Center) {
+            Icon(Icons.AutoMirrored.Outlined.ShowChart, null, tint = c.accent, modifier = Modifier.size(22.dp))
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text("What if you'd invested?", color = c.text, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+            Text("Pick a fund, amount and date — see what it's worth today", color = c.muted, fontSize = 12.sp, maxLines = 2)
+        }
+        Text("Try ›", color = c.accent, fontWeight = FontWeight.SemiBold, fontSize = 13.5.sp)
     }
 }
 

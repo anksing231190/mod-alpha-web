@@ -44,6 +44,7 @@ import com.modalpha.app.ui.theme.AppTheme
 import com.modalpha.app.ui.theme.Ma
 import com.modalpha.app.ui.theme.ModAlphaTheme
 import kotlinx.coroutines.runBlocking
+import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -96,12 +97,12 @@ class AllScreensTest {
     @Test fun reminder() = shot("13-reminder", screen = true) { MainTabsPreview(runBlocking { repo.home() }); ReminderSheet(12) {} }
     @Test fun ask() = tab("14-ask", Tab.Ask) { AskTab(remember { mutableStateListOf(ChatMsg(true, "Is the 12th good for small-cap funds too?"), ChatMsg(false, "Yes. Across the small-cap funds we track, a SIP on the 12th beat the 1st in **7 of the last 10 years**, by **+3.1%** on average.")) }, it) }
     @Test fun notifications() = shot("15-notifications") { NotificationsScreen() }
-    @Test fun you() = tab("16-you", Tab.You) { YouTab(session, Biometrics(available = false), it) }
-    @Test fun you_espresso() = tab("16-you", Tab.You, AppTheme.Espresso) { YouTab(session, Biometrics(available = false), it) }
+    @Test fun you() = shot("16-profile") { YouTab(session, Biometrics(available = false), 0.dp, onBack = {}) }
+    @Test fun you_espresso() = shot("16-profile", AppTheme.Espresso) { YouTab(session, Biometrics(available = false), 0.dp, onBack = {}) }
     @Test fun plans() = shot("17-plans") { PlansScreen() }
     @Test fun checkout() = shot("18-checkout") { CheckoutScreen("Pro", "Yearly") }
     @Test fun kyc() = shot("19-kyc") { KycScreen(null) }
     @Test fun success() = shot("20-success") { SuccessScreen("Pro", "Yearly", 2868, "GPay") }
     @Test fun subscription() = shot("21-subscription") { SubscriptionScreen() }
-    @Test fun help() = shot("22-help") { HelpScreen() }
+    @Test fun help() = tab("22-support", Tab.Support) { HelpScreen(asTab = true, bottomPad = it) }
 }

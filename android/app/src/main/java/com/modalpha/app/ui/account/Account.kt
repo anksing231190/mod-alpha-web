@@ -118,6 +118,8 @@ import com.modalpha.app.ui.components.*
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -129,7 +131,7 @@ private fun per(c: String) = when (c) { "Yearly" -> "year"; "Quarterly" -> "quar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun YouTab(session: SessionViewModel, bio: Biometrics, bottomPad: Dp) {
+fun YouTab(session: SessionViewModel, bio: Biometrics, bottomPad: Dp, onBack: (() -> Unit)? = null) {
     val nav = LocalNav.current
     val u = nav.user
     val plan = rememberLoad { nav.repo.subscription() to nav.repo.plan() }
@@ -147,7 +149,8 @@ fun YouTab(session: SessionViewModel, bio: Biometrics, bottomPad: Dp) {
         MeshHero(bottomPad = 18.dp) {
             Column(Modifier.padding(horizontal = 20.dp)) {
                 Row(Modifier.height(54.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("You", color = Ma.c.chromeText, fontSize = 23.sp, fontWeight = FontWeight.Black, modifier = Modifier.weight(1f))
+                    if (onBack != null) { IconButton(onClick = onBack, modifier = Modifier.offset(x = (-12).dp)) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Back", tint = Ma.c.chromeText) } }
+                    Text("Profile", color = Ma.c.chromeText, fontSize = 23.sp, fontWeight = FontWeight.Black, modifier = Modifier.weight(1f))
                     if (nav.repo.isDemo) GhostChip("Demo data")
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -630,7 +633,7 @@ fun SubscriptionScreen() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HelpScreen() {
+fun HelpScreen(asTab: Boolean = false, bottomPad: Dp = 0.dp) {
     val nav = LocalNav.current
     val scope = rememberCoroutineScope()
     val faqs = rememberLoad { nav.repo.faqs() }
@@ -638,8 +641,8 @@ fun HelpScreen() {
     var q by rememberSaveable { mutableStateOf("") }
     var open by remember { mutableStateOf<Int?>(null) }
     var newReq by remember { mutableStateOf(false) }
-    Screen("Help", onBack = nav::pop, header = { SearchField(q, { q = it }, "Search questions", Modifier.padding(horizontal = 20.dp)) }) {
-        Column(Modifier.verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) {
+    Screen("Support", onBack = if (asTab) null else nav::pop, header = { SearchField(q, { q = it }, "Search questions", Modifier.padding(horizontal = 20.dp)) }) {
+        Column(Modifier.verticalScroll(rememberScrollState()).padding(bottom = bottomPad + 24.dp)) {
             SectionTitle("My requests", "+ New") { newReq = true }
             LoadBox(tickets) { list ->
                 if (list.isEmpty()) Text("No requests yet.", Modifier.padding(horizontal = 20.dp), color = Ma.c.muted)

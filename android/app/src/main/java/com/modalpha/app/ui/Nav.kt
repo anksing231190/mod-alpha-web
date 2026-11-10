@@ -19,6 +19,7 @@ sealed interface Route {
     data class Success(val planId: String, val cycle: String, val amount: Int, val method: String) : Route
     data object Subscription : Route
     data object Help : Route
+    data object Profile : Route
 }
 
 /** What every screen can reach: data, the signed-in user, navigation, toasts and the Remind me sheet. */

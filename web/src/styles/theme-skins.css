@@ -104,3 +104,15 @@ html[data-theme="light"]:is([data-skin="duo"],[data-skin="slate"]):root #app foo
 html[data-theme="light"]:is([data-skin="duo"],[data-skin="slate"]):root #app footer.public-footer a:not(.v22-socials a):hover{color:var(--esp-tx)!important}
 html[data-theme="light"]:is([data-skin="duo"],[data-skin="slate"]):root #app footer.public-footer .footer-bottom{border-top-color:var(--esp-line)!important}
 footer.public-footer .footer-legal-links i{margin:0 6px;font-style:normal}
+
+/* FAQ / accordion +/− buttons on light themes: closed = light tint with a dark plus (was white on grey), open = solid theme colour */
+html[data-theme="light"] #app .v22-acc-plus{background:#eef2ff;border:1px solid #c7d2fe}
+html[data-theme="light"] #app .v22-acc-plus::before,html[data-theme="light"] #app .v22-acc-plus::after{background:#3b4fd0}
+html[data-theme="light"] #app .v22-acc-item.open .v22-acc-plus{background:linear-gradient(135deg,#3b82f6,#6366f1);border-color:transparent}
+html[data-theme="light"][data-skin="slate"] #app .v22-acc-plus{background:#e8edf8;border-color:#b9c5e4}
+html[data-theme="light"][data-skin="slate"] #app .v22-acc-plus::before,html[data-theme="light"][data-skin="slate"] #app .v22-acc-plus::after{background:#23449f}
+html[data-theme="light"][data-skin="slate"] #app .v22-acc-item.open .v22-acc-plus{background:linear-gradient(135deg,#23449f,#192c6b)}
+html[data-theme="light"][data-skin="duo"] #app .v22-acc-plus{background:#f6ebdc;border-color:#e2c9a6}
+html[data-theme="light"][data-skin="duo"] #app .v22-acc-plus::before,html[data-theme="light"][data-skin="duo"] #app .v22-acc-plus::after{background:#8a5a2b}
+html[data-theme="light"][data-skin="duo"] #app .v22-acc-item.open .v22-acc-plus{background:linear-gradient(135deg,#a8692f,#6e3f1a)}
+html[data-theme="light"] #app .v22-acc-item.open .v22-acc-plus::before,html[data-theme="light"] #app .v22-acc-item.open .v22-acc-plus::after{background:#fff}
