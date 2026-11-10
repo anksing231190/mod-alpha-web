@@ -21,6 +21,7 @@ import com.modalpha.app.ui.theme.Ma
 import com.modalpha.app.ui.theme.ModAlphaTheme
 import com.modalpha.app.ui.welcome.LockScreen
 import com.modalpha.app.ui.welcome.WelcomeScreen
+import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -57,7 +58,11 @@ class ScreenshotTest {
     private val today = LocalDate.of(2026, 11, 10)
     private val user = User("u1", "Ankit Singh", "ankit@example.com", "+919876543210")
     private val sip = SipMonth("2026-11", 12, 2.8, listOf(AltDay(5, 1.6), AltDay(20, 1.4), AltDay(28, 1.2)))
-    private val pro = HomeData(user, "Pro", sip, false, DemoRepository.demoFunds, 24, 2, DemoRepository.demoCompare, DemoRepository.demoFunds.take(2))
+    private val demoRepo = DemoRepository(latencyMs = 0)
+    private val candleNav = runBlocking { demoRepo.nav(DemoRepository.demoFunds.first().id, "5Y") }.filter { it.date >= today.minusMonths(12).withDayOfMonth(1).toString() }
+    private val pastDays = mapOf("2026-05" to 12, "2026-06" to 9, "2026-07" to 15, "2026-08" to 11, "2026-09" to 18, "2026-10" to 14)
+    private val pro = HomeData(user, "Pro", sip, false, DemoRepository.demoFunds, 24, 2, DemoRepository.demoCompare, DemoRepository.demoFunds.take(2),
+        candleNav = candleNav, candleFund = DemoRepository.demoFunds.first().short, pastDays = pastDays)
     private val free = pro.copy(user = User("u2", "Riya Sharma", null, "+919876500000"), plan = "Free", locked = true,
         sip = sip.copy(day = null, alternatives = emptyList()), unread = 0, watchlist = emptyList())
 

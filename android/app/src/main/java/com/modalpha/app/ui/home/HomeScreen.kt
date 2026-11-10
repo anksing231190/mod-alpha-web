@@ -23,6 +23,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.foundation.Canvas
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.CompareArrows
@@ -131,7 +135,7 @@ fun HomeContent(d: HomeData, refreshing: Boolean, onRefresh: () -> Unit, actions
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = contentPadding.calculateBottomPadding() + 16.dp)) {
             item { Hero(d, today, actions) }
             item { QuickLinks(actions, Modifier.padding(start = 18.dp, end = 18.dp, top = 14.dp)) }
-            d.compare?.let { item { EdgeCard(it, Modifier.padding(start = 18.dp, end = 18.dp, top = 14.dp)) } }
+            d.compare?.let { item { EdgeCard(it, d, Modifier.padding(start = 18.dp, end = 18.dp, top = 14.dp)) } }
 
             item { Watchlist(d.watchlist, actions) }
         }
@@ -350,7 +354,7 @@ private fun WhatIfCard(onClick: () -> Unit, modifier: Modifier = Modifier) {
 
 /** Your edge since 2021: the backtest (POST /calc/sip-compare) on the checkered chart with the three totals. */
 @Composable
-private fun EdgeCard(c: SipCompare, modifier: Modifier = Modifier) {
+private fun EdgeCard(c: SipCompare, d: HomeData, modifier: Modifier = Modifier) {
     MaCard(modifier.fillMaxWidth(), padding = 14.dp) {
         Column {
             Row(verticalAlignment = Alignment.Top) {
@@ -361,11 +365,19 @@ private fun EdgeCard(c: SipCompare, modifier: Modifier = Modifier) {
                 Text((if (c.extra >= 0) "+" else "−") + inr(kotlin.math.abs(c.extra)), color = if (c.extra >= 0) Ma.c.up else Ma.c.down, fontSize = 22.sp, fontWeight = FontWeight.Black)
             }
             VSpace(8.dp)
-            // the gap itself (Mod Alpha value − fixed-date value) over time, so even a small edge reads as a curve
-            val gap = c.points.map { (it.modAlpha - it.fixed).toDouble() }
-            Text("Extra value over a SIP on the ${c.fixedDay}${sfx(c.fixedDay)}" + if (c.fixedValue > 0) " · %+.2f%%".format(c.extra * 100.0 / c.fixedValue) else "", color = Ma.c.muted, fontSize = 11.sp)
-            VSpace(4.dp)
-            if (gap.size > 1) GridChart(listOf(ChartSeries(gap, Ma.c.up, fill = true)), emptyList(), Modifier.fillMaxWidth().height(96.dp), yFormat = { inrShort(it) }, showY = false)
+            val candles = remember(d.candleNav, d.pastDays) { monthCandles(d.candleNav, d.pastDays) }
+            if (candles.size >= 3) {
+                Text("${d.candleFund ?: "Top fund"} · NAV by month, last ${candles.size} months", color = Ma.c.muted, fontSize = 11.sp)
+                VSpace(4.dp)
+                NavCandles(candles, Modifier.fillMaxWidth().height(130.dp))
+                Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    LegendDot(Color(0xFF94A3B8), "Buy on the 1st"); LegendDot(GoldDeep, "Mod Alpha buy"); LegendDot(Color(0xFF16A34A), "Month up", square = true)
+                }
+            } else {
+                // not enough NAV history yet: the gap itself over time
+                val gap = c.points.map { (it.modAlpha - it.fixed).toDouble() }
+                if (gap.size > 1) GridChart(listOf(ChartSeries(gap, Ma.c.up, fill = true)), emptyList(), Modifier.fillMaxWidth().height(96.dp), yFormat = { inrShort(it) }, showY = false)
+            }
             VSpace(10.dp)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Mini("Invested", inrShort(c.invested.toDouble()), Ma.c.text, Modifier.weight(1f))
@@ -374,6 +386,49 @@ private fun EdgeCard(c: SipCompare, modifier: Modifier = Modifier) {
             }
         }
     }
+}
+
+/** One month of NAV: open, close, high, low, the NAV a 1st-of-month SIP bought at, and the Mod Alpha buy (if published). */
+private class MonthCandle(val label: String, val open: Double, val close: Double, val high: Double, val low: Double, val first: Double, val best: Double?)
+
+private fun monthCandles(nav: List<com.modalpha.app.data.NavPoint>, pastDays: Map<String, Int>): List<MonthCandle> =
+    nav.groupBy { it.date.take(7) }.toSortedMap().entries.toList().takeLast(12).mapNotNull { (ym, pts) ->
+        if (pts.size < 3) return@mapNotNull null
+        val vals = pts.sortedBy { it.date }
+        val best = pastDays[ym]?.let { day -> vals.firstOrNull { it.date.substring(8, 10).toInt() >= day }?.value }
+        val label = runCatching { YearMonth.parse(ym).month.getDisplayName(TextStyle.SHORT, Locale.ENGLISH) }.getOrDefault(ym)
+        MonthCandle(label, vals.first().value, vals.last().value, vals.maxOf { it.value }, vals.minOf { it.value }, vals.first().value, best)
+    }
+
+/** Monthly NAV candles on a checkered grid: grey dot = bought on the 1st, gold dot = bought on the Mod Alpha date. */
+@Composable
+private fun NavCandles(cs: List<MonthCandle>, modifier: Modifier) {
+    val c = Ma.c
+    val measurer = androidx.compose.ui.text.rememberTextMeasurer()
+    val label = androidx.compose.ui.text.TextStyle(color = c.muted, fontSize = 9.sp)
+    Canvas(modifier) {
+        val labelH = 14.dp.toPx(); val top = 6.dp.toPx(); val h = size.height - labelH - top
+        // checkered background
+        val rows = 4; val ch = h / rows; val cols = (size.width / ch).toInt().coerceAtLeast(6); val cw = size.width / cols
+        for (r in 0 until rows) for (k in 0 until cols) if ((r + k) % 2 == 0) drawRect(Color(0xFF0D1730).copy(alpha = .04f), Offset(k * cw, top + r * ch), Size(cw, ch))
+        val lo = cs.minOf { it.low } * .995; val hi = cs.maxOf { it.high } * 1.005
+        fun y(v: Double) = (top + h * (1 - (v - lo) / (hi - lo))).toFloat()
+        val slot = size.width / cs.size; val bw = slot * .36f
+        cs.forEachIndexed { i, m ->
+            val cx = slot * i + slot / 2
+            val col = if (m.close >= m.open) Color(0xFF16A34A) else Color(0xFFDC2626)
+            drawLine(col, Offset(cx, y(m.high)), Offset(cx, y(m.low)), 1.3.dp.toPx())
+            val t = y(maxOf(m.open, m.close)); val b = y(minOf(m.open, m.close))
+            drawRoundRect(col, Offset(cx - bw / 2, t), Size(bw, (b - t).coerceAtLeast(2.dp.toPx())), androidx.compose.ui.geometry.CornerRadius(1.5.dp.toPx()))
+            drawCircle(Color(0xFF94A3B8), 2.6.dp.toPx(), Offset(cx - bw / 2 - 4.dp.toPx(), y(m.first)))
+            m.best?.let { drawCircle(Color.White, 3.6.dp.toPx(), Offset(cx + bw / 2 + 4.dp.toPx(), y(it))); drawCircle(Color(0xFFE0A63C), 2.8.dp.toPx(), Offset(cx + bw / 2 + 4.dp.toPx(), y(it))) }
+            if (i % 2 == 0 || cs.size <= 6) { val tl = measurer.measure(m.label, label); drawText(tl, topLeft = Offset(cx - tl.size.width / 2f, size.height - tl.size.height)) }
+        }
+    }
+}
+
+@Composable private fun LegendDot(col: Color, t: String, square: Boolean = false) = Row(verticalAlignment = Alignment.CenterVertically) {
+    Box(Modifier.size(8.dp).clip(if (square) RoundedCornerShape(2.dp) else CircleShape).background(col)); Spacer(Modifier.width(4.dp)); Text(t, color = Ma.c.muted, fontSize = 10.5.sp)
 }
 
 @Composable private fun Mini(k: String, v: String, col: Color, modifier: Modifier) = Column(modifier.clip(RoundedCornerShape(12.dp)).background(Ma.c.surface2).padding(horizontal = 10.dp, vertical = 8.dp)) {

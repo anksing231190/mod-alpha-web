@@ -77,6 +77,11 @@ data class HomeData(
     val watchlist: List<Fund> = emptyList(),
     /** Value of a ₹10,000 SIP on each day 1–28 (Analytics.dayValues on the top fund's NAV history). */
     val dayEdge: List<Double>? = null,
+    /** Last ~13 months of the top fund's NAV, for the monthly candles on Home. */
+    val candleNav: List<NavPoint> = emptyList(),
+    val candleFund: String? = null,
+    /** Published best day of each past month ("2026-10" → 18), for the gold buy dots. */
+    val pastDays: Map<String, Int> = emptyMap(),
 )
 
 /** Result of asking for an OTP. `devCode` comes back only on stage (mock SMS) and in demo mode. */
