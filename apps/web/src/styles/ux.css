@@ -1132,3 +1132,21 @@ html[data-theme="light"] .ma-bill-kind{color:#6d28d9;background:rgba(109,40,217,
 html[data-theme="light"] .ma-bill-cn{color:#92400e!important}
 .v22-mailprev>small{color:#64748b!important}
 .v22-mini-table td{overflow:visible!important}
+
+/* ---------- footer always at the bottom of the screen on short pages ---------- */
+.main-area{display:flex!important;flex-direction:column;min-height:var(--vh100,100vh)}
+.main-area>.page-content{flex:1 0 auto}
+.main-area>.workspace-footer{margin-top:auto;flex:none}
+
+/* search box in the top bar: the box itself shows focus, not a ring inside it */
+.ma-cmd input:focus,.ma-cmd input:focus-visible{outline:none!important;box-shadow:none!important}
+.ma-cmd:focus-within{border-color:var(--ma-c)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--ma-c) 22%,transparent)!important}
+
+/* ---------- empty watchlist: a centred message, not a full-width strip ---------- */
+.ma-watch-page .ma-empty,.ma-watch-page [class*="ma-empty"]:not(.ma-empty *){max-width:560px;margin:40px auto 0!important;display:flex!important;flex-direction:column!important;align-items:center!important;text-align:center!important;gap:14px!important;padding:40px 32px!important}
+.ma-watch-page [class*="ma-empty"] p{max-width:420px;margin-left:auto;margin-right:auto}
+.ma-watch-page .ma-empty-txt{display:grid;justify-items:center;gap:8px}
+html[data-theme="light"] .ma-cmd mark{color:#155e75!important}
+.ma-cmd [aria-selected="true"] small,.ma-cmd .on small,.ma-th-menu button.on small{color:var(--ma-sub)!important}
+.main-area{padding-bottom:0!important}
+@media (min-width:761px){.workspace-footer{padding-right:190px!important}}

@@ -1,15 +1,8 @@
 /* ==========================================================================
    Theme skins on top of Sand (features/theme/theme-skins.js)
-   • Ivory  — white & cream: most colours come from theme-ivory.generated.css; tokens below.
    • Espresso ("duo") — Sand's cream pages with a dark espresso sidebar, top bar and phone tab bar.
    ========================================================================== */
 
-/* ---------- Ivory: shared tokens used by the newer screens ---------- */
-html[data-theme="light"][data-skin="ivory"]{
-  --ma-surf:#ffffff;--ma-surf2:#fbf8f2;--ma-bd:rgba(120,90,40,.17);--ma-skel:#f3eee4;--ma-skel2:#fbf8f2;
-  --sand-shadow:0 1px 2px rgba(94,64,32,.05),0 8px 24px rgba(94,64,32,.06);
-}
-html[data-theme="light"][data-skin="ivory"] .ma-cc,html[data-theme="light"][data-skin="ivory"] .ma-toast,html[data-theme="light"][data-skin="ivory"] .ma-bsel-pop{background:#ffffff}
 
 /* ---------- Espresso: dark chrome ---------- */
 html[data-theme="light"][data-skin="duo"]:root{--esp:#1e1813;--esp2:#2a221a;--esp-line:#3a2f24;--esp-tx:#f4e8d4;--esp-sub:#cdb89a;--esp-mut:#a38c6f;--esp-acc:#d39a5c}
@@ -30,7 +23,7 @@ html[data-theme="light"][data-skin="duo"]:root .sidebar .logout-btn{background:r
 html[data-theme="light"][data-skin="duo"]:root .workspace-topbar,html[data-theme="light"][data-skin="duo"]:root .topbar.public-topbar,html[data-theme="light"][data-skin="duo"]:root .topbar{background:rgba(30,24,19,.96)!important;border-bottom-color:var(--esp-line)!important;color:var(--esp-tx)}
 html[data-theme="light"][data-skin="duo"]:root .workspace-topbar :is(.ma-theme-toggle,.ma-lang-toggle,.v22-bell,.icon-action,.profile-menu,.user-chip,.workspace-search,.ma-cmd,.ma-usage-btn),
 html[data-theme="light"][data-skin="duo"]:root .topbar :is(.ma-theme-toggle,.ma-lang-toggle,.login-outline){background:var(--esp2)!important;border-color:var(--esp-line)!important;color:var(--esp-tx)!important}
-html[data-theme="light"][data-skin="duo"]:root .workspace-topbar :is(input,kbd,span,b,small),html[data-theme="light"][data-skin="duo"]:root .ma-m-menu{color:var(--esp-tx)!important}
+html[data-theme="light"][data-skin="duo"]:root .workspace-topbar :is(input,kbd,span,b,small):not(.ma-cmd-list *):not([class*="pop"] *):not([class*="v22-np"] *):not([role="menu"] *):not([role="dialog"] *):not([role="listbox"] *),html[data-theme="light"][data-skin="duo"]:root .ma-m-menu{color:var(--esp-tx)!important}
 html[data-theme="light"][data-skin="duo"]:root .workspace-topbar input::placeholder{color:var(--esp-mut)!important}
 html[data-theme="light"][data-skin="duo"]:root .workspace-topbar .ma-theme-toggle,html[data-theme="light"][data-skin="duo"]:root .topbar .ma-theme-toggle{color:#f3c27a!important}
 html[data-theme="light"][data-skin="duo"]:root .topbar .public-nav a{color:var(--esp-sub)!important}html[data-theme="light"][data-skin="duo"]:root .topbar .public-nav a:hover{color:var(--esp-tx)!important}
@@ -45,8 +38,8 @@ html[data-theme="light"][data-skin="duo"]:root .workspace-footer{background:var(
 html[data-theme="light"][data-skin="duo"]:root .workspace-footer :is(span,a){color:var(--esp-sub)!important}
 
 /* ---------- theme picker pop-over ---------- */
+html[data-theme="light"] .ma-th-menu{background:#fffaf1!important}
 .ma-th-menu{position:fixed;z-index:9500;width:290px;padding:8px;border-radius:16px;border:1px solid var(--ma-bd);background:#0f1a3a;box-shadow:0 24px 60px -18px rgba(0,0,0,.6);display:grid;gap:2px;animation:maCcIn .2s ease}
-html[data-theme="light"] .ma-th-menu{background:#fffaf1}html[data-skin="ivory"] .ma-th-menu{background:#fff}
 .ma-th-h{padding:6px 10px 8px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ma-mut)}
 .ma-th-menu button{display:flex;align-items:center;gap:12px;padding:9px 10px;border:0;border-radius:11px;background:none;color:var(--ma-tx);text-align:left;cursor:pointer;font-family:inherit}
 .ma-th-menu button:hover,.ma-th-menu button:focus-visible{background:var(--ma-surf2)}
@@ -57,7 +50,6 @@ html[data-theme="light"] .ma-th-menu{background:#fffaf1}html[data-skin="ivory"] 
 .ma-th-sw em{flex:1;display:block}.ma-th-sw em:first-child{flex:1.4}
 .ma-th-sw.auto em:first-child{background:#f4ecdd}.ma-th-sw.auto em:last-child{background:#080b18}
 /* Settings cards: previews for the new themes */
-.v22-theme-prev.ivory{background:#fdfbf7!important}.v22-theme-prev.ivory i{background:#fff!important;border:1px solid #ece4d4}.v22-theme-prev.ivory i:first-child{background:#f3ead9!important}
 .v22-theme-prev.duo{background:#f4ecdd!important}.v22-theme-prev.duo i:first-child{background:#1e1813!important}.v22-theme-prev.duo i{background:#fffaf1!important}
 html[data-theme="light"][data-skin="duo"]:root .workspace-topbar .ma-lang-toggle span:not(.on){color:var(--esp-sub)!important}
 html[data-theme="light"][data-skin="duo"]:root .workspace-topbar .ma-lang-toggle span.on{background:linear-gradient(100deg,#b8783a,#8a5226)!important;color:#fff!important}
