@@ -29,7 +29,7 @@
     return src.map((p) => ({ id: p.id || p.name, name: p.name, prices: p.prices && p.prices.Yearly != null ? p.prices : { Monthly: p.price, Quarterly: p.price * 3, Yearly: Math.round(p.price * 0.8) * 12 } }));
   };
 
-  /** Same rules as apps/api/src/modules/billing/plan-change.ts (the API is the authority in live mode). */
+  /** Same rules as api/src/modules/billing/plan-change.ts (the API is the authority in live mode). */
   function preview(s, target) {
     const ps = plans(), tp = ps.find((p) => p.id === target.planId || p.name === target.planId);
     if (!tp) return { kind: 'blocked', message: T('Unknown plan') };

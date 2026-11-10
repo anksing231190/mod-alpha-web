@@ -6,7 +6,7 @@ ARG WEB_RAZORPAY_KEY_ID
 ARG WEB_GOOGLE_CLIENT_ID
 WORKDIR /app
 COPY scripts/build-web.mjs scripts/
-COPY apps/web apps/web
+COPY web web
 RUN WEB_API_BASE_URL=$WEB_API_BASE_URL WEB_RAZORPAY_KEY_ID=$WEB_RAZORPAY_KEY_ID WEB_GOOGLE_CLIENT_ID=$WEB_GOOGLE_CLIENT_ID node scripts/build-web.mjs $APP_ENV && mv dist/web-$APP_ENV /site
 
 FROM nginx:1.27-alpine

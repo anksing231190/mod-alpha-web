@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Build apps/web/src/core/icons-lucide.js from the Lucide icon set (https://lucide.dev, ISC licence).
+ * Build web/src/core/icons-lucide.js from the Lucide icon set (https://lucide.dev, ISC licence).
  *
  *   npm pack lucide-static && tar xzf lucide-static-*.tgz      # downloads package/icons/*.svg
  *   node scripts/data-tools/build-icons.mjs <path-to>/package/icons
@@ -60,7 +60,7 @@ const MA_LUCIDE = ${JSON.stringify(paths, null, 0).replace(/","/g, '",\n "')};
 const MA_ICON_OUTLINE = ${JSON.stringify(OUTLINE)};
 const MA_ICON_TILE = ${JSON.stringify(TILE)};
 `;
-const target = path.join(path.dirname(new URL(import.meta.url).pathname), '../../apps/web/src/core/icons-lucide.js');
+const target = path.join(path.dirname(new URL(import.meta.url).pathname), '../../web/src/core/icons-lucide.js');
 fs.writeFileSync(target, out);
 fs.mkdirSync(path.join(path.dirname(target), '../../assets/icons'), { recursive: true });
 fs.copyFileSync(path.join(dir, '..', 'LICENSE'), path.join(path.dirname(target), '../../assets/icons/LUCIDE-LICENSE.txt'));

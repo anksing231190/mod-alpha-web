@@ -5,7 +5,7 @@
    Step 2  only when there is no KYC record in the registry (KRA):
            "Verify with DigiLocker" → the KYC provider's page (Aadhaar, selfie, e-sign)
    Step 3  verified → checkout continues
-   Live mode: POST /kyc/pan (apps/api/src/modules/kyc/routes.ts). Demo mode: the same
+   Live mode: POST /kyc/pan (api/src/modules/kyc/routes.ts). Demo mode: the same
    test PANs as the API mock, kept in this browser:
      ABCDE1234F  KRA record found → verified at once
      ABCDE5678G  no KRA record → DigiLocker step (any other valid PAN too)

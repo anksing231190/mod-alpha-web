@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const env = process.argv[2] || 'stage';
 if (!['local', 'stage', 'prod'].includes(env)) { console.error('usage: build-web.mjs <local|stage|prod>'); process.exit(1); }
-const src = path.join(root, 'apps/web'), out = path.join(root, 'dist', `web-${env}`);
+const src = path.join(root, 'web'), out = path.join(root, 'dist', `web-${env}`);
 const cfg = JSON.parse(fs.readFileSync(path.join(src, 'config', `env.${env}.json`), 'utf8'));
 if (process.env.WEB_API_BASE_URL) cfg.API_BASE_URL = process.env.WEB_API_BASE_URL;
 if (process.env.WEB_RAZORPAY_KEY_ID) cfg.RAZORPAY_KEY_ID = process.env.WEB_RAZORPAY_KEY_ID;

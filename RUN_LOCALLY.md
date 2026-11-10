@@ -119,14 +119,14 @@ npm run jobs
 
 - **Paid plan:** Subscription → Start Pro Plan → **Start KYC** → **Approve** → **Pay (test)**. An invoice appears under *Billing history*.
 - **Emails and SMS** (password reset, OTP, reminders) are not sent. They appear in **Admin → Notifications → Mock outbox**.
-- **Data upload:** Admin → Data Management. Upload `apps/web/data/mod-alpha-test-data.xlsx` or your own workbook (format: `docs/21_test_data_excel_format.md`).
+- **Data upload:** Admin → Data Management. Upload `web/data/mod-alpha-test-data.xlsx` or your own workbook (format: `docs/21_test_data_excel_format.md`).
 
 ## Troubleshooting
 
 | Problem | Fix |
 |---|---|
 | `Invalid configuration … DATABASE_URL` | Check `.env.local` exists in the `mod-alpha` folder and the database URL is correct |
-| `port 8080/8081/5432 already in use` | Stop the other program using the port, or change `PORT` in `.env.local` and the port in `apps/web/config/env.local.json` |
+| `port 8080/8081/5432 already in use` | Stop the other program using the port, or change `PORT` in `.env.local` and the port in `web/config/env.local.json` |
 | Website loads but shows "Could not reach the Mod Alpha API" | The API is not running. Start it with `npm run dev:api` or check `docker compose … logs api` |
 | Login works but you are logged out immediately | Use exactly `http://localhost:8081`, not `127.0.0.1`, so cookies match |
-| Want the old static demo with no backend | Serve `apps/web` directly, for example `npx serve apps/web` |
+| Want the old static demo with no backend | Serve `web` directly, for example `npx serve web` |

@@ -1,9 +1,20 @@
 node_modules/
 dist/
-apps/api/dist/
+api/dist/
 var/
 .env
 .env.stage
 .env.prod
 *.log
 .DS_Store
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+*.apk
+*.aab
+*.jks
+*.keystore

@@ -9,7 +9,7 @@
      period end. "Keep my plan" undoes a cancellation.
      live: GET /me/entitlements · POST /billing/subscriptions/:id/cancel { reason, comment } · …/resume
      demo: the state is kept in this browser; "Preview a state" on the Subscription page switches it
-   Test accounts on stage: demo.pastdue@ / demo.cancelling@ / demo.pro@modalpha.test (apps/api/src/cli/seed.ts)
+   Test accounts on stage: demo.pastdue@ / demo.cancelling@ / demo.pro@modalpha.test (api/src/cli/seed.ts)
    Styles: src/styles/ux.css
    ========================================================================== */
 (function () {

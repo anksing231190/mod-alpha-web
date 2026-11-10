@@ -1,4 +1,4 @@
-# Mod Alpha — website (`apps/web`)
+# Mod Alpha — website (`web`)
 
 Plain HTML + CSS + JavaScript (no framework, no bundler). `index.html` loads every file with a
 `<script>` tag; the build (`scripts/build-web.mjs`) only copies the folder, writes `config/env.js`
@@ -11,7 +11,7 @@ and adds cache-busting `?v=` to the file names.
 ## Folder structure (one folder per feature)
 
 ```
-apps/web/
+web/
 ├── index.html                 the only page; lists every script in load order (commented)
 ├── config/env.*.json          per-environment settings → config/env.js at build time
 ├── assets/                    brand images, fund house logos (assets/funds/manifest.js), xlsx library
@@ -77,7 +77,7 @@ Inside a feature folder:
 ## Run locally
 
 ```bash
-node scripts/serve-web.mjs apps/web 8092
+node scripts/serve-web.mjs web 8092
 ```
 
 Open `http://localhost:8092` for the demo, or use `scripts/start-local.sh` for the full app with the API.

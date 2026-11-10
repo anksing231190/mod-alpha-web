@@ -1,7 +1,7 @@
 /**
  * One-off migration (v23.15): split the layered legacy website scripts into one folder per feature.
  *
- *   node scripts/dev/restructure-web.cjs <apps/web> <descriptions.json>
+ *   node scripts/dev/restructure-web.cjs <web> <descriptions.json>
  *
  * What it does, without changing behaviour:
  *   1. Drops dead code: older copies of functions that a later file replaced without using them.

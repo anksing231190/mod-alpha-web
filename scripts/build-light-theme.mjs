@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-/* Generates apps/web/src/styles/theme-light.generated.css — the "Sand" (beige + cream) light theme.
+/* Generates web/src/styles/theme-light.generated.css — the "Sand" (beige + cream) light theme.
    Every colour declaration in src/styles/base.css and src/styles/app.css is re-emitted under
    html[data-theme="light"] with its light counterpart (src/features/theme/theme-palette.js).
-   Hand-designed refinements live in apps/web/src/styles/theme-light.css and load after this file.
+   Hand-designed refinements live in web/src/styles/theme-light.css and load after this file.
    Run:  node scripts/build-light-theme.mjs   (also runs in `npm run build`) */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -11,7 +11,7 @@ import postcss from 'postcss';
 
 const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
-const web = path.join(root, 'apps/web');
+const web = path.join(root, 'web');
 const P = require(path.join(web, 'src/features/theme/theme-palette.js'));
 const SOURCES = ['src/styles/base.css', 'src/styles/app.css'];
 const SCOPE = 'html[data-theme="light"]';

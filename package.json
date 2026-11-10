@@ -1,23 +1,23 @@
 {
   "name": "mod-alpha",
   "private": true,
-  "workspaces": ["apps/api"],
+  "workspaces": ["api"],
   "scripts": {
     "local": "bash scripts/start-local.sh",
-    "dev:api": "npm --workspace apps/api run dev",
+    "dev:api": "npm --workspace api run dev",
     "dev:web": "node scripts/build-web.mjs local && node scripts/serve-web.mjs dist/web-local 8081",
-    "seed:test": "npm --workspace apps/api run seed -- --workbook=../web/data/mod-alpha-test-data.xlsx",
-    "jobs": "npm --workspace apps/api run jobs",
-    "build": "npm --workspace apps/api run build && node scripts/build-light-theme.mjs && node scripts/build-web.mjs",
+    "seed:test": "npm --workspace api run seed -- --workbook=../web/data/mod-alpha-test-data.xlsx",
+    "jobs": "npm --workspace api run jobs",
+    "build": "npm --workspace api run build && node scripts/build-light-theme.mjs && node scripts/build-web.mjs",
     "theme:build": "node scripts/build-light-theme.mjs",
     "build:web:stage": "node scripts/build-web.mjs stage",
     "build:web:prod": "node scripts/build-web.mjs prod",
-    "migrate": "npm --workspace apps/api run migrate",
+    "migrate": "npm --workspace api run migrate",
     "db:backup": "bash scripts/db/backup.sh",
     "db:restore": "bash scripts/db/restore.sh",
-    "seed": "npm --workspace apps/api run seed",
-    "test": "npm --workspace apps/api test",
-    "typecheck": "npm --workspace apps/api run typecheck"
+    "seed": "npm --workspace api run seed",
+    "test": "npm --workspace api test",
+    "typecheck": "npm --workspace api run typecheck"
   },
   "engines": { "node": ">=20" }
 }

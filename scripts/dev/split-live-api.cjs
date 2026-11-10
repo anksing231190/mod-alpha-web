@@ -1,7 +1,7 @@
 /**
  * One-off migration (v23.15): split js/v23-api.js (one big closure) into one "live" file per feature.
  *
- *   node scripts/dev/split-live-api.cjs <apps/web> <descriptions.json>
+ *   node scripts/dev/split-live-api.cjs <web> <descriptions.json>
  *
  * Live files run only when the site talks to the API (config/env.js sets API_BASE_URL).
  * They share helpers and state through window.MA_LIVE (created by src/core/live.js):

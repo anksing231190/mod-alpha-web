@@ -74,12 +74,12 @@ These are also listed under "Not built yet — planned" in System Settings.
 4. **Admin → System Settings → External providers** should now show **Live** for that provider.
 5. Run the provider's QA script:
    - **Payments:** successful payment, failed payment, duplicate webhook (ignored), refund from admin, cancel at period end.
-   - **KYC:** KRA hit, DigiLocker approve / reject, wrong PAN, duplicate PAN, abandoned session. Digio's PAN-verification and KRA-lookup endpoints must be added from the onboarding pack (`verifyPan` / `kraLookup` in `apps/api/src/providers/kyc.ts` fail clearly until then).
+   - **KYC:** KRA hit, DigiLocker approve / reject, wrong PAN, duplicate PAN, abandoned session. Digio's PAN-verification and KRA-lookup endpoints must be added from the onboarding pack (`verifyPan` / `kraLookup` in `api/src/providers/kyc.ts` fail clearly until then).
    - **Email/SMS:** deliverability to Gmail/Outlook, DLT template approval, OTP expiry and retry limit.
    - **AI:** quota per plan, refusal of personalised advice, latency.
    - **NAV:** fund `amfi_code` mapping coverage, holiday handling, metrics recomputed.
 6. Repeat with **live** credentials in **prod** (remove the provider from `ALLOW_MOCK_PROVIDERS` if it was listed).
-7. Update the status in `apps/web/src/features/admin/settings/integrations-catalogue.js` from `Mock` to `Ready` and regenerate `docs/22_integration_backlog.md`:
+7. Update the status in `web/src/features/admin/settings/integrations-catalogue.js` from `Mock` to `Ready` and regenerate `docs/22_integration_backlog.md`:
 
    ```bash
    node scripts/data-tools/export_integrations.js
@@ -91,10 +91,10 @@ These are also listed under "Not built yet — planned" in System Settings.
 
 | Concern | File |
 |---|---|
-| All adapters (mock + real) — one file per provider; registry and catalogue shown in System Settings | `apps/api/src/providers/` (`index.ts` = registry) |
-| Rule-based assistant | `apps/api/src/providers/mock-ai.ts` |
-| Prod guard (refuses mocks) and required credentials per provider | `apps/api/src/config.ts` |
-| Stage-only payment confirmation | `POST /api/v1/billing/mock/complete` in `apps/api/src/modules/billing/routes.ts` |
-| Stage-only KYC decision | `POST /api/v1/kyc/mock/complete` in `apps/api/src/modules/kyc/routes.ts`; page `#/kyc/mock` in `apps/web/src/features/subscription/kyc.live.js` |
+| All adapters (mock + real) — one file per provider; registry and catalogue shown in System Settings | `api/src/providers/` (`index.ts` = registry) |
+| Rule-based assistant | `api/src/providers/mock-ai.ts` |
+| Prod guard (refuses mocks) and required credentials per provider | `api/src/config.ts` |
+| Stage-only payment confirmation | `POST /api/v1/billing/mock/complete` in `api/src/modules/billing/routes.ts` |
+| Stage-only KYC decision | `POST /api/v1/kyc/mock/complete` in `api/src/modules/kyc/routes.ts`; page `#/kyc/mock` in `web/src/features/subscription/kyc.live.js` |
 | Mock outbox | table `mock_outbox`; `GET /api/v1/admin/mock-outbox`; Admin → Notifications |
-| Public keys the browser needs | `apps/web/config/env.<env>.json` or CI vars `WEB_RAZORPAY_KEY_ID`, `WEB_GOOGLE_CLIENT_ID` |
+| Public keys the browser needs | `web/config/env.<env>.json` or CI vars `WEB_RAZORPAY_KEY_ID`, `WEB_GOOGLE_CLIENT_ID` |

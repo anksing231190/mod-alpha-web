@@ -4,8 +4,8 @@ Mutual-fund analytics and monthly SIP-date intelligence. The repository holds th
 
 | Part | Path | Stack |
 |---|---|---|
-| Website | `apps/web` | static HTML/CSS/JS, served by nginx |
-| API + jobs worker | `apps/api` | Node 22, TypeScript, Fastify, PostgreSQL 16 |
+| Website | `web` | static HTML/CSS/JS, served by nginx |
+| API + jobs worker | `api` | Node 22, TypeScript, Fastify, PostgreSQL 16 |
 | Infra | `infra/`, `.github/workflows/` | Docker, docker-compose, GitHub Actions |
 | Docs | `docs/` | see the index below |
 

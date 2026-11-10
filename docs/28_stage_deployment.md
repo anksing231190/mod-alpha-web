@@ -117,7 +117,7 @@ the hold is lifted the button appears. **Until then, stage runs on the temporary
 ```bash
 git clone --depth 1 https://<TOKEN>@github.com/anksing231190/mod-alpha-web.git ~/mod-alpha-web
 mkdir -p ~/modalpha-stage/seed && cp ~/mod-alpha-web/infra/stage/* ~/modalpha-stage/ \
-  && cp ~/mod-alpha-web/apps/web/data/mod-alpha-test-data.xlsx ~/modalpha-stage/seed/ && cd ~/modalpha-stage && ls
+  && cp ~/mod-alpha-web/web/data/mod-alpha-test-data.xlsx ~/modalpha-stage/seed/ && cd ~/modalpha-stage && ls
 cp env.stage.example .env.stage && chmod 600 .env.stage
 sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -hex 24)|; s|^JWT_SECRET=.*|JWT_SECRET=$(openssl rand -hex 48)|" .env.stage
 echo <TOKEN> | docker login ghcr.io -u anksing231190 --password-stdin     # → Login Succeeded

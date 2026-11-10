@@ -1,5 +1,5 @@
 /**
- * Apply database migrations (apps/api/migrations/*.sql) in file-name order, once each.
+ * Apply database migrations (api/migrations/*.sql) in file-name order, once each.
  * A PostgreSQL advisory lock makes it safe when several API replicas start together; each file runs in a transaction.
  * usage: npm run migrate
  */

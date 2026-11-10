@@ -44,11 +44,11 @@ The colourful icon tiles keep their original colours in both themes.
 ## How it is built
 | File | Role |
 |---|---|
-| `apps/web/src/features/theme/theme-palette.js` | One colour-mapping function: dark colour → Sand colour, by what the colour is used for (surface, text, border, shadow, chart). |
-| `scripts/build-light-theme.mjs` | Reads `src/styles/base.css` and `src/styles/app.css` and re-emits every colour declaration under `html[data-theme="light"]`. Writes **`apps/web/src/styles/theme-light.generated.css`**, which is generated, so don't edit it by hand. |
-| `apps/web/src/styles/theme-light.css` | Hand-designed refinements: sidebar, buttons, inputs, tables, tooltips, toggle, upgrade chip, login. |
-| `apps/web/src/features/theme/theme.js` | The toggle and the Appearance cards. Re-colours charts drawn at runtime (SVG `fill`/`stroke`/`stop-color`, legend dots) and restores them when you switch back. |
-| `apps/web/v22-ui.js` | The animated login background uses Sand colours in light mode. |
+| `web/src/features/theme/theme-palette.js` | One colour-mapping function: dark colour → Sand colour, by what the colour is used for (surface, text, border, shadow, chart). |
+| `scripts/build-light-theme.mjs` | Reads `src/styles/base.css` and `src/styles/app.css` and re-emits every colour declaration under `html[data-theme="light"]`. Writes **`web/src/styles/theme-light.generated.css`**, which is generated, so don't edit it by hand. |
+| `web/src/styles/theme-light.css` | Hand-designed refinements: sidebar, buttons, inputs, tables, tooltips, toggle, upgrade chip, login. |
+| `web/src/features/theme/theme.js` | The toggle and the Appearance cards. Re-colours charts drawn at runtime (SVG `fill`/`stroke`/`stop-color`, legend dots) and restores them when you switch back. |
+| `web/v22-ui.js` | The animated login background uses Sand colours in light mode. |
 
 **After changing `base.css` or `app.css`**, regenerate the light theme. `npm run build` also does this automatically.
 ```bash
@@ -75,7 +75,7 @@ node scripts/qa/contrast-audit.js
 ```
 
 ## Date picker
-Every date field on the site uses one Mod Alpha calendar (`apps/web/src/shared/datepicker.js`), styled for both themes and translated into Hindi. It covers the what-if and SIP-compare dates and the admin date-range dialog; nothing uses the browser's own date popup.
+Every date field on the site uses one Mod Alpha calendar (`web/src/shared/datepicker.js`), styled for both themes and translated into Hindi. It covers the what-if and SIP-compare dates and the admin date-range dialog; nothing uses the browser's own date popup.
 
 - **Navigation:** month and year quick switch.
 - **Dates:** today is marked with a ring. Dates outside the allowed range are disabled; investment dates cannot be in the future.
@@ -87,8 +87,8 @@ Every date field on the site uses one Mod Alpha calendar (`apps/web/src/shared/d
 ## Fund house logos
 - **Where they appear:** each fund shows its fund house (AMC) logo in the fund list, on the fund page and in the dashboard legend.
 - **Adding a logo:**
-  1. Put the official file in `apps/web/assets/funds/`: SVG, or a square PNG of at least 128 px with a transparent background.
-  2. Map the AMC name, exactly as in the Funds sheet's `amc` column, to that file in `apps/web/assets/funds/manifest.js`.
+  1. Put the official file in `web/assets/funds/`: SVG, or a square PNG of at least 128 px with a transparent background.
+  2. Map the AMC name, exactly as in the Funds sheet's `amc` column, to that file in `web/assets/funds/manifest.js`.
 - **Fallback:** an AMC without a file shows a coloured monogram tile (e.g. "SBI", "HDFC").
 - **Permission:** logos are trademarks of their AMCs, so use them only with permission or under each AMC's brand guidelines.
 - **Network note:** the build environment's network policy blocked downloading them, so add the files manually.

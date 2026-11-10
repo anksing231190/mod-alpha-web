@@ -4,34 +4,34 @@
 
 ```
 mod-alpha/
-├── apps/
-│   ├── api/                      # Backend — Node 22 + TypeScript + Fastify + PostgreSQL
-│   │   ├── migrations/           # SQL migrations (001_init.sql, 002_fund_metrics.sql …)
-│   │   ├── src/
-│   │   │   ├── config.ts         # env validation, stage/prod rules, provider credentials
-│   │   │   ├── app.ts            # Fastify app (security headers, CORS, cookies, rate limit, errors)
-│   │   │   ├── server.ts         # HTTP entrypoint
-│   │   │   ├── db.ts             # pg pool + transactions
-│   │   │   ├── shared/           # errors, validation, audit log, dates
-│   │   │   ├── providers/        # external adapters, one file per vendor: mock + real (docs/23)
-│   │   │   ├── modules/          # one folder per feature: routes.ts (+ helpers)
-│   │   │   │   ├── auth/         routes · session (cookies, timeouts) · admin-mfa · helpers
-│   │   │   │   ├── account/  billing/  kyc/  funds/ (+ analytics)  sip/  data/ (+ workbook)
-│   │   │   │   └── admin/  notifications/  content/
-│   │   │   ├── jobs/             # NAV import, campaign dispatch, subscription lifecycle, DPDP requests, custom reminders
-│   │   │   └── cli/              # migrate, seed, jobs worker
-│   │   ├── test/                 # integration tests against a real PostgreSQL
-│   │   └── Dockerfile
-│   └── web/                      # Website (static HTML/CSS/JS) — structure: apps/web/README.md
-│       ├── index.html            # the only page; script load order explained inside
-│       ├── src/core/             # state, router, layout, icons, start-up registry, boot, API client
-│       ├── src/shared/           # charts, date picker, fund logos, dataset
-│       ├── src/features/<feature>/  # <feature>.js (screens) + <feature>.live.js (API mode)
-│       ├── src/styles/           # base.css, app.css, theme-light(.generated).css
-│       ├── config/env.js         # generated per environment at build time
-│       ├── config/env.{local,stage,prod}.json
-│       ├── data/                 # test workbook + blank template
-│       └── Dockerfile            # nginx image
+├── api/                      # Backend — Node 22 + TypeScript + Fastify + PostgreSQL
+│   ├── migrations/           # SQL migrations (001_init.sql, 002_fund_metrics.sql …)
+│   ├── src/
+│   │   ├── config.ts         # env validation, stage/prod rules, provider credentials
+│   │   ├── app.ts            # Fastify app (security headers, CORS, cookies, rate limit, errors)
+│   │   ├── server.ts         # HTTP entrypoint
+│   │   ├── db.ts             # pg pool + transactions
+│   │   ├── shared/           # errors, validation, audit log, dates
+│   │   ├── providers/        # external adapters, one file per vendor: mock + real (docs/23)
+│   │   ├── modules/          # one folder per feature: routes.ts (+ helpers)
+│   │   │   ├── auth/         routes · session (cookies, timeouts) · admin-mfa · helpers
+│   │   │   ├── account/  billing/  kyc/  funds/ (+ analytics)  sip/  data/ (+ workbook)
+│   │   │   └── admin/  notifications/  content/
+│   │   ├── jobs/             # NAV import, campaign dispatch, subscription lifecycle, DPDP requests, custom reminders
+│   │   └── cli/              # migrate, seed, jobs worker
+│   ├── test/                 # integration tests against a real PostgreSQL
+│   └── Dockerfile
+├── web/                      # Website (static HTML/CSS/JS) — structure: web/README.md
+│   ├── index.html            # the only page; script load order explained inside
+│   ├── src/core/             # state, router, layout, icons, start-up registry, boot, API client
+│   ├── src/shared/           # charts, date picker, fund logos, dataset
+│   ├── src/features/<feature>/  # <feature>.js (screens) + <feature>.live.js (API mode)
+│   ├── src/styles/           # base.css, app.css, theme-light(.generated).css
+│   ├── config/env.js         # generated per environment at build time
+│   ├── config/env.{local,stage,prod}.json
+│   ├── data/                 # test workbook + blank template
+│   └── Dockerfile            # nginx image
+├── android/                  # Android app — Kotlin + Jetpack Compose, same API (and database) as the website: android/README.md
 ├── infra/                        # docker-compose (local/stage), nginx.conf
 ├── scripts/                      # build-web.mjs, data-tools (test data + backlog generators)
 ├── docs/                         # product, design and engineering docs (this file)
@@ -144,7 +144,7 @@ Base path: `/api/v1`. Auth uses httpOnly cookies (`ma_at` for the access token, 
 
 ## 7b. GST tax invoices (v23.18)
 
-Every captured payment creates a GST tax invoice (`apps/api/src/modules/billing/invoice.ts`), downloadable as an A4 PDF from **Subscription → Billing history** (`GET /billing/invoices/:id/pdf`).
+Every captured payment creates a GST tax invoice (`api/src/modules/billing/invoice.ts`), downloadable as an A4 PDF from **Subscription → Billing history** (`GET /billing/invoices/:id/pdf`).
 
 | On the invoice | Where it comes from |
 |---|---|

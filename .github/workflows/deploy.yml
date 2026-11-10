@@ -23,11 +23,11 @@ jobs:
         with: { registry: ghcr.io, username: "${{ github.actor }}", password: "${{ secrets.GITHUB_TOKEN }}" }
       - name: Build & push API image
         run: |
-          docker build -f apps/api/Dockerfile -t $REGISTRY/mod-alpha-api:${{ github.sha }} -t $REGISTRY/mod-alpha-api:$APP_ENV .
+          docker build -f api/Dockerfile -t $REGISTRY/mod-alpha-api:${{ github.sha }} -t $REGISTRY/mod-alpha-api:$APP_ENV .
           docker push --all-tags $REGISTRY/mod-alpha-api
       - name: Build & push web image
         run: |
-          docker build -f apps/web/Dockerfile --build-arg APP_ENV=$APP_ENV \
+          docker build -f web/Dockerfile --build-arg APP_ENV=$APP_ENV \
             --build-arg WEB_API_BASE_URL="${{ vars.WEB_API_BASE_URL }}" \
             --build-arg WEB_RAZORPAY_KEY_ID="${{ vars.WEB_RAZORPAY_KEY_ID }}" \
             --build-arg WEB_GOOGLE_CLIENT_ID="${{ vars.WEB_GOOGLE_CLIENT_ID }}" \

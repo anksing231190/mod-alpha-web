@@ -63,7 +63,7 @@ Mod Alpha holds SEBI registration, so client KYC is **mandatory** before any pai
 ---
 
 ## 2. Fund house logos
-- [ ] Add official AMC logo files to `apps/web/assets/funds/` and list them in `assets/funds/manifest.js`. Monograms are shown until then. The build environment cannot reach AMC sites, so these must be supplied.
+- [ ] Add official AMC logo files to `web/assets/funds/` and list them in `assets/funds/manifest.js`. Monograms are shown until then. The build environment cannot reach AMC sites, so these must be supplied.
 
 ---
 

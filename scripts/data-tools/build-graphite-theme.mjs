@@ -1,5 +1,5 @@
 /**
- * Build apps/web/src/styles/theme-graphite.generated.css — the content colours of the "Graphite" theme
+ * Build web/src/styles/theme-graphite.generated.css — the content colours of the "Graphite" theme
  * (charcoal + white). Graphite = Sand's layout with:
  *   • warm cream / beige surfaces, borders and text  → the same lightness in cool neutral grey (white pages)
  *   • caramel / ochre accents                        → slate blue-grey
@@ -16,7 +16,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const dir = path.join(root, 'apps/web/src/styles');
+const dir = path.join(root, 'web/src/styles');
 const SRC = ['app.css', 'theme-light.generated.css', 'theme-light.css', 'robot.css', 'ai.css', 'ux.css'];
 
 const hex2rgb = (h) => { h = h.slice(1); if (h.length === 3) h = h.split('').map((c) => c + c).join(''); return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)); };
