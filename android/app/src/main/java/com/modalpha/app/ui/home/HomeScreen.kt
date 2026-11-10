@@ -176,7 +176,8 @@ private fun Hero(d: HomeData, today: LocalDate, actions: HomeActions) {
             Text("This month's date is being prepared. We'll notify you when it's ready.", Modifier.padding(18.dp), color = c.chromeSub, fontSize = 15.sp)
             return@MeshHero
         }
-        val locked = d.locked || sip.day == null
+        if (d.locked || sip.day == null) { LockedHero(actions.openPlans); return@MeshHero }
+        val locked = false
         val date = if (locked) null else runCatching { LocalDate.parse("${sip.month}-%02d".format(sip.day)) }.getOrNull()
         val days = date?.let { ChronoUnit.DAYS.between(today, it) }
         Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -238,6 +239,45 @@ private fun Hero(d: HomeData, today: LocalDate, actions: HomeActions) {
         }
         if (locked) Box(Modifier.padding(start = 18.dp, end = 18.dp, top = 10.dp)) {
             GradientButton("Unlock with Pro", actions.openPlans, brush = Brush.horizontalGradient(listOf(Gold, GoldDeep)), leading = { Icon(Icons.Outlined.Lock, null, tint = Color.White, modifier = Modifier.size(17.dp)) })
+        }
+    }
+}
+
+/**
+ * Free plan: the whole date block (date, countdown, tiles, actions) drawn with placeholder values and blurred,
+ * with one lock and "Unlock with Pro" on top. Placeholders only; the real date is never on the device.
+ */
+@Composable
+private fun LockedHero(onUnlock: () -> Unit) {
+    val c = Ma.c
+    val blur = if (Build.VERSION.SDK_INT >= 31) Modifier.blur(10.dp) else Modifier.alpha(.12f)
+    Box(Modifier.fillMaxWidth().clickable(onClickLabel = "See plans", onClick = onUnlock)) {
+        Column(blur.padding(horizontal = 18.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("18th", color = c.chromeText, fontSize = 72.sp, fontWeight = FontWeight.Black, letterSpacing = (-3).sp)
+                    Text("Wednesday · 90% confidence", color = c.chromeSub, fontSize = 13.5.sp)
+                }
+                Ring(.6f, 88.dp, 8.dp, listOf(Mint, Color(0xFF22D3EE))) { Text("7", color = c.chromeText, fontSize = 24.sp, fontWeight = FontWeight.Black) }
+            }
+            Row(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                HeroTile("+3.1%", "vs the 1st", Modifier.weight(1f)); HeroTile("2.4 pts", "ahead of next", Modifier.weight(1f)); HeroTile("22nd", "backup day", Modifier.weight(1f))
+            }
+            Row(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                HeroButton("Remind me", Modifier.weight(1f)) {}; HeroButton("Add to calendar", Modifier.weight(1f)) {}; HeroButton("Why?", Modifier.weight(1f)) {}
+            }
+        }
+        // one lock for everything
+        Column(Modifier.align(Alignment.Center).padding(horizontal = 30.dp).clip(RoundedCornerShape(22.dp)).background(c.chrome2.copy(alpha = .82f))
+            .border(1.dp, Gold.copy(alpha = .45f), RoundedCornerShape(22.dp)).padding(horizontal = 18.dp, vertical = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(Modifier.size(60.dp).clip(CircleShape).background(Color.White).border(2.dp, Gold, CircleShape), contentAlignment = Alignment.Center) {
+                Icon(Icons.Outlined.Lock, "Locked", tint = Color(0xFF0F1A33), modifier = Modifier.size(26.dp))
+            }
+            Spacer(Modifier.height(10.dp))
+            Text("This month's date is ready", color = c.chromeText, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text("See the date, countdown, backup day and reminders", color = c.chromeSub, fontSize = 12.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            Spacer(Modifier.height(12.dp))
+            GradientButton("Unlock with Pro", onUnlock, brush = Brush.horizontalGradient(listOf(Gold, GoldDeep)))
         }
     }
 }
