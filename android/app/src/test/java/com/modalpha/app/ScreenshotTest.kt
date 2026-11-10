@@ -63,6 +63,9 @@ class ScreenshotTest {
 
 
     @Test fun welcome_navy() = shot("01-welcome", AppTheme.Navy, 2600) { WelcomeScreen({}, {}, {}, autoPlay = false) }
+    @Test fun welcome_navdata() = shot("01c-welcome-navdata", AppTheme.Navy, 2600) { WelcomeScreen({}, {}, {}, autoPlay = false, startSlide = 1) }
+    @Test fun welcome_reminder() = shot("01d-welcome-reminder", AppTheme.Navy, 2600) { WelcomeScreen({}, {}, {}, autoPlay = false, startSlide = 2) }
+    @Test fun welcome_navdata_espresso() = shot("01c-welcome-navdata", AppTheme.Espresso, 2600) { WelcomeScreen({}, {}, {}, autoPlay = false, startSlide = 1) }
     @Test fun welcome_espresso() = shot("01-welcome", AppTheme.Espresso, 2600) { WelcomeScreen({}, {}, {}, autoPlay = false) }
     @Test fun welcome_returning() = shot("01b-welcome-back", AppTheme.Navy, 3200) { WelcomeScreen({}, {}, {}, autoPlay = false, returningName = "Ankit", lastDay = 12, lastMonth = "November") }
     @Test fun lock_navy() = shot("02-lock", AppTheme.Navy, 2600) { LockScreen("Ankit", {}, {}, {}, autoPrompt = false, lastDay = 12, lastMonth = "November") }

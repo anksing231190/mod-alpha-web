@@ -1,6 +1,7 @@
 package com.modalpha.app.ui.welcome
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -73,11 +74,12 @@ private val slides = listOf(
 @Composable
 fun WelcomeScreen(
     onLogin: () -> Unit, onSignup: () -> Unit, onDemo: () -> Unit,
-    autoPlay: Boolean = true, returningName: String? = null, lastDay: Int? = null, lastMonth: String? = null,
+    autoPlay: Boolean = true, returningName: String? = null, lastDay: Int? = null, lastMonth: String? = null, startSlide: Int = 0,
 ) {
     val c = Ma.c
-    var i by remember { mutableIntStateOf(0) }
-    if (autoPlay && returningName == null) LaunchedEffect(Unit) { while (true) { delay(3500); i = (i + 1) % slides.size } }
+    var i by remember { mutableIntStateOf(startSlide) }
+    // slide 1 stays longer so its chart can finish drawing; each slide's picture changes with its message
+    if (autoPlay && returningName == null) LaunchedEffect(Unit) { while (true) { delay(if (i == 0) 6500L else 6000L); i = (i + 1) % slides.size } }
     Column(Modifier.fillMaxSize().background(c.bg)) {
         // dark panel: brand row + the animation
         Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)).meshBackdrop(c).statusBarsPadding().padding(bottom = 18.dp)) {
@@ -85,7 +87,11 @@ fun WelcomeScreen(
                 Text("Mod Alpha", color = c.chromeText, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
             VSpace(14.dp)
-            if (returningName == null) WaveWelcome(Modifier.fillMaxWidth(), autoPlay)
+            if (returningName == null) AnimatedContent(i, transitionSpec = { fadeIn(tween(450)) togetherWith fadeOut(tween(300)) }, label = "panel") { k ->
+                Box(Modifier.fillMaxWidth().height(392.dp), contentAlignment = Alignment.TopCenter) {
+                    when (k) { 0 -> WaveWelcome(Modifier.fillMaxWidth(), autoPlay); 1 -> NavFlowSlide(autoPlay = autoPlay); else -> ReminderSlide(autoPlay = autoPlay) }
+                }
+            }
             else Box(Modifier.fillMaxWidth().height(356.dp), contentAlignment = Alignment.TopCenter) { DialLock(lastDay, lastMonth, play = autoPlay) }
         }
         // light page: message + actions
