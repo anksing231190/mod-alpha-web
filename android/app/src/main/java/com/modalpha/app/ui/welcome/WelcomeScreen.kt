@@ -87,15 +87,15 @@ fun WelcomeScreen(
                     color = c.chromeSub, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             }
             VSpace(18.dp)
-            if (returningName == null) WaveWelcome(Modifier.fillMaxWidth().height(380.dp), autoPlay)
-            else Box(Modifier.fillMaxWidth().height(380.dp), contentAlignment = Alignment.TopCenter) { DialLock(lastDay, lastMonth, play = autoPlay) }
-            Spacer(Modifier.weight(1f))
+            if (returningName == null) { WaveWelcome(Modifier.fillMaxWidth(), autoPlay); Spacer(Modifier.weight(1f)) }
+            else {
+                Box(Modifier.fillMaxWidth().height(360.dp), contentAlignment = Alignment.TopCenter) { DialLock(lastDay, lastMonth, play = autoPlay) }
+                Spacer(Modifier.weight(1f))
+                WelcomeBack(returningName, "Log in to see this month's best SIP date.")
+                Spacer(Modifier.weight(1f))
+            }
             Column(Modifier.padding(horizontal = 24.dp)) {
-                if (returningName != null) {
-                    Text("Welcome back,", color = c.chromeSub, fontSize = 16.sp)
-                    Text(returningName, color = c.chromeText, fontSize = 30.sp, fontWeight = FontWeight.Black)
-                    Text("Log in to see this month's best SIP date.", color = c.chromeSub, style = MaterialTheme.typography.bodyMedium)
-                } else {
+                if (returningName == null) {
                     AnimatedContent(i, transitionSpec = { (slideInVertically { it / 4 } + fadeIn()) togetherWith fadeOut() }, label = "slide") { k ->
                         Column {
                             Text(buildAnnotatedString { append(slides[k].first); withStyle(SpanStyle(brush = Brush.horizontalGradient(listOf(Color(0xFF93C5FD), Color(0xFFC4B5FD))))) { append(slides[k].second) } },
@@ -106,8 +106,8 @@ fun WelcomeScreen(
                     }
                     VSpace(10.dp)
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { slides.indices.forEach { k -> Box(Modifier.height(5.dp).width(if (k == i) 22.dp else 6.dp).clip(CircleShape).background(if (k == i) Gold else Color.White.copy(alpha = .25f))) } }
+                    VSpace(22.dp)
                 }
-                VSpace(22.dp)
                 GradientButton("Log in", onLogin, brush = c.hiBrush)
                 VSpace(10.dp)
                 Box(Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(14.dp)).background(Color.White.copy(alpha = .08f)).border(1.dp, Color.White.copy(alpha = .16f), RoundedCornerShape(14.dp)).clickable(role = Role.Button, onClick = onSignup), contentAlignment = Alignment.Center) {

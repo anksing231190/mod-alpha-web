@@ -12,7 +12,9 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -63,60 +66,94 @@ import kotlin.math.sin
 
 /**
  * Welcome animation B — "Buy when it's cheaper".
- * A NAV line scrolls by like a live market; a grey dot buys on the 1st of each month, a gold dot buys on the best
- * day (the dip) and drops a coin. The two unit counters show the gold strategy pulling ahead.
+ * Six months of a realistic NAV line draw in from left to right inside a chart card. Each month a grey dot buys on the
+ * 1st and a gold dot buys on the cheaper mid-month day; the unit counters grow as the line reaches each buy.
  */
+private const val DAYS = 22                      // trading days a month
+private const val MONTHS = 6
+private const val BEST = 8                       // trading-day index of the mid-month dip (~12th)
+private val NAV: List<Double> by lazy {
+    val rnd = java.util.Random(7)
+    var noise = 0.0
+    List(MONTHS * DAYS) { i ->
+        val m = i / DAYS; val d = i % DAYS
+        noise = noise * .85 + rnd.nextGaussian() * .12
+        val dip = -1.9 * kotlin.math.exp(-((d - BEST) * (d - BEST)) / 14.0)   // the mid-month dip
+        100 + i * .05 + dip + noise + if (m == 3) -.8 else 0.0
+    }
+}
+
 @Composable
 fun WaveWelcome(modifier: Modifier = Modifier, autoPlay: Boolean = true) {
     val tr = rememberInfiniteTransition(label = "wave")
-    val t by tr.animateFloat(0f, 1f, infiniteRepeatable(tween(9000, easing = LinearEasing)), label = "t")
-    val pulse by tr.animateFloat(0f, 1f, infiniteRepeatable(tween(1400), RepeatMode.Reverse), label = "p")
+    val cycle by tr.animateFloat(0f, 1f, infiniteRepeatable(tween(7000, easing = LinearEasing)), label = "t")
+    val pulse by tr.animateFloat(0f, 1f, infiniteRepeatable(tween(1200), RepeatMode.Reverse), label = "p")
+    val prog = if (autoPlay) (cycle / .65f).coerceIn(0f, 1f) else 1f             // draw for 65% of the loop, then hold
     val measurer = rememberTextMeasurer()
     val c = Ma.c
-    val grey = Color(0xFF94A3B8)
-    val fixed = 1184 + (t * 60).toInt(); val ma = (fixed * 1.031).toInt()
-    Box(modifier) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 22.dp)) {
-            GlassCard(Modifier.weight(1f)) { StatBlock("Units · 1st", "%,d".format(fixed)) }
-            Spacer(Modifier.width(10.dp))
-            GlassCard(Modifier.weight(1f), gold = true) {
-                Row(verticalAlignment = Alignment.Bottom) { StatBlock("Units · Mod Alpha", "%,d".format(ma), valueColor = Gold); Spacer(Modifier.width(6.dp)); Box(Modifier.padding(bottom = 4.dp)) { UpChip("3.1%") } }
+    val grey = Color(0xFFB8C2D6); val line = Color(0xFFA9C4F5)
+    val shown = (prog * (NAV.size - 1)).toInt()
+    var u1 = 0.0; var u2 = 0.0
+    for (m in 0 until MONTHS) { if (m * DAYS <= shown) u1 += 10000 / NAV[m * DAYS]; if (m * DAYS + BEST <= shown) u2 += 10000 / NAV[m * DAYS + BEST] }
+    val more = if (u1 > 0) (u2 / u1 - 1) * 100 else 0.0
+    val months = listOf("Jun", "Jul", "Aug", "Sep", "Oct", "Nov")
+    Column(modifier.padding(horizontal = 20.dp)) {
+        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(Color.White.copy(alpha = .05f)).border(1.dp, Color.White.copy(alpha = .1f), RoundedCornerShape(22.dp)).padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("₹10,000 every month", color = c.chromeText, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Text("Same fund · same amount · different day", color = c.chromeMuted, fontSize = 11.5.sp)
+                }
+                Text("NAV", color = c.chromeMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            }
+            Spacer(Modifier.height(10.dp))
+            Canvas(Modifier.fillMaxWidth().height(200.dp)) {
+                val W = size.width; val labelH = 16.dp.toPx(); val H = size.height - labelH
+                val lo = NAV.min() - .8; val hi = NAV.max() + .8
+                fun px(i: Int) = W * i / (NAV.size - 1)
+                fun py(v: Double) = (H * (1 - (v - lo) / (hi - lo))).toFloat()
+                // grid + month labels
+                for (k in 1..3) drawLine(Color.White.copy(alpha = .06f), Offset(0f, H * k / 4), Offset(W, H * k / 4), 1f)
+                for (m in 0 until MONTHS) {
+                    val x = px(m * DAYS)
+                    if (m > 0) drawLine(Color.White.copy(alpha = .05f), Offset(x, 0f), Offset(x, H), 1f)
+                    val tl = measurer.measure(months[m], TextStyle(color = c.chromeMuted, fontSize = 10.sp)); drawText(tl, topLeft = Offset(x + 4.dp.toPx(), H + 3.dp.toPx()))
+                }
+                if (shown < 1) return@Canvas
+                val p = Path(); p.moveTo(0f, py(NAV[0])); for (i in 1..shown) p.lineTo(px(i), py(NAV[i]))
+                val area = Path().apply { addPath(p); lineTo(px(shown), H); lineTo(0f, H); close() }
+                drawPath(area, Brush.verticalGradient(listOf(line.copy(alpha = .16f), Color.Transparent), startY = 0f, endY = H))
+                drawPath(p, line, style = Stroke(1.8.dp.toPx(), cap = StrokeCap.Round))
+                // buys
+                for (m in 0 until MONTHS) {
+                    val i1 = m * DAYS; val ib = m * DAYS + BEST
+                    if (i1 <= shown) { drawCircle(c.chrome2, 5.dp.toPx(), Offset(px(i1), py(NAV[i1]))); drawCircle(grey, 3.5.dp.toPx(), Offset(px(i1), py(NAV[i1]))) }
+                    if (ib <= shown) {
+                        val o = Offset(px(ib), py(NAV[ib]))
+                        val fresh = shown - ib < 6
+                        drawCircle(Gold.copy(alpha = if (fresh) .35f else .12f + .1f * pulse), (if (fresh) 11 else 8).dp.toPx(), o)
+                        drawCircle(c.chrome2, 5.5.dp.toPx(), o); drawCircle(Gold, 4.dp.toPx(), o)
+                        // dashed drop showing how much cheaper than the 1st
+                        if (NAV[ib] < NAV[i1]) drawLine(Gold.copy(alpha = .45f), Offset(px(ib), py(NAV[i1])), o, 1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 4f)))
+                    }
+                }
+                // live end point
+                val e = Offset(px(shown), py(NAV[shown])); drawCircle(line.copy(alpha = .25f), 7.dp.toPx(), e); drawCircle(Color.White, 3.dp.toPx(), e)
+            }
+            Spacer(Modifier.height(8.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(8.dp).clip(CircleShape).background(grey)); Spacer(Modifier.width(5.dp)); Text("Buy on the 1st", color = c.chromeSub, fontSize = 11.sp)
+                Spacer(Modifier.width(14.dp))
+                Box(Modifier.size(8.dp).clip(CircleShape).background(Gold)); Spacer(Modifier.width(5.dp)); Text("Buy on Mod Alpha date", color = c.chromeSub, fontSize = 11.sp)
             }
         }
-        Canvas(Modifier.fillMaxWidth().height(300.dp).padding(top = 80.dp)) {
-            val W = size.width; val H = size.height; val mid = H * .5f; val A = H * .26f
-            val monthW = W / 3f; val shift = t * 3f                       // three months scroll past per loop
-            fun v(m: Float) = (-cos(2 * PI * (m - 12f / 30f)) + .18 * sin(2 * PI * m * 3.1 + 1.3)).toFloat()
-            fun y(x: Float) = mid - v(x / monthW + shift) * A
-            // grid
-            for (k in 1..3) drawLine(Color.White.copy(alpha = .06f), Offset(0f, H * k / 4), Offset(W, H * k / 4), 1f)
-            // area + glow line
-            val p = Path(); var x = 0f; p.moveTo(0f, y(0f)); while (x <= W) { p.lineTo(x, y(x)); x += 4f }
-            val area = Path().apply { addPath(p); lineTo(W, H); lineTo(0f, H); close() }
-            drawPath(area, Brush.verticalGradient(listOf(c.hi.copy(alpha = .40f), Color.Transparent)))
-            for (k in 1..3) drawPath(p, c.hi.copy(alpha = .12f), style = Stroke((2f + k * 4).dp.toPx(), cap = StrokeCap.Round))
-            drawPath(p, Color(0xFF93C5FD), style = Stroke(2.6.dp.toPx(), cap = StrokeCap.Round))
-            // buys: the 1st (grey) and the best day (gold) of each visible month
-            val months = listOf("Sep", "Oct", "Nov", "Dec", "Jan")
-            for (k in -1..4) {
-                val mStart = k - (shift % 1f); val label = months[((k + shift.toInt()) % months.size + months.size) % months.size]
-                val x1 = mStart * monthW; val xb = (mStart + 11f / 30f) * monthW
-                if (x1 in 0f..W) {
-                    drawLine(grey.copy(alpha = .5f), Offset(x1, y(x1)), Offset(x1, H), 1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 8f)))
-                    drawCircle(grey, 5.dp.toPx(), Offset(x1, y(x1)))
-                    val tl = measurer.measure(label, TextStyle(color = c.chromeMuted, fontSize = 10.sp)); drawText(tl, topLeft = Offset(x1 + 6.dp.toPx(), H - tl.size.height))
-                }
-                if (xb in 0f..W) {
-                    val py = y(xb)
-                    drawCircle(Gold.copy(alpha = .22f + .15f * pulse), (14 + 4 * pulse).dp.toPx(), Offset(xb, py))
-                    drawCircle(Gold, 7.dp.toPx(), Offset(xb, py))
-                    val tl = measurer.measure("12th · buy", TextStyle(color = Gold, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold)); drawText(tl, topLeft = Offset(xb - tl.size.width / 2f, py + 14.dp.toPx()))
-                    // coin dropping into the buy point
-                    val fall = ((xb / W) * 1.6f).coerceIn(0f, 1f)
-                    val cy = py - 70.dp.toPx() * (1 - fall); if (fall < .98f) {
-                        drawCircle(Brush.radialGradient(listOf(Color(0xFFFFF3C4), Gold, Color(0xFFB7791F)), center = Offset(xb - 3f, cy - 3f), radius = 12.dp.toPx()), 10.dp.toPx(), Offset(xb, cy))
-                        val ct = measurer.measure("₹", TextStyle(color = Color(0xFF6B3F06), fontSize = 11.sp, fontWeight = FontWeight.Black)); drawText(ct, topLeft = Offset(xb - ct.size.width / 2f, cy - ct.size.height / 2f))
-                    }
+        Spacer(Modifier.height(10.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            GlassCard(Modifier.weight(1f)) { StatBlock("On the 1st", "%,.0f".format(u1), "units bought", valueSize = 18) }
+            GlassCard(Modifier.weight(1f), gold = true) {
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Box(Modifier.weight(1f)) { StatBlock("Mod Alpha date", "%,.0f".format(u2), "units bought", valueColor = Gold, valueSize = 18) }
+                    if (more > 0.05) Box(Modifier.padding(bottom = 2.dp)) { UpChip("%.1f%%".format(more)) }
                 }
             }
         }
@@ -183,3 +220,18 @@ fun DialLock(day: Int?, month: String?, modifier: Modifier = Modifier, play: Boo
 }
 
 private fun sfx(n: Int) = when { n % 100 in 11..13 -> "th"; n % 10 == 1 -> "st"; n % 10 == 2 -> "nd"; n % 10 == 3 -> "rd"; else -> "th" }
+
+/** Centred "Welcome back" block used by the returning Welcome screen and the Lock screen. */
+@Composable
+fun WelcomeBack(name: String, sub: String) {
+    val c = Ma.c
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(Modifier.size(52.dp).clip(CircleShape).background(c.hiBrush).border(2.dp, Gold.copy(alpha = .7f), CircleShape), contentAlignment = Alignment.Center) {
+            Text(name.trim().take(1).uppercase(), color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
+        }
+        Spacer(Modifier.height(10.dp))
+        Text("WELCOME BACK", color = Gold, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+        Text(name, color = c.chromeText, fontSize = 28.sp, fontWeight = FontWeight.Black)
+        Text(sub, color = c.chromeSub, fontSize = 13.5.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+    }
+}

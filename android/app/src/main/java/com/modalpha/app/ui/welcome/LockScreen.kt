@@ -6,6 +6,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -59,13 +60,13 @@ fun LockScreen(
                 Text("Mod Alpha", color = c.chromeText, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
             VSpace(18.dp)
-            Box(Modifier.fillMaxWidth().height(380.dp), contentAlignment = Alignment.TopCenter) { DialLock(lastDay, lastMonth, play = autoPrompt) }
+            Box(Modifier.fillMaxWidth().height(360.dp), contentAlignment = Alignment.TopCenter) { DialLock(lastDay, lastMonth, play = autoPrompt) }
             Spacer(Modifier.weight(1f))
-            Text("Welcome back,", color = c.chromeSub, fontSize = 16.sp)
-            Text(name, color = c.chromeText, fontSize = 30.sp, fontWeight = FontWeight.Black)
-            VSpace(18.dp)
+            WelcomeBack(name, "Touch the sensor to see this month's date.")
+            Spacer(Modifier.weight(1f))
             Row(
-                Modifier.fillMaxWidth().height(56.dp).scale(glow).clip(RoundedCornerShape(16.dp)).background(c.hiBrush).clickable(role = Role.Button, onClick = onFingerprint),
+                Modifier.fillMaxWidth().height(56.dp).border((1 + 2 * (glow - 1f) / .06f).dp, Gold.copy(alpha = .25f + .35f * (glow - 1f) / .06f), RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(16.dp)).background(c.hiBrush).clickable(role = Role.Button, onClick = onFingerprint),
                 horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(Icons.Outlined.Fingerprint, null, tint = androidx.compose.ui.graphics.Color.White, modifier = Modifier.size(26.dp)); Spacer(Modifier.width(10.dp))
