@@ -5,6 +5,7 @@ name: Deploy
 on:
   push:
     branches: [main]
+    paths-ignore: ['android/**']   # app-only changes don't redeploy the website/API
     tags: ["v*"]
   workflow_dispatch:
     inputs:
