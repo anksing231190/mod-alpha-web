@@ -193,6 +193,12 @@ private fun Hero(d: HomeData, today: LocalDate, actions: HomeActions) {
                 val wd = date?.dayOfWeek?.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
                 Text(if (locked) "This month's date is ready" else listOfNotNull(wd, "${sip.confidencePct}% confidence".takeIf { sip.confidencePct > 0 }).joinToString(" · "), color = c.chromeSub, fontSize = 13.5.sp)
             }
+            if (locked) Ring(.3f, 88.dp, 8.dp, listOf(Gold, GoldDeep)) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(Icons.Outlined.Lock, null, tint = c.chromeText, modifier = Modifier.size(20.dp))
+                    Text("LOCKED", color = c.chromeMuted, fontSize = 7.5.sp, fontWeight = FontWeight.Bold, letterSpacing = .5.sp)
+                }
+            }
             if (!locked && days != null) {
                 val len = YearMonth.parse(sip.month).lengthOfMonth()
                 Ring(if (days > 0) 1f - days.toFloat() / len else 1f, 88.dp, 8.dp, listOf(Mint, Color(0xFF22D3EE))) {
@@ -206,7 +212,10 @@ private fun Hero(d: HomeData, today: LocalDate, actions: HomeActions) {
         // three facts about this month's date
         Row(Modifier.padding(start = 18.dp, end = 18.dp, top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             HeroTile(pct(sip.upliftPct), "vs the 1st", Modifier.weight(1f))
-            if (!locked) {
+            if (locked) {
+                HeroTile("2.8 pts", "ahead of next", Modifier.weight(1f), locked = true, onClick = actions.openPlans)
+                HeroTile("20th", "backup day", Modifier.weight(1f), locked = true, onClick = actions.openPlans)
+            } else {
                 if (sip.leadPts != null) HeroTile("%.1f pts".format(sip.leadPts), "ahead of next", Modifier.weight(1f))
                 else HeroTile("${sip.alternatives.size + 1}", "good days", Modifier.weight(1f))
                 val backup = sip.alternatives.maxByOrNull { it.upliftPct ?: 0.0 }?.day
@@ -216,25 +225,39 @@ private fun Hero(d: HomeData, today: LocalDate, actions: HomeActions) {
         // actions
         val ctx = androidx.compose.ui.platform.LocalContext.current
         Row(Modifier.padding(start = 18.dp, end = 18.dp, top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (locked) GradientButton("Unlock with Pro", actions.openPlans, brush = c.hiBrush)
-            else {
+            if (locked) {
+                // the same three actions, locked: each opens Plans
+                HeroButton("Remind me", Modifier.weight(1.25f), locked = true, onClick = actions.openPlans)
+                HeroButton("Add to calendar", Modifier.weight(1.25f), locked = true, onClick = actions.openPlans)
+                HeroButton("Why?", Modifier.weight(1f), locked = true, onClick = actions.openPlans)
+            } else {
                 GradientButton("Remind me", { actions.setReminder(sip.day!!) }, Modifier.weight(1.25f), brush = c.hiBrush, leading = { Icon(Icons.Outlined.NotificationsActive, null, tint = Color.White, modifier = Modifier.size(17.dp)) })
                 HeroButton("Add to calendar", Modifier.weight(1.25f)) { date?.let { addToCalendar(ctx, it) } }
                 HeroButton("Why ${sip.day}${sfx(sip.day!!)}?", Modifier.weight(1f), onClick = actions.whyDate)
             }
         }
+        if (locked) Box(Modifier.padding(start = 18.dp, end = 18.dp, top = 10.dp)) {
+            GradientButton("Unlock with Pro", actions.openPlans, brush = Brush.horizontalGradient(listOf(Gold, GoldDeep)), leading = { Icon(Icons.Outlined.Lock, null, tint = Color.White, modifier = Modifier.size(17.dp)) })
+        }
     }
 }
 
-@Composable private fun HeroTile(value: String, label: String, modifier: Modifier) =
-    Column(modifier.clip(RoundedCornerShape(12.dp)).background(Ma.c.surface).border(1.dp, Ma.c.line, RoundedCornerShape(12.dp)).padding(vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, color = Ma.c.text, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
+@Composable private fun HeroTile(value: String, label: String, modifier: Modifier, locked: Boolean = false, onClick: (() -> Unit)? = null) =
+    Column(modifier.clip(RoundedCornerShape(12.dp)).background(Ma.c.surface).border(1.dp, Ma.c.line, RoundedCornerShape(12.dp))
+        .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier).padding(vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(value, color = Ma.c.text, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1,
+                modifier = if (locked) (if (Build.VERSION.SDK_INT >= 31) Modifier.blur(6.dp) else Modifier.alpha(.15f)) else Modifier)
+            if (locked) Icon(Icons.Outlined.Lock, "Locked", tint = Ma.c.text, modifier = Modifier.size(16.dp))
+        }
         Text(label, color = Ma.c.muted, fontSize = 10.5.sp, maxLines = 1)
     }
 
-@Composable private fun HeroButton(text: String, modifier: Modifier, onClick: () -> Unit) =
-    Box(modifier.height(52.dp).clip(RoundedCornerShape(14.dp)).background(Ma.c.surface).border(1.dp, Ma.c.line, RoundedCornerShape(14.dp)).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
-        Text(text, color = Ma.c.text, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 6.dp))
+@Composable private fun HeroButton(text: String, modifier: Modifier, locked: Boolean = false, onClick: () -> Unit) =
+    Row(modifier.height(52.dp).clip(RoundedCornerShape(14.dp)).background(Ma.c.surface).border(1.dp, Ma.c.line, RoundedCornerShape(14.dp)).clickable(onClick = onClick).padding(horizontal = 6.dp),
+        horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+        if (locked) { Icon(Icons.Outlined.Lock, null, tint = Ma.c.muted, modifier = Modifier.size(13.dp)); Spacer(Modifier.width(4.dp)) }
+        Text(text, color = if (locked) Ma.c.muted else Ma.c.text, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 
 /** Opens the phone's calendar with an all-day "Mod Alpha · SIP date" event (no calendar permission needed). */
