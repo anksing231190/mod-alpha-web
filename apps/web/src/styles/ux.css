@@ -1160,5 +1160,7 @@ html[data-theme="light"] .ma-cmd mark{color:#155e75!important}
  html[data-theme="light"] .v22-how .v22-conn::before{background:linear-gradient(180deg,rgba(100,116,139,.15),var(--ma-c,#64748b),rgba(100,116,139,.15));background-size:100% 200%}
  html[data-theme="light"] .v22-how .v22-conn::after{border-color:var(--ma-c,#64748b)}
 }
+/* desktop: the engine's own fibers already join step 2 to step 3, so the dashed arrow there is not drawn (kept for spacing) */
+@media (min-width:1181px){.v22-how .v22-conn[style*="--i:1"]>svg{visibility:hidden}}
 @keyframes maConnFlow{from{background-position:0 0}to{background-position:0 -200%}}
 @media (prefers-reduced-motion:reduce){.v22-how .v22-conn::before{animation:none!important}}
