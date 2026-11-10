@@ -2,8 +2,9 @@
    Feature: theme picker — three looks
      Midnight  (dark, the original)                         data-theme="dark"
      Sand      (cream & beige)                              data-theme="light"
-     Espresso  (Sand's cream pages, dark sidebar, top bar,  data-theme="light" data-skin="duo" → theme-skins.css
+     Espresso  (Sand's cream pages, brown sidebar, top bar,  data-theme="light" data-skin="duo"   → theme-skins.css
                 footer and phone tab bar)
+     Graphite  (charcoal sidebar / top bar, white pages;  theme-graphite.generated.css)         data-theme="light" data-skin="slate"
    The skin is stored in localStorage 'mod-alpha-skin' (applied before first paint by index.html).
    The sun/moon button in the top bar opens this picker; Settings → Appearance shows the three as cards.
    The earlier "Auto" (clock) and "Ivory" options were removed; a saved Auto/Ivory choice falls back to Sand.
@@ -14,13 +15,15 @@
   const THEMES = [
     { id: 'dark', name: 'Midnight', desc: 'Dark, the original', sw: ['#080b18', '#141d3d', '#6366f1'] },
     { id: 'light', name: 'Sand', desc: 'Cream & beige', sw: ['#f4ecdd', '#fffaf1', '#9c5f2a'] },
-    { id: 'duo', name: 'Espresso', desc: 'Cream pages, dark sidebar', sw: ['#1e1813', '#f4ecdd', '#c08548'] },
+    { id: 'duo', name: 'Espresso', desc: 'Cream pages, brown sidebar', sw: ['#1e1813', '#f4ecdd', '#c08548'] },
+    { id: 'slate', name: 'Graphite', desc: 'Charcoal & white', sw: ['#1f2227', '#ffffff', '#4a5a72'] },
   ];
-  const META = { dark: '#080b18', light: '#f4ecdd', duo: '#1e1813' };
+  const META = { dark: '#080b18', light: '#f4ecdd', duo: '#1e1813', slate: '#1f2227' };
+  const SKINS = ['duo', 'slate'];
   // retire the removed options
-  try { if (localStorage.getItem(KEY) && localStorage.getItem(KEY) !== 'duo') localStorage.removeItem(KEY); localStorage.removeItem('mod-alpha-theme-auto'); } catch (e) {}
+  try { if (localStorage.getItem(KEY) && !SKINS.includes(localStorage.getItem(KEY))) localStorage.removeItem(KEY); localStorage.removeItem('mod-alpha-theme-auto'); } catch (e) {}
   if (window.MA_THEME && MA_THEME.setAuto) MA_THEME.setAuto(false);
-  const skin = () => { try { return localStorage.getItem(KEY) === 'duo' ? 'duo' : ''; } catch (e) { return ''; } };
+  const skin = () => { try { const v = localStorage.getItem(KEY); return SKINS.includes(v) ? v : ''; } catch (e) { return ''; } };
   const current = () => (html.dataset.theme === 'light' ? (skin() || 'light') : 'dark');
   function applySkin() {
     const s = html.dataset.theme === 'light' ? skin() : '';
@@ -28,7 +31,7 @@
     const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = META[current()];
   }
   function pick(id) {
-    try { if (id === 'duo') localStorage.setItem(KEY, id); else localStorage.removeItem(KEY); } catch (e) {}
+    try { if (SKINS.includes(id)) localStorage.setItem(KEY, id); else localStorage.removeItem(KEY); } catch (e) {}
     const base = id === 'dark' ? 'dark' : 'light';
     if (window.MA_THEME) MA_THEME.set(base); else if (typeof setTheme === 'function') setTheme(base);
     applySkin(); paintCards(); closeMenu();
@@ -54,10 +57,7 @@
   function paintCards() {
     const cards = document.querySelector('.v22-theme-cards'); if (!cards) return;
     cards.querySelectorAll('[data-pick="auto"],[data-pick="ivory"]').forEach((x) => x.remove());
-    if (!cards.querySelector('[data-pick="duo"]')) {
-      const t = THEMES[2];
-      cards.insertAdjacentHTML('beforeend', `<label class="v22-theme" data-pick="duo"><input type="radio" name="v22-theme" value="duo"><span class="v22-theme-prev duo"><i></i><i></i><i></i></span><b>${T(t.name)}</b><small>${T(t.desc)}</small></label>`);
-    }
+    THEMES.slice(2).forEach((t) => { if (!cards.querySelector(`[data-pick="${t.id}"]`)) cards.insertAdjacentHTML('beforeend', `<label class="v22-theme" data-pick="${t.id}"><input type="radio" name="v22-theme" value="${t.id}"><span class="v22-theme-prev ${t.id}"><i></i><i></i><i></i></span><b>${T(t.name)}</b><small>${T(t.desc)}</small></label>`); });
     const cur = current();
     cards.querySelectorAll('.v22-theme').forEach((l) => { const on = l.dataset.pick === cur; l.classList.toggle('on', on); const i = l.querySelector('input'); if (i) i.checked = on; });
   }
@@ -74,7 +74,7 @@
   addEventListener('ma:theme', () => { applySkin(); setTimeout(paintCards, 30); });
   addEventListener('hashchange', closeMenu);
   let q = false;
-  new MutationObserver(() => { if (q) return; q = true; requestAnimationFrame(() => { q = false; const c = document.querySelector('.v22-theme-cards'); if (c && (!c.querySelector('[data-pick="duo"]') || c.querySelector('[data-pick="auto"]'))) paintCards(); }); }).observe(document.documentElement, { childList: true, subtree: true });
+  new MutationObserver(() => { if (q) return; q = true; requestAnimationFrame(() => { q = false; const c = document.querySelector('.v22-theme-cards'); if (c && (!c.querySelector('[data-pick="slate"]') || c.querySelector('[data-pick="auto"]'))) paintCards(); }); }).observe(document.documentElement, { childList: true, subtree: true });
   applySkin();
   window.MA_SKIN = { pick, current, openMenu, THEMES };
 })();

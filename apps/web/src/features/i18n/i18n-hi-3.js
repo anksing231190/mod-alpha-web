@@ -306,5 +306,5 @@ Object.assign(window.MA_I18N_DICT, {
   'Reminders': 'रिमाइंडर', 'Billing': 'बिलिंग', 'Insights': 'इनसाइट्स', 'Account': 'अकाउंट', 'All': 'सभी',
   'Theme': 'थीम', 'Midnight': 'मिडनाइट', 'Sand': 'सैंड', 'Ivory': 'आइवरी', 'Espresso': 'एस्प्रेसो', 'Auto': 'ऑटो',
   'Dark, the original': 'डार्क, मूल थीम', 'Cream & beige': 'क्रीम और बेज', 'White & cream': 'सफ़ेद और क्रीम',
-  'Cream pages, dark sidebar': 'क्रीम पेज, गहरा साइडबार', 'Sand by day, Midnight at night': 'दिन में सैंड, रात में मिडनाइट', 'theme applied': 'थीम लागू',
+  'Cream pages, brown sidebar': 'क्रीम पेज, भूरा साइडबार', 'Charcoal & white': 'चारकोल और सफ़ेद', 'Graphite': 'ग्रेफ़ाइट', 'Sand by day, Midnight at night': 'दिन में सैंड, रात में मिडनाइट', 'theme applied': 'थीम लागू',
 });
