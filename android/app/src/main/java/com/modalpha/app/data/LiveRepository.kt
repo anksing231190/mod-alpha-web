@@ -133,8 +133,126 @@ class LiveRepository(context: Context, private val baseUrl: String) : Repository
             id = id, name = str("name") ?: id, short = str("short") ?: str("name") ?: id, amc = str("amc") ?: "",
             category = str("category") ?: "", r1 = ret?.num("1"), r3 = ret?.num("3"), r5 = ret?.num("5"),
             spark = (this["spark"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonPrimitive)?.content?.toDoubleOrNull() },
+            r10 = ret?.num("10"), nav = num("nav"), navDate = str("navDate")?.take(10), aum = str("aum"), expense = num("expense"),
+            risk = str("riskLabel") ?: str("risk"), vol = num("vol"), benchmark = str("benchmark"),
         )
     }
+
+
+    /* ---------------- other screens ---------------- */
+    private var fundCache: List<Fund>? = null
+    override suspend fun funds(): List<Fund> = fundCache ?: (call("GET", "/funds?sort=5y&pageSize=200")["items"] as? JsonArray).orEmpty()
+        .mapNotNull { (it as? JsonObject)?.toFund() }.also { fundCache = it }
+    override suspend fun fund(id: String): Fund = (call("GET", "/funds/${enc(id)}")["fund"] as? JsonObject)?.toFund() ?: throw ApiException("Fund not found")
+    override suspend fun nav(id: String, period: String): List<NavPoint> =
+        (call("GET", "/funds/${enc(id)}/nav?period=$period&points=${if (period == "5Y" || period == "MAX") 1500 else 260}")["points"] as? JsonArray).orEmpty()
+            .mapNotNull { p -> (p as? JsonObject)?.let { o -> NavPoint(o.str("d")?.take(10) ?: return@mapNotNull null, o.num("v") ?: return@mapNotNull null) } }
+
+    override suspend fun sipCompare(fundId: String?, amount: Int, start: String, fixedDay: Int): SipCompare? = runCatching {
+        call("POST", "/calc/sip-compare", buildJsonObject {
+            fundId?.let { put("fundId", it) }; put("amount", amount); put("start", start); put("end", java.time.LocalDate.now().toString()); put("fixedDay", fixedDay)
+        }).toCompare()?.copy(amount = amount)
+    }.getOrNull()
+
+    override suspend fun lumpsum(fundId: String, date: String, amount: Int): LumpResult {
+        val r = call("POST", "/calc/lumpsum", buildJsonObject { put("fundId", fundId); put("date", date); put("amount", amount) })
+        return LumpResult(amount.toLong(), r.num("value")?.toLong() ?: 0, r.num("gain")?.toLong() ?: 0, r.num("totalReturnPct") ?: 0.0, r.num("cagrPct"), r.str("investedOn")?.take(10) ?: date)
+    }
+
+    override suspend fun watchlist(): Set<String> = (call("GET", "/me/watchlist")["items"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject).str("fund_id") }.toSet()
+    override suspend fun setWatch(fundId: String, on: Boolean) { call(if (on) "POST" else "DELETE", "/me/watchlist/${enc(fundId)}") }
+
+    override suspend fun insights(): List<Insight> = (call("GET", "/insights")["items"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.let { o ->
+        Insight(o.int("id") ?: 0, o.str("kind") ?: "text", o.str("title") ?: "", o.str("body") ?: "", o.str("url"), o.str("publishedAt")?.take(10))
+    } }
+
+    override suspend fun sipHistory(): Pair<List<SipMonth>, Boolean> {
+        val r = call("GET", "/sip-dates")
+        val items = (r["items"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.let { c ->
+            SipMonth(c.str("month") ?: return@mapNotNull null, c.int("recommended_day"), c.num("uplift_pct"),
+                (1..3).mapNotNull { i -> c.int("alt_day_$i")?.let { AltDay(it, c.num("alt_uplift_$i")) } })
+        } }
+        return items to ((r["locked"] as? JsonPrimitive)?.content == "true")
+    }
+
+    override suspend fun prefs(): Prefs {
+        val p = call("GET", "/me/preferences")["preferences"] as? JsonObject
+        val ch = p?.get("channels") as? JsonObject; val tp = p?.get("topics") as? JsonObject
+        fun b(o: JsonObject?, k: String, d: Boolean) = o.str(k)?.toBooleanStrictOrNull() ?: d
+        return Prefs(p.str("reminderTiming") ?: "2 days before", b(ch, "push", true), b(ch, "sms", false), b(ch, "email", true), b(tp, "sipReminder", true), b(tp, "datePublished", true))
+    }
+    override suspend fun savePrefs(p: Prefs) {
+        call("PUT", "/me/preferences", buildJsonObject {
+            put("reminderTiming", p.timing)
+            put("channels", buildJsonObject { put("push", p.push); put("sms", p.sms); put("email", p.email) })
+            put("topics", buildJsonObject { put("sipReminder", p.sipReminder); put("datePublished", p.datePublished) })
+        })
+    }
+
+    override suspend fun ask(history: List<ChatMsg>): AskReply {
+        val r = call("POST", "/assistant/messages", buildJsonObject {
+            put("messages", kotlinx.serialization.json.buildJsonArray {
+                history.takeLast(20).forEach { m -> add(buildJsonObject { put("role", if (m.fromUser) "user" else "assistant"); put("content", m.text.take(2000)) }) }
+            })
+        })
+        return AskReply(r.str("reply") ?: "", (r["usage"] as? JsonObject).int("remainingToday"))
+    }
+    override suspend fun aiLeftToday(): Int? {
+        val e = call("GET", "/me/entitlements")
+        val lim = (e["limits"] as? JsonObject).int("ai_queries_per_day") ?: return null
+        if (lim < 0) return null
+        return (lim - ((e["usage"] as? JsonObject).int("aiQueriesToday") ?: 0)).coerceAtLeast(0)
+    }
+
+    override suspend fun notifications(): List<Notice> = (call("GET", "/me/notifications")["items"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.let { o ->
+        Notice(o.str("id") ?: "", o.str("kind") ?: "", o.str("title") ?: "", o.str("body") ?: "", o.str("created_at") ?: "", o.str("read") == "true")
+    } }
+    override suspend fun markAllRead() { call("POST", "/me/notifications/read", buildJsonObject { }) }
+
+    override suspend fun plans(): List<Plan> = (call("GET", "/plans")["plans"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.let { o ->
+        val pr = o["prices"] as? JsonObject
+        Plan(o.str("id") ?: return@mapNotNull null, o.str("name") ?: "", o.str("tagline") ?: "",
+            pr?.keys?.associateWith { k -> pr.num(k)?.toInt() ?: 0 } ?: emptyMap(),
+            (o["features"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonPrimitive)?.content })
+    } }
+    override suspend fun plan(): String = call("GET", "/me/entitlements").str("plan") ?: "Free"
+    override suspend fun kycStatus(): String = call("GET", "/kyc/status").str("kyc_status") ?: "Not started"
+    override suspend fun submitPan(pan: String, name: String, dob: String): KycResult {
+        val r = call("POST", "/kyc/pan", buildJsonObject { put("pan", pan); put("name", name); put("dob", dob); put("consent", true) })
+        return KycResult(r.str("status") ?: "Pending", r.str("message"), r.str("redirectUrl"))
+    }
+    override suspend fun checkout(planId: String, cycle: String): Order {
+        val r = call("POST", "/billing/checkout", buildJsonObject { put("planId", planId); put("cycle", cycle) })
+        val o = r["order"] as? JsonObject
+        return Order(o.str("orderId") ?: "", o.str("provider") ?: "", r.int("amountInr") ?: 0, r.str("subscriptionId") ?: "")
+    }
+    override suspend fun completeMockPayment(orderId: String) { call("POST", "/billing/mock/complete", buildJsonObject { put("orderId", orderId); put("outcome", "success") }) }
+    override suspend fun subscription(): Subscription? = (call("GET", "/billing/subscription")["subscription"] as? JsonObject)?.let { o ->
+        Subscription(o.str("id") ?: "", o.str("plan_name") ?: o.str("plan_id") ?: "", o.str("billing_cycle") ?: "", o.str("status") ?: "",
+            o.str("renewal_date")?.take(10), o.num("amount_inr")?.toInt() ?: 0, o.str("cancel_at_period_end") == "true")
+    }
+    override suspend fun cancel(subId: String, reason: String?): String =
+        call("POST", "/billing/subscriptions/${enc(subId)}/cancel", buildJsonObject { reason?.let { put("reason", it) } }).str("message") ?: "Cancelled"
+    override suspend fun resume(subId: String) { call("POST", "/billing/subscriptions/${enc(subId)}/resume", buildJsonObject { }) }
+    override suspend fun invoices(): List<Invoice> = (call("GET", "/billing/invoices")["items"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.let { o ->
+        Invoice(o.str("id") ?: return@mapNotNull null, o.str("type") ?: "invoice", o.str("number") ?: "", o.num("amount_inr") ?: 0.0, o.str("issued_at")?.take(10) ?: "", o.str("plan_id"), o.str("billing_cycle"))
+    } }
+    override suspend fun invoicePdf(inv: Invoice): ByteArray = withContext(Dispatchers.IO) {
+        val path = if (inv.type == "credit_note") "/billing/credit-notes/${enc(inv.id)}/pdf" else "/billing/invoices/${enc(inv.id)}/pdf"
+        fun get() = http.newCall(Request.Builder().url(api + path).build()).execute()
+        var res = get()
+        if (res.code == 401) { res.close(); refresh(); res = get() }
+        res.use { if (!it.isSuccessful) throw ApiException("Couldn't download the PDF (${it.code})"); it.body!!.bytes() }
+    }
+
+    override suspend fun faqs(): List<Faq> = (call("GET", "/faqs")["items"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.let { o ->
+        Faq(o.str("category") ?: "", o.str("question") ?: "", o.str("answer") ?: "") } }
+    override suspend fun tickets(): List<Ticket> = (call("GET", "/me/support-tickets")["items"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.let { o ->
+        Ticket(o.str("number") ?: "", o.str("topic") ?: "", o.str("message") ?: "", o.str("status") ?: "Open", o.str("reply"), o.str("created_at")?.take(10) ?: "") } }
+    override suspend fun newTicket(email: String, topic: String, message: String): String =
+        call("POST", "/support/tickets", buildJsonObject { put("email", email); put("topic", topic); put("message", message) }).str("number") ?: ""
+
+    private fun enc(s: String) = java.net.URLEncoder.encode(s, "UTF-8")
 
     private fun JsonObject.toCompare(): SipCompare? {
         val pts = (this["path"] as? JsonArray).orEmpty().mapNotNull { p ->

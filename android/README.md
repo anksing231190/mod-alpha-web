@@ -12,7 +12,13 @@ Built one screen at a time, designed for the phone (less content per screen than
 | Log in: mobile OTP (6 boxes, resend timer) or email + password | done |
 | Fingerprint unlock (offered after first log-in; on/off in You; re-locks after 5 min in background) | done |
 | Home: best SIP date (blurred on Free), backtest chart on the checkered grid, watchlist; tab bar with α centre | done |
-| Explore, Ask Mod Alpha, Calendar, You (full), notifications, plans & payment | next |
+| Explore (search, categories, sort) · Fund detail (NAV chart, facts, watchlist, Mod Alpha backtest) · What if (lump sum / SIP) · Compare · Insights & reels | done |
+| Calendar (best / good dates, "Why the 12th?" from real NAV history, past months) · Remind me sheet (/me/preferences) | done |
+| Ask Mod Alpha (POST /assistant/messages, daily limit shown) · Notifications (filters, mark all read) | done |
+| You (plan, KYC, reminders, theme, fingerprint) · Plans · Checkout (stage: simulated payment) · KYC (PAN) · Payment success · Subscription & invoices (PDF, cancel / keep) · Help (FAQ, my requests, new request) | done |
+
+**Not in the app yet:** live Razorpay checkout (needs the Razorpay Android SDK + key; stage uses the mock provider end
+to end), changing an existing plan (opens the website), push notifications (FCM), Hindi.
 
 **Themes** (You → Theme): **Navy** — white pages, dark navy top panel and tab bar (default); **Espresso** — cream
 pages, dark brown chrome (same as the website's Espresso).
@@ -52,8 +58,12 @@ app/src/main/java/com/modalpha/app/
   ui/components/  cards, buttons, fund logos, sparkline, loader
   ui/login/  LoginScreen + LoginViewModel
   ui/home/   HomeScreen + HomeViewModel
-  ui/AppRoot.kt   bottom tabs
-app/src/test/…/ScreenshotTest.kt   renders every screen to PNG (no emulator): ./gradlew recordRoborazziStageDebug
+  ui/explore/  Explore, Fund, What if, Compare, Insights
+  ui/sip/    Calendar, Remind me sheet, Ask Mod Alpha, Notifications
+  ui/account/  You, Plans, Checkout, KYC, Success, Subscription & invoices, Help
+  ui/kit/    screen frame, list rows, chips, tags, loading/error
+  ui/Nav.kt, ui/AppRoot.kt   routes (back stack over the tabs) and the tab bar
+app/src/test/…/ScreenshotTest.kt, AllScreensTest.kt   render every screen to PNG (no emulator): ./gradlew recordRoborazziStageDebug
 ```
 
 Sessions work like the browser: the API's `ma_at` / `ma_rt` cookies are kept in a cookie jar saved on the phone, and

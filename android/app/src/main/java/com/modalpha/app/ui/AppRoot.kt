@@ -83,6 +83,23 @@ import com.modalpha.app.ui.theme.colorsFor
 import com.modalpha.app.ui.welcome.LockScreen
 import com.modalpha.app.ui.welcome.WelcomeScreen
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.CompositionLocalProvider
+import com.modalpha.app.ui.account.CheckoutScreen
+import com.modalpha.app.ui.account.HelpScreen
+import com.modalpha.app.ui.account.KycScreen
+import com.modalpha.app.ui.account.PlansScreen
+import com.modalpha.app.ui.account.SubscriptionScreen
+import com.modalpha.app.ui.account.SuccessScreen
+import com.modalpha.app.ui.account.YouTab
+import com.modalpha.app.ui.explore.CompareScreen
+import com.modalpha.app.ui.explore.ExploreTab
+import com.modalpha.app.ui.explore.FundScreen
+import com.modalpha.app.ui.explore.InsightsScreen
+import com.modalpha.app.ui.explore.WhatIfScreen
+import com.modalpha.app.ui.sip.AskTab
+import com.modalpha.app.ui.sip.CalendarTab
+import com.modalpha.app.ui.sip.NotificationsScreen
+import com.modalpha.app.ui.sip.ReminderSheet
 
 /** Fingerprint support handed down from the Activity (BiometricPrompt needs the Activity). */
 class Biometrics(val available: Boolean = false, val prompt: (title: String, onOk: () -> Unit) -> Unit = { _, _ -> })
@@ -140,28 +157,67 @@ enum class Tab(val label: String, val icon: ImageVector?) {
 
 @Composable
 fun MainTabs(user: User, repo: Repository, session: SessionViewModel, bio: Biometrics) {
-    var tab by rememberSaveable { mutableStateOf(Tab.Home) }
+    val tab = rememberSaveable { mutableStateOf(Tab.Home) }
+    val stack = remember { androidx.compose.runtime.mutableStateListOf<Route>() }
+    val chat = remember { androidx.compose.runtime.mutableStateListOf<com.modalpha.app.data.ChatMsg>() }
     val snack = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    val toast: (String) -> Unit = { m -> scope.launch { snack.currentSnackbarData?.dismiss(); snack.showSnackbar(m) } }
+    var remind by remember { mutableStateOf<Int?>(null) }
+    var remindOpen by remember { mutableStateOf(false) }
     val home: HomeViewModel = viewModel(key = "home-${user.id}-${repo.isDemo}", factory = factory { HomeViewModel(repo) })
-
-    TabsScaffold(tab, { tab = it }, snack) { inner ->
-        when (tab) {
-            Tab.Home -> HomeScreen(
-                home,
-                HomeActions(
-                    openFunds = { tab = Tab.Explore },
-                    openSip = { tab = Tab.Calendar },
-                    openPlans = { toast("Plans and payments come in a later screen") },
-                    openNotifications = { toast("Notifications come in a later screen") },
-                    setReminder = { d -> toast("Reminder set. We'll notify you the day before (day $d).") },
-                    whyDate = { tab = Tab.Calendar },
-                ),
-                inner,
-            )
-            Tab.You -> AccountTab(user, repo.isDemo, session, bio, inner)
-            else -> ComingNext(tab, inner)
+    val nav = remember(user, repo) {
+        AppNav(repo, user, stack, tab,
+            toast = { m -> scope.launch { snack.currentSnackbarData?.dismiss(); snack.showSnackbar(m) } },
+            remindMe = { d -> remind = d; remindOpen = true },
+            refreshHome = { home.load() })
+    }
+    androidx.activity.compose.BackHandler(enabled = stack.isNotEmpty()) { nav.pop() }
+    androidx.activity.compose.BackHandler(enabled = stack.isEmpty() && tab.value != Tab.Home) { tab.value = Tab.Home }
+    CompositionLocalProvider(LocalNav provides nav) {
+        Box(Modifier.fillMaxSize()) {
+            TabsScaffold(tab.value, { tab.value = it }, snack) { inner ->
+                val bottom = inner.calculateBottomPadding()
+                when (tab.value) {
+                    Tab.Home -> HomeScreen(
+                        home,
+                        HomeActions(
+                            openFunds = { tab.value = Tab.Explore },
+                            openSip = { tab.value = Tab.Calendar },
+                            openPlans = { nav.push(Route.Plans) },
+                            openNotifications = { nav.push(Route.Notifications) },
+                            setReminder = { d -> nav.remindMe(d) },
+                            whyDate = { tab.value = Tab.Calendar },
+                            openFund = { id -> nav.push(Route.Fund(id)) },
+                        ),
+                        inner,
+                    )
+                    Tab.Explore -> ExploreTab(bottom)
+                    Tab.Ask -> AskTab(chat, bottom)
+                    Tab.Calendar -> CalendarTab(bottom)
+                    Tab.You -> YouTab(session, bio, bottom)
+                }
+            }
+            stack.lastOrNull()?.let { r ->
+                Box(Modifier.fillMaxSize().background(Ma.c.bg)) {
+                    androidx.compose.runtime.key(stack.size, r) {
+                        when (r) {
+                            is Route.Fund -> FundScreen(r.id)
+                            is Route.WhatIf -> WhatIfScreen(r.fundId)
+                            is Route.Compare -> CompareScreen(r.a, r.b)
+                            Route.Insights -> InsightsScreen()
+                            Route.Notifications -> NotificationsScreen()
+                            Route.Plans -> PlansScreen()
+                            is Route.Checkout -> CheckoutScreen(r.planId, r.cycle)
+                            is Route.Kyc -> KycScreen(r.then)
+                            is Route.Success -> SuccessScreen(r.planId, r.cycle, r.amount, r.method)
+                            Route.Subscription -> SubscriptionScreen()
+                            Route.Help -> HelpScreen()
+                        }
+                    }
+                }
+                SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 80.dp))
+            }
+            if (remindOpen) ReminderSheet(remind) { remindOpen = false }
         }
     }
 }
@@ -205,79 +261,6 @@ fun TabsScaffold(tab: Tab, onTab: (Tab) -> Unit, snack: SnackbarHostState, conte
 @Composable
 fun MainTabsPreview(data: HomeData, today: java.time.LocalDate = java.time.LocalDate.now()) {
     TabsScaffold(Tab.Home, {}, remember { SnackbarHostState() }) { inner -> HomeContent(data, false, {}, HomeActions(), inner, today) }
-}
-
-/** Placeholder for the tabs we build next, one screen at a time. */
-@Composable
-private fun ComingNext(tab: Tab, pad: PaddingValues) {
-    Column(Modifier.fillMaxSize().padding(pad).padding(32.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-        if (tab.icon != null) Icon(tab.icon, null, tint = Ma.c.accent, modifier = Modifier.size(40.dp))
-        else Image(painterResource(R.drawable.brand_mark), null, Modifier.size(44.dp))
-        VSpace(12.dp)
-        Text(if (tab == Tab.Ask) "Ask Mod Alpha" else tab.label, color = Ma.c.text, style = MaterialTheme.typography.titleLarge)
-        VSpace(6.dp)
-        Text("This screen is next on the list.", color = Ma.c.muted, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
-    }
-}
-
-/** You tab (for now): who is signed in, theme, fingerprint unlock, log out. */
-@Composable
-private fun AccountTab(user: User, demo: Boolean, session: SessionViewModel, bio: Biometrics, pad: PaddingValues) {
-    val theme by session.theme.collectAsStateWithLifecycle()
-    var bioOn by remember { mutableStateOf(session.biometricOn) }
-    Column(Modifier.fillMaxSize().padding(bottom = pad.calculateBottomPadding())) {
-        Column(Modifier.fillMaxWidth().background(Ma.c.chromeBrush).statusBarsPadding().padding(20.dp)) {
-            Text("You", color = Ma.c.chromeText, style = MaterialTheme.typography.headlineSmall)
-            VSpace(14.dp)
-            Text(user.name, color = Ma.c.chromeText, style = MaterialTheme.typography.titleMedium)
-            user.mobile?.let { Text(prettyMobile(it), color = Ma.c.chromeSub, style = MaterialTheme.typography.bodyMedium) }
-            user.email?.let { Text(it, color = Ma.c.chromeSub, style = MaterialTheme.typography.bodyMedium) }
-            if (demo) { VSpace(10.dp); Pill("DEMO MODE · SAMPLE DATA", Ma.c.gold.copy(alpha = .2f), Ma.c.gold) }
-        }
-        Column(Modifier.padding(20.dp)) {
-            Text("THEME", color = Ma.c.muted, style = MaterialTheme.typography.labelSmall)
-            VSpace(8.dp)
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                AppTheme.entries.forEach { t ->
-                    val tc = colorsFor(t); val on = t == theme
-                    Column(
-                        Modifier.weight(1f).clip(RoundedCornerShape(16.dp)).background(Ma.c.surface)
-                            .border(if (on) 2.dp else 1.dp, if (on) Ma.c.accent else Ma.c.line, RoundedCornerShape(16.dp))
-                            .clickable { session.setTheme(t) }.padding(12.dp)
-                    ) {
-                        Row(Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(10.dp))) {
-                            Box(Modifier.weight(1f).fillMaxSize().background(tc.chrome)); Box(Modifier.weight(1.4f).fillMaxSize().background(tc.bg))
-                        }
-                        VSpace(8.dp)
-                        Text(t.label, color = Ma.c.text, fontWeight = FontWeight.SemiBold)
-                        Text(t.desc, color = Ma.c.muted, style = MaterialTheme.typography.bodySmall)
-                    }
-                }
-            }
-            if (!demo && bio.available) {
-                VSpace(20.dp)
-                MaCard(Modifier.fillMaxWidth(), padding = 14.dp) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Outlined.Fingerprint, null, tint = Ma.c.accent, modifier = Modifier.size(26.dp)); Spacer(Modifier.width(12.dp))
-                        Column(Modifier.weight(1f)) {
-                            Text("Fingerprint unlock", color = Ma.c.text, fontWeight = FontWeight.SemiBold)
-                            Text("Open the app with your fingerprint or screen lock", color = Ma.c.muted, style = MaterialTheme.typography.bodySmall)
-                        }
-                        Switch(
-                            checked = bioOn,
-                            onCheckedChange = { want ->
-                                if (want) bio.prompt("Turn on fingerprint unlock") { session.setBiometric(true); bioOn = true }
-                                else { session.setBiometric(false); bioOn = false }
-                            },
-                            colors = SwitchDefaults.colors(checkedTrackColor = Ma.c.accent),
-                        )
-                    }
-                }
-            }
-            VSpace(24.dp)
-            GradientButton("Log out", session::logout, Modifier.fillMaxWidth(), leading = { Icon(Icons.AutoMirrored.Outlined.Logout, null, tint = Ma.c.onAccent, modifier = Modifier.size(18.dp)) })
-        }
-    }
 }
 
 @Suppress("UNCHECKED_CAST")

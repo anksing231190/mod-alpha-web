@@ -30,6 +30,10 @@ data class Fund(
     val category: String,
     val r1: Double?, val r3: Double?, val r5: Double?,
     val spark: List<Double>,
+    val r10: Double? = null,
+    val nav: Double? = null, val navDate: String? = null,
+    val aum: String? = null, val expense: Double? = null,
+    val risk: String? = null, val vol: Double? = null, val benchmark: String? = null,
 )
 
 /**
@@ -66,3 +70,43 @@ data class OtpSent(val expiresInSec: Int, val devCode: String?)
 
 /** A message the screens can show as-is. */
 class ApiException(message: String, val status: Int = 0, val code: String? = null) : Exception(message)
+
+/* ---------- the other screens ---------- */
+
+data class NavPoint(val date: String, val value: Double)
+
+/** POST /calc/lumpsum result. */
+data class LumpResult(val invested: Long, val value: Long, val gain: Long, val totalPct: Double, val cagrPct: Double?, val investedOn: String)
+
+data class Notice(val id: String, val kind: String, val title: String, val body: String, val createdAt: String, val read: Boolean)
+
+/** GET /insights item. kind = "instagram" (a reel with url) or a text insight. */
+data class Insight(val id: Int, val kind: String, val title: String, val body: String, val url: String?, val publishedAt: String?)
+
+data class ChatMsg(val fromUser: Boolean, val text: String)
+data class AskReply(val text: String, val leftToday: Int?)
+
+/** Plan prices include 18% GST. */
+data class Plan(val id: String, val name: String, val tagline: String, val prices: Map<String, Int>, val features: List<String>)
+
+data class KycResult(val status: String, val message: String? = null, val redirectUrl: String? = null)
+
+/** POST /billing/checkout: provider "mock" on stage (completed in-app), "razorpay" in production. */
+data class Order(val orderId: String, val provider: String, val amount: Int, val subscriptionId: String)
+
+data class Subscription(
+    val id: String, val plan: String, val cycle: String, val status: String,
+    val renewalDate: String?, val amount: Int, val cancelling: Boolean,
+)
+
+data class Invoice(val id: String, val type: String, val number: String, val amount: Double, val issuedAt: String, val plan: String?, val cycle: String?)
+
+data class Faq(val category: String, val question: String, val answer: String)
+data class Ticket(val number: String, val topic: String, val message: String, val status: String, val reply: String?, val createdAt: String)
+
+/** The parts of GET/PUT /me/preferences the app edits (reminders and channels). */
+data class Prefs(
+    val timing: String,                 // "3 days before" | "2 days before" | "1 day before" | "On the day"
+    val push: Boolean, val sms: Boolean, val email: Boolean,
+    val sipReminder: Boolean, val datePublished: Boolean,
+)

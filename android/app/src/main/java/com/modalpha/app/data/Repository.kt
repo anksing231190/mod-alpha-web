@@ -14,6 +14,42 @@ interface Repository {
     suspend fun loginWithEmail(email: String, password: String): User
     suspend fun home(): HomeData
     suspend fun logout()
+
+    // Explore
+    suspend fun funds(): List<Fund>
+    suspend fun fund(id: String): Fund
+    suspend fun nav(id: String, period: String): List<NavPoint>
+    suspend fun sipCompare(fundId: String?, amount: Int, start: String, fixedDay: Int = 1): SipCompare?
+    suspend fun lumpsum(fundId: String, date: String, amount: Int): LumpResult
+    suspend fun watchlist(): Set<String>
+    suspend fun setWatch(fundId: String, on: Boolean)
+    suspend fun insights(): List<Insight>
+    // SIP dates
+    suspend fun sipHistory(): Pair<List<SipMonth>, Boolean>       // months (newest first), locked
+    suspend fun prefs(): Prefs
+    suspend fun savePrefs(p: Prefs)
+    // AI
+    suspend fun ask(history: List<ChatMsg>): AskReply
+    suspend fun aiLeftToday(): Int?
+    // inbox
+    suspend fun notifications(): List<Notice>
+    suspend fun markAllRead()
+    // money
+    suspend fun plans(): List<Plan>
+    suspend fun plan(): String
+    suspend fun kycStatus(): String
+    suspend fun submitPan(pan: String, name: String, dob: String): KycResult
+    suspend fun checkout(planId: String, cycle: String): Order
+    suspend fun completeMockPayment(orderId: String)
+    suspend fun subscription(): Subscription?
+    suspend fun cancel(subId: String, reason: String?): String
+    suspend fun resume(subId: String)
+    suspend fun invoices(): List<Invoice>
+    suspend fun invoicePdf(inv: Invoice): ByteArray
+    // help
+    suspend fun faqs(): List<Faq>
+    suspend fun tickets(): List<Ticket>
+    suspend fun newTicket(email: String, topic: String, message: String): String
 }
 
 /** Indian mobile numbers as the API expects them: +91 and 10 digits. */

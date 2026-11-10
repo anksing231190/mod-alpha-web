@@ -80,6 +80,7 @@ class HomeActions(
     val openNotifications: () -> Unit = {},
     val setReminder: (Int) -> Unit = {},
     val whyDate: () -> Unit = {},
+    val openFund: (String) -> Unit = {},
 )
 
 @Composable
@@ -281,7 +282,7 @@ private fun Watchlist(list: List<Fund>, actions: HomeActions) {
         VSpace(4.dp)
         list.take(3).forEachIndexed { i, f ->
             if (i > 0) HorizontalDivider(color = Ma.c.line)
-            Row(Modifier.fillMaxWidth().clickable(onClick = actions.openFunds).padding(vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().clickable { actions.openFund(f.id) }.padding(vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
                 AmcLogo(f.amc, 38.dp); Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text(f.short, color = Ma.c.text, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
