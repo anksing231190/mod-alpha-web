@@ -23,6 +23,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.Offset
@@ -106,6 +107,8 @@ class HomeActions(
     val openCompare: () -> Unit = {},
     val openAsk: () -> Unit = {},
     val openSubscription: () -> Unit = {},
+    val openInsights: () -> Unit = {},
+    val openReminders: () -> Unit = {},
 )
 
 @Composable
@@ -322,7 +325,7 @@ private fun QuickLinks(actions: HomeActions, modifier: Modifier = Modifier) {
     val c = Ma.c
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         listOf(Triple(Icons.AutoMirrored.Outlined.ShowChart, "What if", actions.openWhatIf), Triple(Icons.Outlined.CompareArrows, "Compare", actions.openCompare),
-            Triple(Icons.Outlined.CalendarMonth, "Calendar", actions.openSip), Triple(Icons.Outlined.ChatBubbleOutline, "Ask α", actions.openAsk)).forEach { (ic, label, go) ->
+            Triple(Icons.Outlined.Lightbulb, "Insights", actions.openInsights), Triple(Icons.Outlined.NotificationsActive, "Reminders", actions.openReminders)).forEach { (ic, label, go) ->
             Column(Modifier.weight(1f).clip(RoundedCornerShape(14.dp)).background(c.surface).border(1.dp, c.line, RoundedCornerShape(14.dp)).clickable(onClick = go).padding(vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(Modifier.size(32.dp).clip(RoundedCornerShape(10.dp)).background(c.accent.copy(alpha = .1f)), contentAlignment = Alignment.Center) { Icon(ic, null, tint = c.accent, modifier = Modifier.size(18.dp)) }
                 Spacer(Modifier.height(5.dp))
