@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.graphicsLayer
@@ -72,9 +73,19 @@ private val INK = Color(0xFF0D1730)
 
 /** Light card used by every welcome slide. */
 @Composable
-private fun SlideCard(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+private fun SlideCard(modifier: Modifier = Modifier, checkered: Boolean = false, content: @Composable () -> Unit) {
     val c = Ma.c
-    Box(modifier.padding(horizontal = 20.dp).fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(c.surface).border(1.dp, c.line, RoundedCornerShape(22.dp)).padding(16.dp)) { content() }
+    Box(
+        modifier.padding(horizontal = 20.dp).fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(c.surface)
+            .then(if (checkered) Modifier.drawBehind {
+                // light checkered paper, fading towards the bottom, so the card never looks empty
+                val cell = 22.dp.toPx(); var y = 0f; var r = 0
+                while (y < size.height) { var x = 0f; var k = 0
+                    while (x < size.width) { if ((r + k) % 2 == 0) drawRect(c.accent.copy(alpha = .05f * (1f - .5f * y / size.height)), Offset(x, y), Size(cell, cell)); x += cell; k++ }
+                    y += cell; r++ }
+            } else Modifier)
+            .border(1.dp, c.line, RoundedCornerShape(22.dp)).padding(16.dp),
+    ) { content() }
 }
 
 /* ============================== Slide 2 · 10 years of NAV data ============================== */
@@ -206,7 +217,7 @@ fun ReminderSlide(modifier: Modifier = Modifier, autoPlay: Boolean = true) {
     val noti = seg(.18f, .3f)                      // notification slides in
     val ring = if (t in .3f..0.5f) kotlin.math.sin((t - .3f) * 90f) * 14f else 0f
     val steps = listOf(seg(.05f, .12f), seg(.3f, .38f), seg(.55f, .63f))
-    SlideCard(modifier) {
+    SlideCard(modifier, checkered = true) {
         Row(Modifier.height(352.dp), verticalAlignment = Alignment.CenterVertically) {
             // ---- phone ----
             Box(
@@ -310,7 +321,7 @@ fun TearOffSlide(day: Int?, ym: java.time.YearMonth?, autoPlay: Boolean = true) 
     val t by rememberInfiniteTransition(label = "tear").animateFloat(0f, 1f, infiniteRepeatable(tween(4800, easing = LinearEasing)), label = "t")
     val p = if (autoPlay) ((t - .25f) / .3f).coerceIn(0f, 1f) else 1f        // page flip progress
     fun mon(m: java.time.YearMonth) = m.month.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH).uppercase()
-    SlideCard {
+    SlideCard(checkered = true) {
         Column(Modifier.fillMaxWidth().height(352.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             Box(Modifier.width(170.dp).height(190.dp)) {
                 // this month (underneath)
@@ -356,7 +367,7 @@ fun CountdownSlide(day: Int?, ym: java.time.YearMonth?, autoPlay: Boolean = true
     val fill by tr.animateFloat(0f, 1f, infiniteRepeatable(tween(4800, easing = LinearEasing)), label = "b")
     val f = if (autoPlay) flip else 0f
     val bar = if (autoPlay) (fill / .55f).coerceAtMost(1f) else 1f
-    SlideCard {
+    SlideCard(checkered = true) {
         Column(Modifier.fillMaxWidth().height(352.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             Text(when { left == null -> "This month's date"; left > 0 -> "Next SIP date in"; left == 0 -> "Your SIP date is"; else -> "This month's SIP date" }, color = c.muted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(10.dp))
