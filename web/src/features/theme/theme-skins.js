@@ -4,7 +4,7 @@
      Sand      (cream & beige)                              data-theme="light"
      Espresso  (DEFAULT for new visitors — Sand's cream pages, brown sidebar, top bar,  data-theme="light" data-skin="duo"   → theme-skins.css
                 footer and phone tab bar)
-     Graphite  (charcoal sidebar / top bar, white pages;  theme-graphite.generated.css)         data-theme="light" data-skin="slate"
+     Navy      (dark navy sidebar / top bar, white pages; was "Graphite"; theme-graphite.generated.css)         data-theme="light" data-skin="slate"
    The skin is stored in localStorage 'mod-alpha-skin' (applied before first paint by index.html).
    The sun/moon button in the top bar opens this picker; Settings → Appearance shows the three as cards.
    The earlier "Auto" (clock) and "Ivory" options were removed; a saved Auto/Ivory choice falls back to Sand.
@@ -16,9 +16,9 @@
     { id: 'dark', name: 'Midnight', desc: 'Dark, the original', sw: ['#080b18', '#141d3d', '#6366f1'] },
     { id: 'light', name: 'Sand', desc: 'Cream & beige', sw: ['#f4ecdd', '#fffaf1', '#9c5f2a'] },
     { id: 'duo', name: 'Espresso', desc: 'Cream pages, brown sidebar', sw: ['#1e1813', '#f4ecdd', '#c08548'] },
-    { id: 'slate', name: 'Graphite', desc: 'Charcoal & white', sw: ['#1f2227', '#ffffff', '#4a5a72'] },
+    { id: 'slate', name: 'Navy', desc: 'White & dark navy', sw: ['#0b1b3f', '#ffffff', '#1e3a8a'] },
   ];
-  const META = { dark: '#080b18', light: '#f4ecdd', duo: '#1e1813', slate: '#1f2227' };
+  const META = { dark: '#080b18', light: '#f4ecdd', duo: '#1e1813', slate: '#0b1b3f' };
   const SKINS = ['duo', 'slate'];
   // retire the removed options
   try { if (localStorage.getItem(KEY) && !SKINS.includes(localStorage.getItem(KEY))) localStorage.removeItem(KEY); localStorage.removeItem('mod-alpha-theme-auto'); } catch (e) {}

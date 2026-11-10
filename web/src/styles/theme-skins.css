@@ -57,8 +57,8 @@ html[data-theme="light"][data-skin="duo"]:root .workspace-topbar .ma-lang-toggle
 html[data-theme="light"][data-skin="duo"]:root .workspace-topbar .profile-menu .avatar{color:#fff!important}
 
 /* ---------- Graphite ("slate"): Sand's cream pages with neutral charcoal-grey chrome (same rules as Espresso) ---------- */
-html[data-theme="light"][data-skin="slate"]:root{--esp:#1f2227;--esp2:#2b2f36;--esp-line:#3a3f48;--esp-tx:#eef0f3;--esp-sub:#c3c8d0;--esp-mut:#98a0ab;--esp-acc:#d6a36a}
-html[data-theme="light"][data-skin="slate"]:root .sidebar.v22-side,html[data-theme="light"][data-skin="slate"]:root .sidebar{background:linear-gradient(180deg,#262a30,#1c1f24)!important;border-right-color:var(--esp-line)!important;color:var(--esp-tx)}
+html[data-theme="light"][data-skin="slate"]:root{--esp:#0b1b3f;--esp2:#132a5c;--esp-line:#2a3f70;--esp-tx:#f1f5ff;--esp-sub:#c3cfe8;--esp-mut:#91a1c4;--esp-acc:#8fb6ff}
+html[data-theme="light"][data-skin="slate"]:root .sidebar.v22-side,html[data-theme="light"][data-skin="slate"]:root .sidebar{background:linear-gradient(180deg,#0f2350,#081430)!important;border-right-color:var(--esp-line)!important;color:var(--esp-tx)}
 html[data-theme="light"][data-skin="slate"]:root .sidebar .brand-wording strong,html[data-theme="light"][data-skin="slate"]:root .topbar .brand-wording strong,html[data-theme="light"][data-skin="slate"]:root .ma-m-logo{color:var(--esp-tx)!important}
 html[data-theme="light"][data-skin="slate"]:root .sidebar .brand-wording small,html[data-theme="light"][data-skin="slate"]:root .topbar .brand-wording small{color:var(--esp-mut)!important}
 html[data-theme="light"][data-skin="slate"]:root .sidebar .side-label{color:var(--esp-mut)!important}
@@ -71,7 +71,7 @@ html[data-theme="light"][data-skin="slate"]:root .sidebar .v22-subnav{border-col
 html[data-theme="light"][data-skin="slate"]:root .sidebar .side-bottom{border-top-color:var(--esp-line)!important}
 html[data-theme="light"][data-skin="slate"]:root .sidebar .v22-back,html[data-theme="light"][data-skin="slate"]:root .sidebar .ma-side-toggle,html[data-theme="light"][data-skin="slate"]:root .ma-m-prefs button{background:var(--esp2)!important;border-color:var(--esp-line)!important;color:var(--esp-tx)!important}
 html[data-theme="light"][data-skin="slate"]:root .sidebar .logout-btn{background:rgba(220,90,60,.12)!important;border-color:rgba(220,90,60,.4)!important;color:#f0a58e!important}
-html[data-theme="light"][data-skin="slate"]:root .workspace-topbar,html[data-theme="light"][data-skin="slate"]:root .topbar.public-topbar,html[data-theme="light"][data-skin="slate"]:root .topbar{background:rgba(31,34,39,.96)!important;border-bottom-color:var(--esp-line)!important;color:var(--esp-tx)}
+html[data-theme="light"][data-skin="slate"]:root .workspace-topbar,html[data-theme="light"][data-skin="slate"]:root .topbar.public-topbar,html[data-theme="light"][data-skin="slate"]:root .topbar{background:rgba(11,27,63,.97)!important;border-bottom-color:var(--esp-line)!important;color:var(--esp-tx)}
 html[data-theme="light"][data-skin="slate"]:root .workspace-topbar :is(.ma-theme-toggle,.ma-lang-toggle,.v22-bell,.icon-action,.profile-menu,.user-chip,.workspace-search,.ma-cmd,.ma-usage-btn),
 html[data-theme="light"][data-skin="slate"]:root .topbar :is(.ma-theme-toggle,.ma-lang-toggle,.login-outline){background:var(--esp2)!important;border-color:var(--esp-line)!important;color:var(--esp-tx)!important}
 html[data-theme="light"][data-skin="slate"]:root .workspace-topbar :is(input,kbd,span,b,small):not(.ma-cmd-list *):not([class*="pop"] *):not([class*="v22-np"] *):not([role="menu"] *):not([role="dialog"] *):not([role="listbox"] *):not(.ma-lang-toggle .on),html[data-theme="light"][data-skin="slate"]:root .ma-m-menu{color:var(--esp-tx)!important}
@@ -80,7 +80,7 @@ html[data-theme="light"][data-skin="slate"]:root .workspace-topbar .ma-theme-tog
 html[data-theme="light"][data-skin="slate"]:root .topbar .public-nav a{color:var(--esp-sub)!important}html[data-theme="light"][data-skin="slate"]:root .topbar .public-nav a:hover{color:var(--esp-tx)!important}
 html[data-theme="light"][data-skin="slate"]:root .workspace-topbar .v22-upgrade{background:rgba(211,154,92,.14)!important;border-color:rgba(211,154,92,.45)!important;color:#f3c993!important}
 html[data-theme="light"][data-skin="slate"]:root .workspace-topbar .v22-role-chip{background:rgba(120,170,110,.14)!important;border-color:rgba(120,170,110,.4)!important;color:#bfe0b0!important}
-html[data-theme="light"][data-skin="slate"]:root .ma-bottom-nav{background:rgba(31,34,39,.97)!important;border-top-color:var(--esp-line)!important}
+html[data-theme="light"][data-skin="slate"]:root .ma-bottom-nav{background:rgba(11,27,63,.97)!important;border-top-color:var(--esp-line)!important}
 html[data-theme="light"][data-skin="slate"]:root .ma-bottom-nav a,html[data-theme="light"][data-skin="slate"]:root .ma-bottom-nav button{color:var(--esp-sub)!important}
 html[data-theme="light"][data-skin="slate"]:root .ma-bottom-nav .active,html[data-theme="light"][data-skin="slate"]:root .ma-bottom-nav [aria-current="page"]{color:#fff!important}
 html[data-theme="light"][data-skin="slate"]:root .workspace-footer{background:var(--esp)!important;color:var(--esp-sub)!important;border-top-color:var(--esp-line)!important}
@@ -88,12 +88,12 @@ html[data-theme="light"][data-skin="slate"]:root .workspace-footer :is(span,a){c
 html[data-theme="light"][data-skin="slate"]:root .workspace-topbar .ma-lang-toggle span:not(.on){color:var(--esp-sub)!important}
 html[data-theme="light"][data-skin="slate"]:root .workspace-topbar .ma-lang-toggle span.on.on:not(.x):not(.y){background:linear-gradient(100deg,#b8783a,#8a5226)!important;color:#fff!important}
 html[data-theme="light"][data-skin="slate"]:root .workspace-topbar .profile-menu .avatar{color:#fff!important}
-.v22-theme-prev.slate{background:#f4ecdd!important}.v22-theme-prev.slate i:first-child{background:#1f2227!important}.v22-theme-prev.slate i{background:#fffaf1!important}
+.v22-theme-prev.slate{background:#f4ecdd!important}.v22-theme-prev.slate i:first-child{background:#0b1b3f!important}.v22-theme-prev.slate i{background:#fffaf1!important}
 
 /* Graphite (charcoal + white): white active item in the charcoal sidebar; picker + Settings swatches */
-html[data-theme="light"][data-skin="slate"]:root .sidebar .nav-link.active{background:#f5f6f8!important;color:#1f2227!important;box-shadow:0 8px 22px -12px rgba(0,0,0,.6)!important}
-html[data-theme="light"][data-skin="slate"]:root .sidebar .nav-link.active .v22-ic{color:#1f2227!important}
-html[data-theme="light"][data-skin="slate"]:root .workspace-topbar .ma-lang-toggle span.on.on:not(.x):not(.y){background:#f5f6f8!important;color:#1f2227!important}
+html[data-theme="light"][data-skin="slate"]:root .sidebar .nav-link.active{background:#f5f6f8!important;color:#0b1b3f!important;box-shadow:0 8px 22px -12px rgba(0,0,0,.6)!important}
+html[data-theme="light"][data-skin="slate"]:root .sidebar .nav-link.active .v22-ic{color:#0b1b3f!important}
+html[data-theme="light"][data-skin="slate"]:root .workspace-topbar .ma-lang-toggle span.on.on:not(.x):not(.y){background:#f5f6f8!important;color:#0b1b3f!important}
 html[data-theme="light"][data-skin="slate"]:root .workspace-topbar .v22-upgrade{background:rgba(255,255,255,.1)!important;border-color:rgba(255,255,255,.3)!important;color:#fff!important}
 .v22-theme-prev.slate{background:#f5f6f8!important}.v22-theme-prev.slate i{background:#fff!important}
 

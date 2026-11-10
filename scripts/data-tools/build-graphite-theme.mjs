@@ -2,10 +2,10 @@
  * Build web/src/styles/theme-graphite.generated.css — the content colours of the "Graphite" theme
  * (charcoal + white). Graphite = Sand's layout with:
  *   • warm cream / beige surfaces, borders and text  → the same lightness in cool neutral grey (white pages)
- *   • caramel / ochre accents                        → slate blue-grey
- *   • plum accents (the second stop of Sand's button gradient) → deep slate
+ *   • caramel / ochre accents                        → navy blue
+ *   • plum accents (the second stop of Sand's button gradient) → deep navy
  * Data colours (green gains, red losses, chart blues/violets) are left as they are.
- * The charcoal sidebar / top bar come from theme-skins.css (data-skin="slate").
+ * The dark navy sidebar / top bar come from theme-skins.css (data-skin="slate").
  * Every rule that sets a colour in a Sand-scoped rule is re-emitted under
  *   html[data-theme="light"]:where([data-skin="slate"]) …
  * :where() keeps each rule exactly as specific as in Sand, so Sand's own order still holds.
@@ -38,8 +38,8 @@ function graphite(rgb) {
     const L = l > 0.9 ? Math.min(1, l + (1 - l) * 0.75) : l;   // near-white surfaces become (almost) white
     return hsl2rgb([218, Math.min(s, 0.1) * 0.8, L]);
   }
-  if (warm) return hsl2rgb([215, 0.28, Math.min(l, 0.42)]);      // caramel / ochre accent → slate
-  if (plum && s > 0.15 && l < 0.6) return hsl2rgb([222, 0.3, Math.min(l, 0.36)]);
+  if (warm) return hsl2rgb([224, 0.64, Math.min(l, 0.38)]);      // caramel / ochre accent → navy blue
+  if (plum && s > 0.15 && l < 0.6) return hsl2rgb([226, 0.62, Math.min(l, 0.26)]);   // plum → deep navy
   return null;
 }
 function mapValue(v) {
