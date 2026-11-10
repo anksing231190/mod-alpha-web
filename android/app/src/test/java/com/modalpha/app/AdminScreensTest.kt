@@ -1,6 +1,9 @@
 package com.modalpha.app
 
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
@@ -53,8 +56,8 @@ class AdminScreensTest {
     @Test fun user_detail() { admin(); rule.onNodeWithText("Users").performClick()
         rule.waitUntil(5000) { rule.onAllNodesWithText("Sana Iqbal").fetchSemanticsNodes().isNotEmpty() }
         rule.onNodeWithText("Sana Iqbal").performClick(); cap("04-user") }
-    @Test fun support() { admin(); rule.onNodeWithText("Support").performClick(); cap("05-support") }
-    @Test fun ticket() { admin(); rule.onNodeWithText("Support").performClick(); rule.waitForIdle(); rule.onNodeWithText("My reminder came a day late.").performClick(); cap("06-ticket") }
+    @Test fun support() { admin(); rule.onNode(hasText("Support") and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)).performClick(); cap("05-support") }
+    @Test fun ticket() { admin(); rule.onNode(hasText("Support") and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)).performClick(); rule.waitForIdle(); rule.onNodeWithText("My reminder came a day late.").performClick(); cap("06-ticket") }
     @Test fun sip() {
         admin(); rule.onNodeWithText("SIP date").performClick(); rule.waitForIdle()
         rule.onAllNodesWithText("Check").onFirst().performScrollTo().performClick(); rule.waitForIdle()

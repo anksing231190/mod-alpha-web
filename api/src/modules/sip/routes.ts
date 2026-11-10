@@ -36,9 +36,20 @@ export default async function sip(app: FastifyInstance) {
     return e.plan !== 'Free' && e.subscription?.status === 'Active';
   }
   // Hide the day (and internal fields) of current/future months from people who have not subscribed.
+  /**
+   * Confidence of the month's best date — how far it leads the next-best date in the backtest. Same formula the
+   * website used in the browser (features/ai/ai-ui.js strength()), now computed once here for web and Android.
+   */
+  function confidence(row: any) {
+    const best = Number(row.uplift_pct) || 0;
+    const alts = [row.alt_uplift_1, row.alt_uplift_2, row.alt_uplift_3].filter((x) => x != null).map(Number).sort((a, b) => b - a);
+    const gap = alts.length ? Math.max(0, best - alts[0]) : best;
+    const pct = Math.round(Math.max(40, Math.min(95, 55 + gap * 25)));
+    return { pct, gap: +gap.toFixed(1), label: pct >= 80 ? 'High' : pct >= 62 ? 'Medium' : 'Low' };
+  }
   function view(row: any, open: boolean, isAdmin: boolean) {
     if (!row) return row;
-    const out: any = { ...row };
+    const out: any = { ...row, confidence: confidence(row) };
     if (!isAdmin) { delete out.reason; delete out.published_by; }
     if (!open && row.month >= istMonth()) {
       Object.assign(out, { recommended_day: null, alt_day_1: null, alt_day_2: null, alt_day_3: null, locked: true });

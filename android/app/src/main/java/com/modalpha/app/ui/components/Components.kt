@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -43,9 +44,10 @@ import com.modalpha.app.ui.theme.Ma
 fun MaCard(modifier: Modifier = Modifier, padding: Dp = 16.dp, content: @Composable () -> Unit) {
     Box(
         modifier
-            .clip(RoundedCornerShape(20.dp))
+            .shadow(10.dp, RoundedCornerShape(22.dp), spotColor = Ma.c.chrome.copy(alpha = .25f), ambientColor = Color.Transparent)
+            .clip(RoundedCornerShape(22.dp))
             .background(Ma.c.surface)
-            .border(1.dp, Ma.c.line, RoundedCornerShape(20.dp))
+            .border(1.dp, Ma.c.line, RoundedCornerShape(22.dp))
             .padding(padding)
     ) { content() }
 }

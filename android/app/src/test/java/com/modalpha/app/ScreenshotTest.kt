@@ -64,8 +64,9 @@ class ScreenshotTest {
 
     @Test fun welcome_navy() = shot("01-welcome", AppTheme.Navy, 2600) { WelcomeScreen({}, {}, {}, autoPlay = false) }
     @Test fun welcome_espresso() = shot("01-welcome", AppTheme.Espresso, 2600) { WelcomeScreen({}, {}, {}, autoPlay = false) }
-    @Test fun lock_navy() = shot("02-lock", AppTheme.Navy, 2600) { LockScreen("Ankit", {}, {}, {}, autoPrompt = false) }
-    @Test fun lock_espresso() = shot("02-lock", AppTheme.Espresso, 2600) { LockScreen("Ankit", {}, {}, {}, autoPrompt = false) }
+    @Test fun welcome_returning() = shot("01b-welcome-back", AppTheme.Navy, 3200) { WelcomeScreen({}, {}, {}, autoPlay = false, returningName = "Ankit", lastDay = 12, lastMonth = "November") }
+    @Test fun lock_navy() = shot("02-lock", AppTheme.Navy, 2600) { LockScreen("Ankit", {}, {}, {}, autoPrompt = false, lastDay = 12, lastMonth = "November") }
+    @Test fun lock_espresso() = shot("02-lock", AppTheme.Espresso, 2600) { LockScreen("Ankit", {}, {}, {}, autoPrompt = false, lastDay = 12, lastMonth = "November") }
     @Test fun login_navy() = shot("03-login", AppTheme.Navy) { LoginScreen(loginVm(false), onBack = {}) }
     @Test fun login_espresso() = shot("03-login", AppTheme.Espresso) { LoginScreen(loginVm(false), onBack = {}) }
     @Test fun otp_navy() = shot("04-otp", AppTheme.Navy) { LoginScreen(loginVm(true), onBack = {}) }

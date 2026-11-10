@@ -48,7 +48,23 @@ export default async function admin(app: FastifyInstance) {
         (SELECT count(*) FROM subscriptions WHERE status<>'Created' AND start_date >= greatest(b.bucket, $1::date) AND start_date < b.bucket + ('1 ' || $3)::interval AND start_date <= $2) new_subs,
         (SELECT coalesce(sum(amount_inr - refunded_inr),0) FROM payments WHERE status IN ('captured','refunded') AND paid_on >= greatest(b.bucket, $1::date) AND paid_on < b.bucket + ('1 ' || $3)::interval AND paid_on <= $2) revenue
       FROM b ORDER BY b.bucket`, [from, to, g])).rows;
+    // plan mix (active paid subscriptions by plan; everyone else is Free), sign-up funnel for the period, support speed
+    const mix = (await db.query(`SELECT s.plan_id plan, count(DISTINCT s.user_id)::int n FROM subscriptions s JOIN users u ON u.id=s.user_id
+      WHERE u.role='user' AND u.deleted_at IS NULL AND s.status IN ('Active','Past due') GROUP BY s.plan_id`)).rows;
+    const paidUsers = mix.reduce((a: number, r: any) => a + r.n, 0);
+    const funnel = (await db.query(`SELECT count(*)::int signed_up,
+        count(*) FILTER (WHERE mobile_verified_at IS NOT NULL OR email_verified_at IS NOT NULL)::int verified,
+        count(*) FILTER (WHERE kyc_status='Verified')::int kyc,
+        count(*) FILTER (WHERE EXISTS (SELECT 1 FROM subscriptions s WHERE s.user_id=u.id AND s.status<>'Created'))::int paid
+      FROM users u WHERE role='user' AND signup_date BETWEEN $1 AND $2`, [from, to])).rows[0];
+    const sup = (await db.query(`SELECT count(*) FILTER (WHERE status IN ('Open','In progress'))::int waiting,
+        min(created_at) FILTER (WHERE status IN ('Open','In progress')) oldest,
+        avg(extract(epoch FROM replied_at - created_at)/3600) FILTER (WHERE replied_at IS NOT NULL AND created_at > now() - interval '30 days') avg_reply_hours
+      FROM support_tickets`)).rows[0];
     return {
+      planMix: [{ plan: 'Free', users: Math.max(0, Number(cur.total_users) - paidUsers) }, ...mix.map((r: any) => ({ plan: r.plan, users: r.n }))],
+      funnel: { signedUp: funnel.signed_up, verified: funnel.verified, kyc: funnel.kyc, paid: funnel.paid },
+      support: { waiting: sup.waiting, oldest: sup.oldest, avgReplyHours: sup.avg_reply_hours == null ? null : +Number(sup.avg_reply_hours).toFixed(1) },
       range: { from, to, previous: { from: prevFrom, to: prevTo }, granularity: g, asOf },
       kpis: {
         totalUsers: { value: cur.total_users, previous: prev.total_users, changePct: pct(cur.total_users, prev.total_users) },

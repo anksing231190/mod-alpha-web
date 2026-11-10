@@ -119,14 +119,10 @@ fun Screen(
 
 @Composable
 fun ChromeHeader(title: String, onBack: (() -> Unit)? = null, actions: @Composable RowScope.() -> Unit = {}, extra: @Composable ColumnScope.() -> Unit = {}) {
-    Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(bottomStart = 26.dp, bottomEnd = 26.dp)).background(Ma.c.chromeBrush)
-            .background(Brush.radialGradient(listOf(Ma.c.glow.copy(alpha = .22f), Color.Transparent), center = androidx.compose.ui.geometry.Offset(200f, 420f), radius = 600f))
-            .statusBarsPadding().padding(bottom = 16.dp)
-    ) {
-        Row(Modifier.fillMaxWidth().height(52.dp).padding(start = if (onBack != null) 4.dp else 20.dp, end = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+    com.modalpha.app.ui.components.MeshHero {
+        Row(Modifier.fillMaxWidth().height(54.dp).padding(start = if (onBack != null) 4.dp else 18.dp, end = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             if (onBack != null) IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Back", tint = Ma.c.chromeText) }
-            Text(title, color = Ma.c.chromeText, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(title, color = Ma.c.chromeText, fontSize = 23.sp, fontWeight = FontWeight.Black, letterSpacing = (-.3).sp, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
             actions()
         }
         extra()
@@ -136,7 +132,7 @@ fun ChromeHeader(title: String, onBack: (() -> Unit)? = null, actions: @Composab
 /** Round icon button on the dark header. */
 @Composable
 fun ChromeIcon(icon: ImageVector, label: String, tint: Color = Ma.c.chromeText, onClick: () -> Unit) {
-    Box(Modifier.size(40.dp).clip(CircleShape).background(Ma.c.chrome2).border(1.dp, Ma.c.chromeLine, CircleShape).clickable(role = Role.Button, onClick = onClick), contentAlignment = Alignment.Center) {
+    Box(Modifier.size(40.dp).clip(RoundedCornerShape(13.dp)).background(Color.White.copy(alpha = .08f)).border(1.dp, Color.White.copy(alpha = .12f), RoundedCornerShape(13.dp)).clickable(role = Role.Button, onClick = onClick), contentAlignment = Alignment.Center) {
         Icon(icon, label, tint = tint, modifier = Modifier.size(19.dp))
     }
 }
@@ -145,8 +141,8 @@ fun ChromeIcon(icon: ImageVector, label: String, tint: Color = Ma.c.chromeText, 
 
 @Composable
 fun SectionTitle(title: String, action: String? = null, onAction: () -> Unit = {}) {
-    Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 8.dp), verticalAlignment = Alignment.Bottom) {
-        Text(title, color = Ma.c.text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+    Row(Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 16.dp, bottom = 8.dp), verticalAlignment = Alignment.Bottom) {
+        Text(title, color = Ma.c.text, fontSize = 15.5.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
         if (action != null) Text(action, color = Ma.c.accent, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, modifier = Modifier.clickable(onClick = onAction))
     }
 }
@@ -158,7 +154,7 @@ fun Caption(text: String, modifier: Modifier = Modifier) =
 /** White card holding rows separated by hairlines. */
 @Composable
 fun CardList(modifier: Modifier = Modifier, rows: List<@Composable () -> Unit>) {
-    Column(modifier.padding(horizontal = 20.dp).fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Ma.c.surface).border(1.dp, Ma.c.line, RoundedCornerShape(20.dp)).padding(horizontal = 14.dp)) {
+    Column(modifier.padding(horizontal = 18.dp).fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(Ma.c.surface).border(1.dp, Ma.c.line, RoundedCornerShape(22.dp)).padding(horizontal = 14.dp)) {
         rows.forEachIndexed { i, r -> if (i > 0) HorizontalDivider(color = Ma.c.line); r() }
     }
 }

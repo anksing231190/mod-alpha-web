@@ -39,6 +39,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,6 +49,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
@@ -115,6 +119,7 @@ fun AppRoot(state: Session, session: SessionViewModel, bio: Biometrics) {
                 name = state.user.firstName,
                 onFingerprint = { bio.prompt("Unlock Mod Alpha") { session.unlocked() } },
                 onUseOtp = session::logout, onSwitch = session::logout,
+                lastDay = session.lastBestDay, lastMonth = monthLabel(session.lastBestMonth),
             )
             is Session.SignedIn -> {
                 if (state.user.isAdmin) com.modalpha.app.ui.admin.AdminTabs(state.user, state.repo, session, bio)
@@ -143,6 +148,7 @@ private fun SignedOut(session: SessionViewModel) {
             onLogin = { vm.setSignup(false); page = "login" },
             onSignup = { vm.setSignup(true); page = "login" },
             onDemo = { vm.tryDemo(); page = "login" },
+            returningName = session.returningName, lastDay = session.lastBestDay, lastMonth = monthLabel(session.lastBestMonth),
         )
         else -> LoginScreen(vm, onBack = { page = "welcome" })
     }
@@ -171,6 +177,11 @@ fun MainTabs(user: User, repo: Repository, session: SessionViewModel, bio: Biome
             toast = { m -> scope.launch { snack.currentSnackbarData?.dismiss(); snack.showSnackbar(m) } },
             remindMe = { d -> remind = d; remindOpen = true },
             refreshHome = { home.load() })
+    }
+    val homeState by home.state.collectAsStateWithLifecycle()
+    LaunchedEffect(homeState) {
+        val d = (homeState as? com.modalpha.app.ui.home.HomeState.Ready)?.data
+        if (d != null && !repo.isDemo && !d.locked) d.sip?.let { s -> s.day?.let { session.rememberBest(it, s.month) } }
     }
     androidx.activity.compose.BackHandler(enabled = stack.isNotEmpty()) { nav.pop() }
     androidx.activity.compose.BackHandler(enabled = stack.isEmpty() && tab.value != Tab.Home) { tab.value = Tab.Home }
@@ -230,27 +241,34 @@ fun TabsScaffold(tab: Tab, onTab: (Tab) -> Unit, snack: SnackbarHostState, conte
         containerColor = Ma.c.bg,
         snackbarHost = { SnackbarHost(snack) },
         bottomBar = {
-            Row(
-                Modifier.fillMaxWidth().background(Ma.c.chrome).navigationBarsPadding().height(68.dp).padding(horizontal = 6.dp),
-                horizontalArrangement = Arrangement.SpaceAround, verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Tab.entries.forEach { t ->
-                    val on = t == tab
-                    if (t.icon == null) {
-                        Box(
-                            Modifier.offset(y = (-14).dp).size(58.dp).clip(CircleShape).background(Ma.c.chrome2)
-                                .border(2.dp, if (on) Ma.c.gold else Ma.c.hi, CircleShape).clickable(role = Role.Tab) { onTab(t) },
-                            contentAlignment = Alignment.Center,
-                        ) { Image(painterResource(R.drawable.brand_mark), "Ask Mod Alpha", Modifier.size(32.dp)) }
-                    } else Column(
-                        Modifier.width(64.dp).clip(RoundedCornerShape(12.dp)).clickable(role = Role.Tab) { onTab(t) }.padding(vertical = 6.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Icon(t.icon, null, tint = if (on) Ma.c.hi else Ma.c.chromeMuted, modifier = Modifier.size(24.dp))
-                        VSpace(3.dp)
-                        Text(t.label, color = if (on) Ma.c.chromeText else Ma.c.chromeMuted, fontSize = 11.sp, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal)
+            // floating bar: rounded, dark, glowing α in the middle
+            Box(Modifier.fillMaxWidth().navigationBarsPadding().padding(start = 12.dp, end = 12.dp, bottom = 10.dp, top = 6.dp)) {
+                Row(
+                    Modifier.fillMaxWidth().height(66.dp).shadow(18.dp, RoundedCornerShape(24.dp), spotColor = Ma.c.chrome).clip(RoundedCornerShape(24.dp))
+                        .background(Ma.c.chrome.copy(alpha = .96f)).border(1.dp, Color.White.copy(alpha = .08f), RoundedCornerShape(24.dp)).padding(horizontal = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceAround, verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Tab.entries.forEach { t ->
+                        val on = t == tab
+                        if (t.icon == null) Spacer(Modifier.width(64.dp))
+                        else Column(
+                            Modifier.width(62.dp).clip(RoundedCornerShape(12.dp)).clickable(role = Role.Tab) { onTab(t) }.padding(vertical = 6.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Icon(t.icon, null, tint = if (on) Ma.c.hi else Ma.c.chromeMuted, modifier = Modifier.size(23.dp))
+                            VSpace(3.dp)
+                            Text(t.label, color = if (on) Color.White else Ma.c.chromeMuted, fontSize = 10.5.sp, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal)
+                        }
                     }
                 }
+                val askOn = tab == Tab.Ask
+                Box(
+                    Modifier.align(Alignment.TopCenter).offset(y = (-16).dp).size(60.dp)
+                        .shadow(16.dp, CircleShape, spotColor = Ma.c.hi).clip(CircleShape)
+                        .background(Brush.radialGradient(listOf(Ma.c.mesh1, Ma.c.chrome2)))
+                        .border(2.5.dp, if (askOn) Ma.c.gold else Ma.c.gold.copy(alpha = .55f), CircleShape).clickable(role = Role.Tab) { onTab(Tab.Ask) },
+                    contentAlignment = Alignment.Center,
+                ) { Image(painterResource(R.drawable.brand_mark), "Ask Mod Alpha", Modifier.size(32.dp)) }
             }
         },
     ) { pad ->
@@ -263,6 +281,9 @@ fun TabsScaffold(tab: Tab, onTab: (Tab) -> Unit, snack: SnackbarHostState, conte
 fun MainTabsPreview(data: HomeData, today: java.time.LocalDate = java.time.LocalDate.now()) {
     TabsScaffold(Tab.Home, {}, remember { SnackbarHostState() }) { inner -> HomeContent(data, false, {}, HomeActions(), inner, today) }
 }
+
+/** "2026-11" → "November". */
+fun monthLabel(ym: String?) = ym?.let { runCatching { java.time.YearMonth.parse(it).month.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.ENGLISH) }.getOrNull() }
 
 @Suppress("UNCHECKED_CAST")
 fun <T : ViewModel> factory(make: () -> T) = object : ViewModelProvider.Factory {

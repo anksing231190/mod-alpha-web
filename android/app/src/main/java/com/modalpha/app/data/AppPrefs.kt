@@ -16,6 +16,13 @@ class AppPrefs(context: Context) {
     var biometricAsked: Boolean
         get() = p.getBoolean("biometric_asked", false)
         set(v) = p.edit().putBoolean("biometric_asked", v).apply()
+    /** Last best SIP date shown on Home (unlocked), so the lock / welcome dial can land on it. */
+    var lastBestDay: Int
+        get() = p.getInt("last_best_day", 0)
+        set(v) = p.edit().putInt("last_best_day", v).apply()
+    var lastBestMonth: String?
+        get() = p.getString("last_best_month", null)
+        set(v) = p.edit().putString("last_best_month", v).apply()
     var lastName: String?
         get() = p.getString("last_name", null)
         set(v) = p.edit().putString("last_name", v).apply()

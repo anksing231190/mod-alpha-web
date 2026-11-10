@@ -374,6 +374,12 @@ describe('admin', () => {
     expect(m.range.granularity).toBe('week');
     expect(m.kpis.totalUsers.value).toBeGreaterThan(12000);
     expect(m.series.length).toBeGreaterThan(10);
+    // plan mix adds up to all users; funnel narrows; support speed is reported
+    expect(m.planMix[0].plan).toBe('Free');
+    expect(m.planMix.reduce((a: number, r: any) => a + r.users, 0)).toBe(Number(m.kpis.totalUsers.value));
+    expect(m.funnel.signedUp).toBeGreaterThanOrEqual(m.funnel.kyc);
+    expect(m.funnel.kyc).toBeGreaterThanOrEqual(0);
+    expect(m.support).toHaveProperty('waiting');
     expect((await a.get('/admin/metrics?from=2026-10-31&to=2026-10-01')).statusCode).toBe(400);
   });
   it('lists and filters users/subscriptions, exports CSV, suspends a user', async () => {
@@ -397,6 +403,10 @@ describe('admin', () => {
     const cur = (await client(app).get('/sip-dates/current')).json();
     expect(cur.upcoming.map((x: any) => x.month)).toContain('2027-01');
     expect(cur.current.status).toBe('Published');
+    // confidence comes with every month (same formula the website used in the browser)
+    expect(cur.current.confidence.pct).toBeGreaterThanOrEqual(40);
+    expect(cur.current.confidence.pct).toBeLessThanOrEqual(95);
+    expect(['High', 'Medium', 'Low']).toContain(cur.current.confidence.label);
     const camp = (await a.get('/admin/campaigns')).json().items.find((x: any) => x.name === 'SIP reminder 2027-01');
     expect(camp.status).toBe('Scheduled');
     const sent = (await a.post('/admin/campaigns', { name: 'Test blast', templateKey: 'sip_reminder', channels: ['inapp', 'email'], audience: 'active_subscribers', sendNow: true })).json();

@@ -37,7 +37,9 @@ data class MaColors(
     val chrome: Color, val chrome2: Color, val chromeLine: Color,
     val chromeText: Color, val chromeSub: Color, val chromeMuted: Color,
     val hi: Color, val hi2: Color,          // bright action colour on chrome
-    val glow: Color, val gold: Color = Color(0xFFE7B766),
+    val glow: Color, val gold: Color = Color(0xFFF0C674),
+    // the two colour glows in the dark "mesh" headers
+    val mesh1: Color = Color(0xFF1D3A8F), val mesh2: Color = Color(0xFF4C1D95),
 ) {
     val dark get() = false
     val accentBrush get() = Brush.linearGradient(listOf(accent, accent2))
@@ -47,14 +49,14 @@ data class MaColors(
 
 val Navy = MaColors(
     theme = AppTheme.Navy,
-    bg = Color(0xFFF4F6FA), bg2 = Color(0xFFEDF1F7),
+    bg = Color(0xFFF3F5FB), bg2 = Color(0xFFEDF1F7),
     surface = Color(0xFFFFFFFF), surface2 = Color(0xFFF6F8FB), line = Color(0xFFE2E7EF),
     text = Color(0xFF0F1B33), sub = Color(0xFF3B4A66), muted = Color(0xFF6B7A94),
     accent = Color(0xFF1E3A8A), accent2 = Color(0xFF13285F), onAccent = Color.White,
-    up = Color(0xFF15803D), down = Color(0xFFC0262D), warn = Color(0xFFB7791F),
-    chrome = Color(0xFF0B1B3F), chrome2 = Color(0xFF081430), chromeLine = Color(0x2EA9BCE6),
+    up = Color(0xFF059669), down = Color(0xFFDC2626), warn = Color(0xFFB7791F),
+    chrome = Color(0xFF0A1A45), chrome2 = Color(0xFF06102B), chromeLine = Color(0x2EA9BCE6),
     chromeText = Color(0xFFF1F5FF), chromeSub = Color(0xFFBFCBE6), chromeMuted = Color(0xFF8C9BBD),
-    hi = Color(0xFF3B82F6), hi2 = Color(0xFF1D4ED8), glow = Color(0xFF3B82F6),
+    hi = Color(0xFF3B82F6), hi2 = Color(0xFF6366F1), glow = Color(0xFF3B82F6),
 )
 
 val Espresso = MaColors(
@@ -67,6 +69,7 @@ val Espresso = MaColors(
     chrome = Color(0xFF1E1813), chrome2 = Color(0xFF15100C), chromeLine = Color(0x33E6CBA6),
     chromeText = Color(0xFFF6EBDA), chromeSub = Color(0xFFD9C4A6), chromeMuted = Color(0xFFA8957D),
     hi = Color(0xFFC08548), hi2 = Color(0xFF9C5F2A), glow = Color(0xFFC08548),
+    mesh1 = Color(0xFF7A4318), mesh2 = Color(0xFF5B1F45),
 )
 
 fun colorsFor(t: AppTheme) = if (t == AppTheme.Espresso) Espresso else Navy

@@ -65,6 +65,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -109,6 +110,14 @@ import com.modalpha.app.ui.kit.rememberLoad
 import com.modalpha.app.ui.theme.AppTheme
 import com.modalpha.app.ui.theme.Ma
 import com.modalpha.app.ui.theme.colorsFor
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.ui.text.style.TextOverflow
+import com.modalpha.app.ui.components.*
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -126,64 +135,76 @@ fun YouTab(session: SessionViewModel, bio: Biometrics, bottomPad: Dp) {
     val plan = rememberLoad { nav.repo.subscription() to nav.repo.plan() }
     val kyc = rememberLoad { nav.repo.kycStatus() }
     val tickets = rememberLoad { nav.repo.tickets() }
+    val watch = rememberLoad { nav.repo.watchlist().size }
+    val hist = rememberLoad { nav.repo.sipHistory() }
     val theme by session.theme.collectAsStateWithLifecycle()
     var bioOn by remember { mutableStateOf(session.biometricOn) }
     var themeSheet by remember { mutableStateOf(false) }
+    val (sub, planName) = (plan.res as? Res.Ok)?.value ?: (null to "…")
+    val k = (kyc.res as? Res.Ok)?.value
+    val open = (tickets.res as? Res.Ok)?.value?.count { it.status != "Closed" && it.status != "Answered" } ?: 0
     Column(Modifier.fillMaxSize().background(Ma.c.bg)) {
-        Column(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(bottomStart = 26.dp, bottomEnd = 26.dp)).background(Ma.c.chromeBrush)
-                .background(Brush.radialGradient(listOf(Ma.c.glow.copy(alpha = .22f), Color.Transparent), center = androidx.compose.ui.geometry.Offset(200f, 420f), radius = 600f))
-                .statusBarsPadding().padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 20.dp)
-        ) {
-            Text("You", color = Ma.c.chromeText, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
-            VSpace(14.dp)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(56.dp).clip(CircleShape).background(Ma.c.hiBrush), contentAlignment = Alignment.Center) { Text(u.initial, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold) }
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(u.name, color = Ma.c.chromeText, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                    Text(listOfNotNull(u.mobile?.let { prettyMobile(it) }, u.email).joinToString(" · "), color = Ma.c.chromeSub, fontSize = 13.sp)
+        MeshHero(bottomPad = 18.dp) {
+            Column(Modifier.padding(horizontal = 20.dp)) {
+                Row(Modifier.height(54.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("You", color = Ma.c.chromeText, fontSize = 23.sp, fontWeight = FontWeight.Black, modifier = Modifier.weight(1f))
+                    if (nav.repo.isDemo) GhostChip("Demo data")
                 }
-            }
-            VSpace(14.dp)
-            val (sub, planName) = (plan.res as? Res.Ok)?.value ?: (null to "…")
-            Row(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Ma.c.gold.copy(alpha = .12f)).border(1.dp, Ma.c.gold.copy(alpha = .35f), RoundedCornerShape(14.dp))
-                    .clickable { nav.push(if (planName == "Free") Route.Plans else Route.Subscription) }.padding(horizontal = 12.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(Icons.Outlined.WorkspacePremium, null, tint = Ma.c.gold, modifier = Modifier.size(22.dp)); Spacer(Modifier.width(10.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(if (sub != null) "${sub.plan.uppercase()} · ${sub.cycle}" else planName.uppercase(), color = Ma.c.gold, fontWeight = FontWeight.Bold, fontSize = 13.5.sp)
-                    Text(when { sub == null -> "Unlock each month's best SIP date"; sub.cancelling -> "Ends ${prettyDate(sub.renewalDate)}"; else -> "Renews ${prettyDate(sub.renewalDate)}" }, color = Ma.c.chromeSub, fontSize = 12.sp)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(54.dp).clip(CircleShape).background(Ma.c.hiBrush).border(2.dp, Gold.copy(alpha = .7f), CircleShape), contentAlignment = Alignment.Center) { Text(u.initial, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold) }
+                    HSpace(12.dp)
+                    Column(Modifier.weight(1f)) {
+                        Text(u.name, color = Ma.c.chromeText, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Text(listOfNotNull(u.mobile?.let { prettyMobile(it) }, u.email).joinToString(" · "), color = Ma.c.chromeSub, fontSize = 12.5.sp, maxLines = 1)
+                    }
                 }
-                Text(if (planName == "Free") "Upgrade" else "Manage", color = Ma.c.chromeText, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                VSpace(14.dp)
+                // Membership card
+                Column(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp))
+                        .background(if (planName == "Free") Brush.linearGradient(listOf(Color.White.copy(alpha = .1f), Color.White.copy(alpha = .04f))) else Brush.linearGradient(listOf(Color(0xFF3A2A0E), Color(0xFF1E1508))))
+                        .border(1.dp, Gold.copy(alpha = .5f), RoundedCornerShape(20.dp))
+                        .clickable { nav.push(if (planName == "Free") Route.Plans else Route.Subscription) }.padding(16.dp),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Outlined.WorkspacePremium, null, tint = Gold, modifier = Modifier.size(20.dp)); HSpace(8.dp)
+                        Text("MOD ALPHA ${(sub?.plan ?: planName).uppercase()}", color = Gold, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, letterSpacing = 1.2.sp, modifier = Modifier.weight(1f))
+                        Text(if (planName == "Free") "Upgrade ›" else "Manage ›", color = Ma.c.chromeText, fontWeight = FontWeight.SemiBold, fontSize = 12.5.sp)
+                    }
+                    VSpace(12.dp)
+                    Row {
+                        Box(Modifier.weight(1f)) { StatBlock(if (sub?.cancelling == true) "Ends" else "Renews", sub?.renewalDate?.let { prettyDate(it) } ?: "—", sub?.cycle, valueSize = 14) }
+                        Box(Modifier.weight(1f)) { StatBlock("KYC", k ?: "…", null, valueColor = if (k == "Verified") Mint else Gold, valueSize = 14) }
+                        Box(Modifier.weight(1f)) { StatBlock("Member since", u.signupDate?.let { runCatching { LocalDate.parse(it.take(10)).format(DateTimeFormatter.ofPattern("MMM yyyy", Locale.ENGLISH)) }.getOrNull() } ?: "—", null, valueSize = 14) }
+                    }
+                }
             }
         }
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(bottom = bottomPad + 20.dp)) {
-            Caption("Account", Modifier.padding(start = 24.dp, top = 18.dp, bottom = 6.dp))
-            CardList(rows = listOf(
-                { val k = (kyc.res as? Res.Ok)?.value
-                  ListRow(Icons.Outlined.VerifiedUser, "KYC", onClick = { if (k != "Verified") nav.push(Route.Kyc()) }) { if (k != null) Tag(if (k == "Verified") "Verified" else k, if (k == "Verified") Tone.Green else Tone.Amber) } },
-                { ListRow(Icons.AutoMirrored.Outlined.ReceiptLong, "Subscription & invoices", onClick = { nav.push(Route.Subscription) }) },
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(top = 14.dp, bottom = bottomPad + 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            // Stat tiles
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                val months = (hist.res as? Res.Ok)?.value?.first?.count { it.day != null } ?: 0
+                StatTile("Watchlist", "${(watch.res as? Res.Ok)?.value ?: "—"}", "funds", Icons.Outlined.Star, Color(0xFFD97706), Modifier.weight(1f)) { nav.goTab(com.modalpha.app.ui.Tab.Explore) }
+                StatTile("SIP dates", "$months", "months", Icons.Outlined.CalendarMonth, Color(0xFF2563EB), Modifier.weight(1f)) { nav.goTab(com.modalpha.app.ui.Tab.Calendar) }
+                StatTile("Requests", "$open", "open", Icons.AutoMirrored.Outlined.HelpOutline, Color(0xFF7C3AED), Modifier.weight(1f)) { nav.push(Route.Help) }
+            }
+            // Settings grid
+            Caption("Settings", Modifier.padding(start = 4.dp, top = 4.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                SettingTile(Icons.Outlined.Notifications, "Reminders", "When we remind you", Color(0xFFD97706), Modifier.weight(1f)) { nav.remindMe(null) }
+                SettingTile(Icons.Outlined.Palette, "Theme", theme.label, Color(0xFFDB2777), Modifier.weight(1f)) { themeSheet = true }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                if (!nav.repo.isDemo && bio.available) SettingTile(Icons.Outlined.Fingerprint, "Fingerprint", if (bioOn) "On" else "Off", Color(0xFF059669), Modifier.weight(1f), trailing = {
+                    MaSwitch(bioOn) { want -> if (want) bio.prompt("Turn on fingerprint unlock") { session.setBiometric(true); bioOn = true } else { session.setBiometric(false); bioOn = false } }
+                }) { }
+                else SettingTile(Icons.Outlined.VerifiedUser, "KYC", k ?: "…", Color(0xFF059669), Modifier.weight(1f)) { if (k != "Verified") nav.push(Route.Kyc()) }
+                SettingTile(Icons.AutoMirrored.Outlined.ReceiptLong, "Billing", "Plan & invoices", Color(0xFF2563EB), Modifier.weight(1f)) { nav.push(Route.Subscription) }
+            }
+            CardList(Modifier.padding(horizontal = 0.dp), rows = listOf(
+                { ListRow(Icons.AutoMirrored.Outlined.HelpOutline, "Help & my requests", onClick = { nav.push(Route.Help) }) { if (open > 0) Tag("$open open", Tone.Blue); Chevron() } },
             ))
-            Caption("Preferences", Modifier.padding(start = 24.dp, top = 18.dp, bottom = 6.dp))
-            CardList(rows = listOfNotNull(
-                { ListRow(Icons.Outlined.Notifications, "Reminders & notifications", "When and how we remind you", onClick = { nav.remindMe(null) }) },
-                { ListRow(Icons.Outlined.Palette, "Theme", onClick = { themeSheet = true }) { Text(theme.label, color = Ma.c.muted, fontSize = 13.sp); Chevron() } },
-                if (!nav.repo.isDemo && bio.available) ({
-                    ListRow(Icons.Outlined.Fingerprint, "Fingerprint unlock", trailing = {
-                        MaSwitch(bioOn) { want -> if (want) bio.prompt("Turn on fingerprint unlock") { session.setBiometric(true); bioOn = true } else { session.setBiometric(false); bioOn = false } }
-                    })
-                }) else null,
-            ))
-            Caption("Help", Modifier.padding(start = 24.dp, top = 18.dp, bottom = 6.dp))
-            CardList(rows = listOf({
-                val open = (tickets.res as? Res.Ok)?.value?.count { it.status != "Closed" && it.status != "Answered" } ?: 0
-                ListRow(Icons.AutoMirrored.Outlined.HelpOutline, "Help & my requests", onClick = { nav.push(Route.Help) }) { if (open > 0) Tag("$open open", Tone.Blue); Chevron() }
-            }))
-            if (nav.repo.isDemo) Text("Demo mode · sample data", Modifier.fillMaxWidth().padding(top = 16.dp), color = Ma.c.warn, fontSize = 12.sp, textAlign = TextAlign.Center)
-            Box(Modifier.padding(20.dp)) { OutlineButton("Log out", session::logout, Modifier.fillMaxWidth(), color = Ma.c.down, icon = Icons.AutoMirrored.Outlined.Logout) }
+            OutlineButton("Log out", session::logout, Modifier.fillMaxWidth(), color = Ma.c.down, icon = Icons.AutoMirrored.Outlined.Logout)
         }
     }
     if (themeSheet) ModalBottomSheet({ themeSheet = false }, containerColor = Ma.c.surface) {
@@ -202,6 +223,32 @@ fun YouTab(session: SessionViewModel, bio: Biometrics, bottomPad: Dp) {
     }
 }
 
+@Composable
+private fun StatTile(label: String, value: String, unit: String, icon: ImageVector, tint: Color, modifier: Modifier, onClick: () -> Unit) {
+    Column(modifier.clip(RoundedCornerShape(18.dp)).background(Brush.verticalGradient(listOf(tint.copy(alpha = .12f), Ma.c.surface))).border(1.dp, Ma.c.line, RoundedCornerShape(18.dp)).clickable(onClick = onClick).padding(12.dp)) {
+        Icon(icon, null, tint = tint, modifier = Modifier.size(18.dp))
+        VSpace(8.dp)
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(value, color = Ma.c.text, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
+            Text(" $unit", color = Ma.c.muted, fontSize = 11.sp, modifier = Modifier.padding(bottom = 4.dp))
+        }
+        Text(label, color = Ma.c.sub, fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
+private fun SettingTile(icon: ImageVector, title: String, sub: String, tint: Color, modifier: Modifier, trailing: (@Composable () -> Unit)? = null, onClick: () -> Unit) {
+    Row(modifier.height(72.dp).clip(RoundedCornerShape(18.dp)).background(Ma.c.surface).border(1.dp, Ma.c.line, RoundedCornerShape(18.dp)).clickable(onClick = onClick).padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(36.dp).clip(RoundedCornerShape(11.dp)).background(tint.copy(alpha = .14f)), contentAlignment = Alignment.Center) { Icon(icon, null, tint = tint, modifier = Modifier.size(19.dp)) }
+        HSpace(10.dp)
+        Column(Modifier.weight(1f)) {
+            Text(title, color = Ma.c.text, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, maxLines = 1)
+            Text(sub, color = Ma.c.muted, fontSize = 11.5.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        trailing?.invoke()
+    }
+}
+
 /* ============================== Plans ============================== */
 
 @Composable
@@ -209,13 +256,34 @@ fun PlansScreen() {
     val nav = LocalNav.current
     val ctx = LocalContext.current
     val plans = rememberLoad { nav.repo.plans() to nav.repo.subscription() }
+    val record = rememberLoad { nav.repo.sipHistory().first.filter { it.day != null && it.month < java.time.YearMonth.now().toString() } }
     var cycle by rememberSaveable { mutableStateOf("Yearly") }
     var pick by rememberSaveable { mutableStateOf("Pro") }
     val sub = (plans.res as? Res.Ok)?.value?.second
     val paid = (plans.res as? Res.Ok)?.value?.first.orEmpty().filter { it.id != "Free" }
     val p = paid.find { it.id == pick }
     Screen("Choose a plan", onBack = nav::pop, header = {
-        Text("Unlock each month's best SIP date", Modifier.padding(horizontal = 20.dp), color = Ma.c.chromeSub, fontSize = 13.5.sp); VSpace(12.dp)
+        Column(Modifier.padding(horizontal = 20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Unlock each month's best SIP date", color = Ma.c.chromeText, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    VSpace(4.dp)
+                    Text("Our dates are picked from 10 years of NAV history and checked every month.", color = Ma.c.chromeSub, fontSize = 12.5.sp, lineHeight = 17.sp)
+                }
+                val rec = (record.res as? Res.Ok)?.value.orEmpty()
+                if (rec.isNotEmpty()) {
+                    HSpace(12.dp)
+                    val beat = rec.count { (it.upliftPct ?: 0.0) > 0 }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Ring(beat.toFloat() / rec.size, 66.dp, 7.dp, listOf(SoftGood, SoftGood)) {
+                            Text("$beat/${rec.size}", color = Ma.c.chromeText, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp)
+                        }
+                        Text("beat the 1st", color = Ma.c.chromeMuted, fontSize = 10.sp)
+                    }
+                }
+            }
+        }
+        VSpace(14.dp)
         Segmented(CYCLES, cycle, { cycle = it }, label = { if (it == "Yearly") "Yearly −20%" else it })
     }, bottom = {
         Column {
@@ -226,10 +294,30 @@ fun PlansScreen() {
     }) {
         LoadBox(plans) { (all, _) ->
             Column(Modifier.verticalScroll(rememberScrollState()).padding(bottom = 16.dp)) {
-                all.filter { it.id != "Free" }.forEach { pl -> PlanCard(pl, cycle, pl.id == pick, pl.id == "Pro") { pick = pl.id } }
-                all.find { it.id == "Free" }?.let { f ->
-                    Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 12.dp).fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Ma.c.surface).border(1.dp, Ma.c.line, RoundedCornerShape(20.dp)).padding(16.dp)) {
-                        Text("Free", color = Ma.c.text, fontWeight = FontWeight.Bold); Text((if (sub == null) "Your current plan · " else "") + f.features.joinToString(" · "), color = Ma.c.muted, fontSize = 12.5.sp)
+                all.filter { it.id != "Free" }.forEach { pl -> PlanCard(pl, cycle, pl.id == pick, pl.id == "Pro", sub?.plan == pl.id) { pick = pl.id } }
+                // Comparison table
+                val cols = all.sortedBy { if (it.id == "Free") 0 else 1 }
+                val feats = cols.flatMap { it.features }.distinct().take(8)
+                if (cols.size > 1 && feats.isNotEmpty()) MaCard(Modifier.padding(start = 16.dp, end = 16.dp, top = 18.dp).fillMaxWidth()) {
+                    Column {
+                        Text("Compare plans", color = Ma.c.text, fontWeight = FontWeight.SemiBold)
+                        VSpace(10.dp)
+                        Row {
+                            Spacer(Modifier.weight(2f))
+                            cols.forEach { c -> Text(c.name, Modifier.weight(1f), color = if (c.id == pick) Ma.c.accent else Ma.c.muted, fontSize = 11.5.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, maxLines = 1) }
+                        }
+                        feats.forEach { f ->
+                            HorizontalDivider(Modifier.padding(vertical = 7.dp), color = Ma.c.line)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(f, Modifier.weight(2f), color = Ma.c.sub, fontSize = 12.sp, lineHeight = 15.sp)
+                                cols.forEach { c ->
+                                    Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                                        if (f in c.features) Box(Modifier.size(20.dp).clip(CircleShape).background(Ma.c.up.copy(alpha = .14f)), contentAlignment = Alignment.Center) { Icon(Icons.Outlined.Check, null, tint = Ma.c.up, modifier = Modifier.size(13.dp)) }
+                                        else Text("—", color = Ma.c.line, fontSize = 13.sp)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -238,25 +326,39 @@ fun PlansScreen() {
 }
 
 @Composable
-private fun PlanCard(p: Plan, cycle: String, on: Boolean, popular: Boolean, onClick: () -> Unit) {
+private fun PlanCard(p: Plan, cycle: String, on: Boolean, popular: Boolean, current: Boolean, onClick: () -> Unit) {
     val price = p.prices[cycle] ?: 0; val perMonth = price / months(cycle)
-    Box(Modifier.padding(start = 20.dp, end = 20.dp, top = 18.dp)) {
+    val dark = on
+    Box(Modifier.padding(start = 16.dp, end = 16.dp, top = 18.dp)) {
         Column(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Ma.c.surface).border(if (on) 2.dp else 1.dp, if (on) Ma.c.accent else Ma.c.line, RoundedCornerShape(20.dp)).clickable(onClick = onClick).padding(16.dp)
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp))
+                .background(if (dark) Brush.linearGradient(listOf(Ma.c.chrome, Ma.c.mesh2.copy(alpha = .9f))) else Brush.linearGradient(listOf(Ma.c.surface, Ma.c.surface)))
+                .border(if (on) 1.5.dp else 1.dp, if (on) Gold.copy(alpha = .7f) else Ma.c.line, RoundedCornerShape(22.dp)).clickable(onClick = onClick).padding(16.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(p.name, color = Ma.c.text, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                    Row(verticalAlignment = Alignment.Bottom) {
-                        Text(inr(perMonth.toLong()), color = Ma.c.text, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold)
-                        Text("/month${if (cycle != "Monthly") " · ${inr(price.toLong())} ${cycle.lowercase()}" else ""}", color = Ma.c.muted, fontSize = 13.sp, modifier = Modifier.padding(start = 2.dp, bottom = 3.dp))
-                    }
+                    Text(p.name, color = if (dark) Gold else Ma.c.text, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
+                    if (p.tagline.isNotBlank()) Text(p.tagline, color = if (dark) Ma.c.chromeSub else Ma.c.muted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
-                RadioButton(on, onClick, colors = RadioButtonDefaults.colors(selectedColor = Ma.c.accent))
+                Box(Modifier.size(22.dp).clip(CircleShape).border(2.dp, if (on) Gold else Ma.c.line, CircleShape), contentAlignment = Alignment.Center) {
+                    if (on) Box(Modifier.size(11.dp).clip(CircleShape).background(Gold))
+                }
             }
-            p.features.take(4).forEach { f -> Row(Modifier.padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Outlined.Check, null, tint = Ma.c.up, modifier = Modifier.size(16.dp)); Spacer(Modifier.width(8.dp)); Text(f, color = Ma.c.sub, fontSize = 13.sp) } }
+            VSpace(8.dp)
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(inr(perMonth.toLong()), color = if (dark) Ma.c.chromeText else Ma.c.text, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
+                Text("/month${if (cycle != "Monthly") " · ${inr(price.toLong())} ${cycle.lowercase()}" else ""}", color = if (dark) Ma.c.chromeMuted else Ma.c.muted, fontSize = 12.5.sp, modifier = Modifier.padding(start = 2.dp, bottom = 5.dp))
+            }
+            VSpace(4.dp)
+            p.features.take(4).forEach { f ->
+                Row(Modifier.padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Outlined.Check, null, tint = if (dark) Mint else Ma.c.up, modifier = Modifier.size(16.dp)); HSpace(8.dp)
+                    Text(f, color = if (dark) Ma.c.chromeSub else Ma.c.sub, fontSize = 13.sp)
+                }
+            }
         }
-        if (popular) Text("MOST POPULAR", Modifier.align(Alignment.TopEnd).padding(end = 16.dp).offset(y = (-10).dp).clip(CircleShape).background(Ma.c.gold).padding(horizontal = 10.dp, vertical = 4.dp), color = Color(0xFF3B2A10), fontSize = 10.5.sp, fontWeight = FontWeight.ExtraBold)
+        val badge = if (current) "YOUR PLAN" else if (popular) "MOST POPULAR" else null
+        if (badge != null) Text(badge, Modifier.align(Alignment.TopEnd).padding(end = 16.dp).offset(y = (-10).dp).clip(CircleShape).background(Brush.horizontalGradient(listOf(Gold, GoldDeep))).padding(horizontal = 10.dp, vertical = 4.dp), color = Color(0xFF3B2A10), fontSize = 10.5.sp, fontWeight = FontWeight.ExtraBold)
     }
 }
 

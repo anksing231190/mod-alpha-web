@@ -16,7 +16,7 @@ class DemoRepository(private val latencyMs: Long = 450) : Repository {
 
     private data class Account(val user: User, val plan: String)
     private val accounts = mutableMapOf(
-        "+919876543210" to Account(User("u1", "Ankit Singh", "ankit@example.com", "+919876543210"), "Pro"),
+        "+919876543210" to Account(User("u1", "Ankit Singh", "ankit@example.com", "+919876543210", signupDate = "2026-03-14"), "Pro"),
         "+919876500000" to Account(User("u2", "Riya Sharma", null, "+919876500000"), "Free"),
     )
     private var current: Account? = null
@@ -55,6 +55,7 @@ class DemoRepository(private val latencyMs: Long = 450) : Repository {
             month = "%d-%02d".format(today.year, today.monthValue),
             day = if (locked) null else 12, upliftPct = 2.8,
             alternatives = if (locked) emptyList() else listOf(AltDay(5, 1.6), AltDay(20, 1.4), AltDay(28, 1.2)),
+            confidencePct = 85, confidenceLabel = "High", leadPts = 1.2,
         )
         return HomeData(
             acc.user, sub?.plan ?: acc.plan, sip, locked, demoFunds, fundsTracked = 24, unread = if (locked) 0 else 2,
@@ -92,7 +93,9 @@ class DemoRepository(private val latencyMs: Long = 450) : Repository {
         return AdminOverview("2026-11-01", "2026-11-10", Kpi(12568.0, 3.4), Kpi(1846.0, 5.1), Kpi(series.sumOf { it.revenue }, 12.7), Kpi(14.7, 0.4), series.sumOf { it.newUsers }, series,
             listOf(RecentSignup("Riya Sharma", "+91 98765 00000", "2026-11-09", "Active"), RecentSignup("Kabir Mehta", "kabir.m@example.com", "2026-11-08", "Active"), RecentSignup("Sana Iqbal", "sana@example.com", "2026-11-02", "Suspended")),
             listOf(RecentSub("Kabir Mehta", "Premium", "Monthly", 499.0, "2026-11-08", "Active"), RecentSub("Ankit Singh", "Pro", "Yearly", 2868.0, "2026-11-04", "Active"), RecentSub("Rahul Khanna", "Pro", "Monthly", 299.0, "2026-10-28", "Active")),
-            demoTickets.count { it.status == "Open" || it.status == "In progress" })
+            demoTickets.count { it.status == "Open" || it.status == "In progress" },
+            planMix = listOf(PlanCount("Free", 10722), PlanCount("Pro", 1384), PlanCount("Premium", 462)),
+            funnel = Funnel(377, 294, 196, 55), oldestWaiting = "2026-11-08T11:05:00", avgReplyHours = 3.2)
     }
     override suspend fun adminUsers(q: String, status: String?): List<AdminUser> { delay(latencyMs / 2)
         return demoUsers.filter { (status == null || it.status == status) && (q.isBlank() || listOfNotNull(it.name, it.email, it.mobile, it.ref).any { s -> s.contains(q, true) }) } }
@@ -207,6 +210,7 @@ class DemoRepository(private val latencyMs: Long = 450) : Repository {
         }
         return AskReply(a, lim - asked)
     }
+    override suspend fun aiLimitToday(): Int? = if (isPro()) 10 else 1
     override suspend fun aiLeftToday(): Int? = ((if (isPro()) 10 else 1) - asked).coerceAtLeast(0)
     override suspend fun notifications(): List<Notice> { delay(latencyMs / 2); return notes.toList() }
     override suspend fun markAllRead() { notes.replaceAll { it.copy(read = true) } }
@@ -275,11 +279,11 @@ class DemoRepository(private val latencyMs: Long = 450) : Repository {
             SipCompare(10000, "2021", 1, 70 * 10000L, last.fixed, last.modAlpha, last.modAlpha - last.fixed, pts)
         }
         val demoFunds = listOf(
-            Fund("QSC01", "Quant Small Cap Fund", "Quant Small Cap", "Quant", "Small Cap", 18.2, 29.7, 32.4, spark(1, 3.0), null, 245.67, "2026-11-07", "₹26,421 Cr", 0.64, "Very High", 21.4, "NIFTY Smallcap 250 TRI"),
-            Fund("SBC01", "SBI Contra Fund", "SBI Contra", "SBI", "Contra", 12.4, 24.9, 28.1, spark(2, 2.4), null, 389.12, "2026-11-07", "₹44,069 Cr", 0.59, "Very High", 15.8, "BSE 500 TRI"),
-            Fund("HMC01", "HDFC Mid-Cap Opportunities Fund", "HDFC Mid-Cap Opportunities", "HDFC", "Mid Cap", 15.1, 25.6, 27.8, spark(3, 2.3), null, 211.40, "2026-11-07", "₹79,718 Cr", 0.74, "Very High", 16.9, "NIFTY Midcap 150 TRI"),
-            Fund("PPF01", "Parag Parikh Flexi Cap Fund", "Parag Parikh Flexi Cap", "PPFAS", "Flexi Cap", 14.6, 19.8, 24.3, spark(4, 1.9), null, 92.35, "2026-11-07", "₹1,03,868 Cr", 0.63, "Very High", 12.7, "NIFTY 500 TRI"),
-            Fund("AXB01", "Axis Bluechip Fund", "Axis Bluechip", "Axis", "Large Cap", 9.8, 12.1, 15.6, spark(5, 1.1), null, 64.88, "2026-11-07", "₹33,102 Cr", 0.67, "High", 12.1, "BSE 100 TRI"),
+            Fund("QSC01", "Quant Small Cap Fund", "Quant Small Cap", "Quant", "Small Cap", 18.2, 29.7, 32.4, spark(1, 3.0), null, 245.67, "2026-11-07", "₹26,421 Cr", 0.64, "Very High", 21.4, "NIFTY Smallcap 250 TRI", 1.42),
+            Fund("SBC01", "SBI Contra Fund", "SBI Contra", "SBI", "Contra", 12.4, 24.9, 28.1, spark(2, 2.4), null, 389.12, "2026-11-07", "₹44,069 Cr", 0.59, "Very High", 15.8, "BSE 500 TRI", 1.51),
+            Fund("HMC01", "HDFC Mid-Cap Opportunities Fund", "HDFC Mid-Cap Opportunities", "HDFC", "Mid Cap", 15.1, 25.6, 27.8, spark(3, 2.3), null, 211.40, "2026-11-07", "₹79,718 Cr", 0.74, "Very High", 16.9, "NIFTY Midcap 150 TRI", 1.38),
+            Fund("PPF01", "Parag Parikh Flexi Cap Fund", "Parag Parikh Flexi Cap", "PPFAS", "Flexi Cap", 14.6, 19.8, 24.3, spark(4, 1.9), null, 92.35, "2026-11-07", "₹1,03,868 Cr", 0.63, "Very High", 12.7, "NIFTY 500 TRI", 1.62),
+            Fund("AXB01", "Axis Bluechip Fund", "Axis Bluechip", "Axis", "Large Cap", 9.8, 12.1, 15.6, spark(5, 1.1), null, 64.88, "2026-11-07", "₹33,102 Cr", 0.67, "High", 12.1, "BSE 100 TRI", 0.94),
         )
     }
 }

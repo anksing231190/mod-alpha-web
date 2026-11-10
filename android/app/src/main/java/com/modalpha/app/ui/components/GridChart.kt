@@ -36,18 +36,21 @@ fun GridChart(
     modifier: Modifier = Modifier,
     yFormat: (Double) -> String = { "%.0f".format(it) },
     rows: Int = 4,
+    onDark: Boolean = false,          // on a dark header: light checks and labels
+    glow: Boolean = false,            // soft glow under the first line
+    showY: Boolean = true,
 ) {
     val c = Ma.c
     val measurer = rememberTextMeasurer()
-    val labelStyle = TextStyle(color = c.muted, fontSize = 10.sp)
-    val square = if (c.dark) Color.White.copy(alpha = .035f) else Color(0xFF5A4634).copy(alpha = .045f)
-    val line = if (c.dark) Color.White.copy(alpha = .08f) else Color(0xFF5A4634).copy(alpha = .10f)
+    val labelStyle = TextStyle(color = if (onDark) c.chromeMuted else c.muted, fontSize = 10.sp)
+    val square = if (onDark) Color.White.copy(alpha = .045f) else Color(0xFF0D1730).copy(alpha = .035f)
+    val line = if (onDark) Color.White.copy(alpha = .07f) else Color(0xFF0D1730).copy(alpha = .07f)
     Canvas(modifier) {
         val all = series.flatMap { it.values }
         if (all.size < 2) return@Canvas
         var lo = all.min(); var hi = all.max()
         val pad = (hi - lo) * .08; lo = (lo - pad).coerceAtLeast(0.0); hi += pad
-        val yLabelW = 40.dp.toPx(); val xLabelH = 18.dp.toPx()
+        val yLabelW = if (showY) 40.dp.toPx() else 0f; val xLabelH = if (xLabels.isEmpty()) 2.dp.toPx() else 18.dp.toPx()
         val left = yLabelW; val top = 4.dp.toPx(); val w = size.width - left; val h = size.height - xLabelH - top
 
         // checkered background: square cells, every other one tinted
@@ -59,7 +62,7 @@ fun GridChart(
             val y = top + r * ch
             drawLine(line, Offset(left, y), Offset(left + w, y), 1f)
             val v = hi - (hi - lo) * r / rows
-            drawLabel(measurer, yFormat(v), labelStyle, Offset(0f, y), alignRight = yLabelW - 6.dp.toPx())
+            if (showY) drawLabel(measurer, yFormat(v), labelStyle, Offset(0f, y), alignRight = yLabelW - 6.dp.toPx())
         }
         for (k in 0..cols) drawLine(line, Offset(left + k * cw, top), Offset(left + k * cw, top + h), 1f)
         if (xLabels.isNotEmpty()) xLabels.forEachIndexed { i, s ->
@@ -75,19 +78,21 @@ fun GridChart(
             val path = Path().apply { moveTo(p[0].x, p[0].y); p.drop(1).forEach { lineTo(it.x, it.y) } }
             if (s.fill) {
                 val f = Path().apply { addPath(path); lineTo(p.last().x, top + h); lineTo(p[0].x, top + h); close() }
-                drawPath(f, Brush.verticalGradient(listOf(s.color.copy(alpha = .30f), s.color.copy(alpha = 0f)), startY = top, endY = top + h))
+                drawPath(f, Brush.verticalGradient(listOf(s.color.copy(alpha = .16f), s.color.copy(alpha = 0f)), startY = top, endY = top + h))
             }
+            if (glow && s == series.first()) drawPath(path, s.color.copy(alpha = .08f), style = Stroke(width = 5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
             drawPath(path, s.color, style = Stroke(
-                width = (if (s.dashed) 1.6f else 2.4f).dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round,
+                width = (if (s.dashed) 1.4f else 1.8f).dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round,
                 pathEffect = if (s.dashed) PathEffect.dashPathEffect(floatArrayOf(5.dp.toPx(), 4.dp.toPx())) else null,
             ))
         }
         series.firstOrNull()?.let { s ->
             val e = pts(s.values).last()
-            drawCircle(s.color.copy(alpha = .25f), 7.dp.toPx(), e)
-            drawCircle(s.color, 3.5.dp.toPx(), e)
+            drawCircle(s.color.copy(alpha = .15f), 6.dp.toPx(), e)
+            drawCircle(Color.White, 3.dp.toPx(), e)
+            drawCircle(s.color, 3.dp.toPx(), e, style = Stroke(1.6.dp.toPx()))
         }
-        drawRoundRect(line, Offset(left, top), Size(w, h), CornerRadius(0f), style = Stroke(1f))
+        if (!onDark) drawRoundRect(line, Offset(left, top), Size(w, h), CornerRadius(0f), style = Stroke(1f))
     }
 }
 

@@ -31,6 +31,8 @@ interface Repository {
     // AI
     suspend fun ask(history: List<ChatMsg>): AskReply
     suspend fun aiLeftToday(): Int?
+    /** Daily AI question allowance for the plan (null = unlimited / unknown). */
+    suspend fun aiLimitToday(): Int? = null
     // inbox
     suspend fun notifications(): List<Notice>
     suspend fun markAllRead()

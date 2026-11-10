@@ -7,6 +7,7 @@ data class User(
     val email: String?,
     val mobile: String?,
     val role: String = "user",            // user | admin | superadmin
+    val signupDate: String? = null,
 ) {
     val isAdmin: Boolean get() = role == "admin" || role == "superadmin"
     val firstName: String get() = name.trim().split(" ").firstOrNull()?.ifBlank { null } ?: "there"
@@ -20,6 +21,8 @@ data class SipMonth(
     val upliftPct: Double?,
     val alternatives: List<AltDay>,
     val confidencePct: Int = 85,
+    val confidenceLabel: String = "High",
+    val leadPts: Double? = null,          // how far the best date leads the next-best one
 )
 data class AltDay(val day: Int, val upliftPct: Double?)
 
@@ -36,7 +39,11 @@ data class Fund(
     val nav: Double? = null, val navDate: String? = null,
     val aum: String? = null, val expense: Double? = null,
     val risk: String? = null, val vol: Double? = null, val benchmark: String? = null,
-)
+    val sharpe: Double? = null,
+) {
+    /** SEBI riskometer step 1 (low) … 5 (very high). */
+    val riskLevel: Int get() = when { risk == null -> 0; risk.contains("very high", true) -> 5; risk.contains("high", true) -> 4; risk.contains("moderate", true) && risk.contains("low", true) -> 2; risk.contains("moderate", true) -> 3; risk.contains("low", true) -> 1; else -> 3 }
+}
 
 /**
  * Backtest from POST /calc/sip-compare: the same monthly SIP on each published Mod Alpha date vs a fixed day.
@@ -65,6 +72,8 @@ data class HomeData(
     val unread: Int,
     val compare: SipCompare? = null,
     val watchlist: List<Fund> = emptyList(),
+    /** Value of a ₹10,000 SIP on each day 1–28 (Analytics.dayValues on the top fund's NAV history). */
+    val dayEdge: List<Double>? = null,
 )
 
 /** Result of asking for an OTP. `devCode` comes back only on stage (mock SMS) and in demo mode. */
@@ -123,10 +132,14 @@ data class Kpi(val value: Double, val changePct: Double?)
 data class AdminSeries(val bucket: String, val newUsers: Int, val revenue: Double)
 data class RecentSignup(val name: String, val contact: String, val date: String, val status: String)
 data class RecentSub(val name: String, val plan: String, val cycle: String, val amount: Double, val date: String, val status: String)
+data class PlanCount(val plan: String, val users: Int)
+data class Funnel(val signedUp: Int, val verified: Int, val kyc: Int, val paid: Int)
 data class AdminOverview(
     val from: String, val to: String,
     val totalUsers: Kpi, val activeSubs: Kpi, val revenue: Kpi, val conversion: Kpi, val newUsers: Int,
     val series: List<AdminSeries>, val signups: List<RecentSignup>, val subs: List<RecentSub>, val openTickets: Int,
+    val planMix: List<PlanCount> = emptyList(), val funnel: Funnel? = null,
+    val oldestWaiting: String? = null, val avgReplyHours: Double? = null,
 )
 data class AdminUser(val id: String, val ref: String, val name: String, val email: String?, val mobile: String?, val signupDate: String, val status: String, val kyc: String, val role: String, val plan: String)
 data class AdminSubRow(val id: String, val plan: String, val cycle: String, val amount: Double, val status: String, val start: String, val renewal: String?)

@@ -24,7 +24,11 @@ class HomeViewModel(private val repo: Repository) : ViewModel() {
         val cur = _s.value
         _s.value = if (cur is HomeState.Ready) cur.copy(refreshing = true) else HomeState.Loading
         viewModelScope.launch {
-            _s.value = try { HomeState.Ready(repo.home()) } catch (e: Exception) {
+            _s.value = try {
+                val d = repo.home()
+                val edge = runCatching { d.topFunds.firstOrNull()?.let { com.modalpha.app.data.Analytics.dayValues(repo.nav(it.id, "5Y")) } }.getOrNull()
+                HomeState.Ready(d.copy(dayEdge = edge))
+            } catch (e: Exception) {
                 if (cur is HomeState.Ready) cur.copy(refreshing = false) else HomeState.Failed(e.message ?: "Couldn't load your dashboard")
             }
         }

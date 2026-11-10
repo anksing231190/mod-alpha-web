@@ -105,6 +105,15 @@ import com.modalpha.app.ui.kit.Screen
 import com.modalpha.app.ui.kit.SectionTitle
 import com.modalpha.app.ui.kit.rememberLoad
 import com.modalpha.app.ui.theme.Ma
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.style.TextOverflow
+import com.modalpha.app.data.Analytics
+import com.modalpha.app.ui.components.*
+import com.modalpha.app.ui.kit.Tag
+import com.modalpha.app.ui.kit.Tone
+import com.modalpha.app.data.Fund
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
@@ -116,32 +125,14 @@ private fun monthName(ym: String, full: Boolean = true) = runCatching { YearMont
 
 /* ============================== Calendar tab ============================== */
 
-/** Value of a ₹10,000 monthly SIP bought on each day 1–28 (first NAV on/after that day), from real NAV history. */
-private fun dayValues(nav: List<Pair<LocalDate, Double>>): List<Double>? {
-    if (nav.size < 200) return null
-    val first = YearMonth.from(nav.first().first).plusMonths(1); val last = YearMonth.from(nav.last().first).minusMonths(1)
-    val endNav = nav.last().second
-    return (1..28).map { d ->
-        var units = 0.0; var m = first; var i = 0
-        while (!m.isAfter(last)) {
-            val day = m.atDay(d)
-            while (i < nav.size && nav[i].first.isBefore(day)) i++
-            if (i >= nav.size) break
-            units += 10000 / nav[i].second; m = m.plusMonths(1)
-            i = (i - 3).coerceAtLeast(0)
-        }
-        units * endNav
-    }
-}
-
 @Composable
 fun CalendarTab(bottomPad: Dp) {
     val nav = LocalNav.current
     val hist = rememberLoad { nav.repo.sipHistory() }
+    val prefs = rememberLoad { nav.repo.prefs() }
     val why = rememberLoad {
         val f = nav.repo.funds().firstOrNull() ?: return@rememberLoad null
-        val pts = nav.repo.nav(f.id, "5Y").mapNotNull { p -> runCatching { LocalDate.parse(p.date.take(10)) to p.value }.getOrNull() }
-        dayValues(pts)?.let { f.short to it }
+        Analytics.dayValues(nav.repo.nav(f.id, "5Y"))?.let { f.short to it }
     }
     var shown by rememberSaveable { mutableStateOf<String?>(null) }
     val list = (hist.res as? Res.Ok)?.value?.first.orEmpty()
@@ -149,64 +140,114 @@ fun CalendarTab(bottomPad: Dp) {
     val thisMonth = YearMonth.now().toString()
     val cur = list.firstOrNull { it.month == thisMonth } ?: list.firstOrNull()
     val month = list.firstOrNull { it.month == (shown ?: cur?.month) } ?: cur
+    val vals = (why.res as? Res.Ok)?.value?.second
     Column(Modifier.fillMaxSize().background(Ma.c.bg)) {
         ChromeHeader("SIP calendar", actions = { ChromeIcon(Icons.Outlined.NotificationsNone, "Remind me") { nav.remindMe(cur?.day) } }) {
-            Text(
-                buildAnnotatedString {
-                    if (cur?.day != null) { append("This month invest on the "); withStyle(SpanStyle(color = Ma.c.chromeText, fontWeight = FontWeight.Bold)) { append("${cur.day}${sfx(cur.day)}") }; append(" · ") ; withStyle(SpanStyle(color = Color(0xFF4ADE80), fontWeight = FontWeight.SemiBold)) { append(pct(cur.upliftPct)) }; append(" vs the 1st") }
-                    else append(if (locked) "This month's date is ready — unlock it with Pro." else "This month's date is being prepared.")
-                },
-                Modifier.padding(horizontal = 20.dp), color = Ma.c.chromeSub, fontSize = 14.sp,
-            )
-        }
-        LoadBox(hist) { _ ->
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(bottom = bottomPad + 20.dp)) {
-                month?.let { m ->
-                    val idx = list.indexOf(m)
-                    MaCard(Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp).fillMaxWidth(), padding = 12.dp) {
-                        Column {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Arrow(Icons.AutoMirrored.Outlined.KeyboardArrowLeft, idx < list.lastIndex) { shown = list[idx + 1].month }
-                                Text(monthName(m.month), Modifier.weight(1f), color = Ma.c.text, fontWeight = FontWeight.Bold, fontSize = 17.sp, textAlign = TextAlign.Center)
-                                Arrow(Icons.AutoMirrored.Outlined.KeyboardArrowRight, idx > 0) { shown = list[idx - 1].month }
+            Row(Modifier.padding(horizontal = 16.dp).padding(top = 4.dp).height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                GlassCard(Modifier.weight(1.15f).fillMaxHeight(), gold = true) {
+                    Column {
+                        Text("BEST DATE", color = Gold, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                        if (cur?.day != null) {
+                            Row(verticalAlignment = Alignment.Top) {
+                                Text("${cur.day}", color = Ma.c.chromeText, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold)
+                                Text(sfx(cur.day), Modifier.padding(top = 5.dp, start = 1.dp), color = Ma.c.chromeSub, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                             }
-                            VSpace(6.dp)
-                            MonthGrid(m)
-                            if (m.day == null && locked) Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Ma.c.surface2).clickable { nav.push(Route.Plans) }.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Outlined.Lock, null, tint = Ma.c.accent, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp))
-                                Text("Unlock this month's best date with Pro", color = Ma.c.text, fontSize = 13.5.sp, modifier = Modifier.weight(1f)); Text("See plans", color = Ma.c.accent, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                            Text("${pct(cur.upliftPct)} vs 1st", color = Mint, fontSize = 11.5.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                        } else {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 6.dp)) {
+                                Icon(Icons.Outlined.Lock, null, tint = Gold, modifier = Modifier.size(22.dp))
                             }
-                            VSpace(8.dp)
-                            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) { Dot(Ma.c.accent, "Best", ring = true); Dot(Ma.c.up, "Good"); Dot(Color.Transparent, "Today", outline = true) }
+                            Text(if (locked) "Unlock with Pro" else "Coming soon", color = Ma.c.chromeSub, fontSize = 11.5.sp, maxLines = 1)
                         }
                     }
                 }
-                (why.res as? Res.Ok)?.value?.let { (fund, vals) ->
+                GlassCard(Modifier.weight(1f).fillMaxHeight()) {
+                    Column {
+                        Text("GOOD DATES", color = Ma.c.chromeMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, maxLines = 1)
+                        Text("${cur?.alternatives?.size ?: 0}", color = Ma.c.chromeText, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold)
+                        Text(cur?.alternatives?.takeIf { it.isNotEmpty() }?.joinToString(", ") { "${it.day}${sfx(it.day)}" } ?: "—", color = Ma.c.chromeSub, fontSize = 11.5.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                }
+                GlassCard(Modifier.weight(1f).fillMaxHeight().clickable { nav.remindMe(cur?.day) }) {
+                    Column {
+                        Text("REMINDER", color = Ma.c.chromeMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                        VSpace(6.dp)
+                        Icon(Icons.Outlined.NotificationsActive, null, tint = Ma.c.chromeText, modifier = Modifier.size(24.dp))
+                        VSpace(6.dp)
+                        val p = (prefs.res as? Res.Ok)?.value
+                        Text(if (p == null) "—" else if (!p.sipReminder) "Off" else p.timing, color = Ma.c.chromeSub, fontSize = 11.5.sp, maxLines = 2)
+                    }
+                }
+            }
+        }
+        LoadBox(hist) { _ ->
+            Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(top = 14.dp, bottom = bottomPad + 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                month?.let { m ->
+                    val idx = list.indexOf(m)
+                    MaCard(Modifier.fillMaxWidth(), padding = 12.dp) {
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Arrow(Icons.AutoMirrored.Outlined.KeyboardArrowLeft, idx < list.lastIndex) { shown = list[idx + 1].month }
+                                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(monthName(m.month), color = Ma.c.text, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                                    if (m.day != null) Text("${m.confidenceLabel} confidence · ${m.confidencePct}%", color = Ma.c.muted, fontSize = 11.5.sp)
+                                }
+                                Arrow(Icons.AutoMirrored.Outlined.KeyboardArrowRight, idx > 0) { shown = list[idx - 1].month }
+                            }
+                            VSpace(6.dp)
+                            MonthGrid(m, vals)
+                            if (m.day == null && locked) Row(Modifier.padding(top = 6.dp).fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Ma.c.surface2).clickable { nav.push(Route.Plans) }.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Outlined.Lock, null, tint = Ma.c.accent, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp))
+                                Text("Unlock this month's best date with Pro", color = Ma.c.text, fontSize = 13.5.sp, modifier = Modifier.weight(1f)); Text("See plans", color = Ma.c.accent, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                            }
+                            VSpace(10.dp)
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Dot(Gold, "Best", ring = true); Dot(Ma.c.up, "Good"); Dot(Color.Transparent, "Today", outline = true)
+                                if (vals != null) Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text("Weak", color = Ma.c.muted, fontSize = 10.5.sp); HSpace(4.dp)
+                                    Box(Modifier.size(42.dp, 8.dp).clip(CircleShape).background(Brush.horizontalGradient(listOf(Ma.c.accent.copy(alpha = .04f), Ma.c.accent.copy(alpha = .3f)))))
+                                    HSpace(4.dp); Text("Strong", color = Ma.c.muted, fontSize = 10.5.sp)
+                                }
+                            }
+                        }
+                    }
+                }
+                val past = list.filter { it.month < thisMonth && it.day != null }.take(12).reversed()
+                if (past.size > 1) {
+                    val beat = past.count { (it.upliftPct ?: 0.0) > 0 }
+                    MaCard(Modifier.fillMaxWidth()) {
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(Modifier.weight(1f)) {
+                                    Text("Month by month", color = Ma.c.text, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                                    Caption("Our date vs investing on the 1st")
+                                }
+                                Tag("$beat of ${past.size} beat the 1st", if (beat * 2 >= past.size) Tone.Green else Tone.Amber)
+                            }
+                            VSpace(12.dp)
+                            BarStrip(past.map { it.upliftPct ?: 0.0 }, Modifier.fillMaxWidth().height(90.dp), hi = past.lastIndex, good = past.indices.filter { (past[it].upliftPct ?: 0.0) > 0 }.toSet(), gap = 6.dp, signed = true)
+                            VSpace(4.dp)
+                            Row(Modifier.fillMaxWidth()) { past.forEach { Text(monthName(it.month, false).take(1), Modifier.weight(1f), color = Ma.c.muted, fontSize = 10.5.sp, textAlign = TextAlign.Center) } }
+                            VSpace(8.dp)
+                            val avg = past.mapNotNull { it.upliftPct }.average()
+                            Text("Average edge ${pct(avg)} a month · best ${pct(past.maxOf { it.upliftPct ?: 0.0 })} in ${monthName(past.maxBy { it.upliftPct ?: 0.0 }.month)}", color = Ma.c.sub, fontSize = 12.5.sp)
+                        }
+                    }
+                }
+                (why.res as? Res.Ok)?.value?.let { (fund, v) ->
                     val best = cur?.day; val good = cur?.alternatives?.map { it.day }.orEmpty()
-                    MaCard(Modifier.padding(start = 20.dp, end = 20.dp, top = 12.dp).fillMaxWidth()) {
+                    MaCard(Modifier.fillMaxWidth()) {
                         Column {
                             Text(if (best != null) "Why the $best${sfx(best)}?" else "Does the day matter?", color = Ma.c.text, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
                             Text("Value of ₹10,000 a month by SIP day · 5 years · $fund", color = Ma.c.muted, fontSize = 12.sp)
                             VSpace(10.dp)
-                            DayBars(vals, best, good)
+                            DayBars(v, best, good)
                             Row(Modifier.fillMaxWidth()) { listOf("1", "7", "14", "21", "28").forEach { Text(it, Modifier.weight(1f), color = Ma.c.muted, fontSize = 10.5.sp, textAlign = TextAlign.Center) } }
-                            val top = vals.indices.maxBy { vals[it] } + 1; val diff = (vals[top - 1] / vals[0] - 1) * 100
+                            val top = v.indices.maxBy { v[it] } + 1; val diff = (v[top - 1] / v[0] - 1) * 100
                             VSpace(6.dp)
                             Text("In this fund the strongest day was the $top${sfx(top)}: ${pct(diff)} more than investing on the 1st.", color = Ma.c.sub, fontSize = 12.5.sp)
                         }
                     }
-                }
-                val past = list.filter { it.month < thisMonth && it.day != null }
-                if (past.isNotEmpty()) {
-                    SectionTitle("Past months")
-                    CardList(rows = past.take(6).map { p -> {
-                        Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Text(monthName(p.month, false), Modifier.width(48.dp), color = Ma.c.text, fontWeight = FontWeight.Bold)
-                            val d = runCatching { YearMonth.parse(p.month).atDay(p.day!!).dayOfWeek.getDisplayName(JTextStyle.FULL, Locale.ENGLISH) }.getOrDefault("")
-                            Text("${p.day}${sfx(p.day!!)} · $d", Modifier.weight(1f), color = Ma.c.muted, fontSize = 13.sp)
-                            Text(pct(p.upliftPct), color = if ((p.upliftPct ?: 0.0) >= 0) Ma.c.up else Ma.c.down, fontWeight = FontWeight.Bold)
-                        }
-                    } })
                 }
             }
         }
@@ -216,27 +257,35 @@ fun CalendarTab(bottomPad: Dp) {
 @Composable private fun Arrow(icon: ImageVector, enabled: Boolean, onClick: () -> Unit) =
     Box(Modifier.size(36.dp).clip(CircleShape).clickable(enabled = enabled, onClick = onClick), contentAlignment = Alignment.Center) { Icon(icon, null, tint = if (enabled) Ma.c.sub else Ma.c.line) }
 
+/** Month grid as a heat map: each day shaded by how strong it has been (dayValues), best date gold, today ringed. */
 @Composable
-private fun MonthGrid(m: SipMonth) {
+private fun MonthGrid(m: SipMonth, vals: List<Double>?) {
     val ym = YearMonth.parse(m.month); val first = ym.atDay(1).dayOfWeek.value % 7; val days = ym.lengthOfMonth()
     val today = LocalDate.now(); val good = m.alternatives.map { it.day }.toSet()
+    val lo = vals?.min() ?: 0.0; val span = vals?.let { (it.max() - lo).takeIf { s -> s > 0 } } ?: 1.0
     Row(Modifier.fillMaxWidth()) { listOf("S", "M", "T", "W", "T", "F", "S").forEach { Text(it, Modifier.weight(1f), color = Ma.c.muted, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center) } }
     VSpace(4.dp)
     val cells = List(first) { 0 } + (1..days).toList()
     cells.chunked(7).forEach { week ->
-        Row(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
+        Row(Modifier.fillMaxWidth()) {
             (0 until 7).forEach { k ->
                 val d = week.getOrNull(k) ?: 0
-                Box(Modifier.weight(1f).height(40.dp).padding(2.dp), contentAlignment = Alignment.Center) {
+                Box(Modifier.weight(1f).height(42.dp).padding(2.dp), contentAlignment = Alignment.Center) {
                     if (d > 0) {
-                        val best = d == m.day; val isToday = ym.atDay(d) == today; val we = (first + d - 1) % 7 in setOf(0, 6)
+                        val best = d == m.day; val isToday = ym.atDay(d) == today
+                        val heat = vals?.getOrNull(d - 1)?.let { ((it - lo) / span).toFloat() }
+                        val bg = when {
+                            best -> Modifier.background(Brush.linearGradient(listOf(Gold, GoldDeep)))
+                            heat != null -> Modifier.background(Ma.c.accent.copy(alpha = .04f + .26f * heat))
+                            else -> Modifier.background(Ma.c.surface2)
+                        }
                         Box(
-                            Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp))
-                                .then(if (best) Modifier.background(Ma.c.accentBrush).border(2.dp, Ma.c.gold, RoundedCornerShape(12.dp)) else if (isToday) Modifier.border(2.dp, Ma.c.accent, RoundedCornerShape(12.dp)) else Modifier),
+                            Modifier.fillMaxSize().clip(RoundedCornerShape(11.dp)).then(bg)
+                                .then(if (isToday) Modifier.border(2.dp, Ma.c.text, RoundedCornerShape(11.dp)) else Modifier),
                             contentAlignment = Alignment.Center,
                         ) {
-                            Text("$d", color = if (best) Color.White else if (we) Ma.c.muted else Ma.c.text, fontSize = 14.5.sp, fontWeight = FontWeight.SemiBold)
-                            if (d in good) Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(5.dp).clip(CircleShape).background(Ma.c.up))
+                            Text("$d", color = if (best) Color(0xFF3B2405) else Ma.c.text, fontSize = 14.sp, fontWeight = if (best) FontWeight.ExtraBold else FontWeight.SemiBold)
+                            if (d in good) Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 3.dp).size(5.dp).clip(CircleShape).background(Ma.c.up))
                         }
                     }
                 }
@@ -246,7 +295,7 @@ private fun MonthGrid(m: SipMonth) {
 }
 
 @Composable private fun Dot(c: Color, t: String, ring: Boolean = false, outline: Boolean = false) = Row(verticalAlignment = Alignment.CenterVertically) {
-    Box(Modifier.size(9.dp).clip(CircleShape).background(c).then(if (ring) Modifier.border(1.5.dp, Ma.c.gold, CircleShape) else if (outline) Modifier.border(1.5.dp, Ma.c.accent, CircleShape) else Modifier))
+    Box(Modifier.size(9.dp).clip(CircleShape).background(c).then(if (ring) Modifier.border(1.5.dp, GoldDeep, CircleShape) else if (outline) Modifier.border(1.5.dp, Ma.c.text, CircleShape) else Modifier))
     Spacer(Modifier.width(5.dp)); Text(t, color = Ma.c.muted, fontSize = 11.5.sp)
 }
 
@@ -311,7 +360,18 @@ fun ReminderSheet(day: Int?, onDone: () -> Unit) {
 
 /* ============================== Ask Mod Alpha ============================== */
 
-private val SUGGEST = listOf("Is the 12th good for small caps?", "Compare Quant Small Cap vs SBI Contra", "What is CAGR?", "Which fund had the best 5 years?")
+private val SUGGEST = listOf(
+    Triple("📅", "Is the 12th good for small caps?", "SIP dates"),
+    Triple("⚖️", "Compare Quant Small Cap vs SBI Contra", "Funds"),
+    Triple("📈", "What is CAGR?", "Basics"),
+    Triple("🏆", "Which fund had the best 5 years?", "Returns"),
+)
+
+/** Funds named in a message (by short name or first words of the full name). */
+private fun mentioned(text: String, funds: List<Fund>): List<Fund> {
+    val t = text.lowercase()
+    return funds.filter { f -> t.contains(f.short.lowercase()) || t.contains(f.name.lowercase().split(" ").take(2).joinToString(" ")) }.take(2)
+}
 
 @Composable
 fun AskTab(chat: SnapshotStateList<ChatMsg>, bottomPad: Dp) {
@@ -320,9 +380,12 @@ fun AskTab(chat: SnapshotStateList<ChatMsg>, bottomPad: Dp) {
     var input by rememberSaveable { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
     var left by remember { mutableStateOf<Int?>(null) }
+    var limit by remember { mutableStateOf<Int?>(null) }
     var err by remember { mutableStateOf<String?>(null) }
+    val funds = rememberLoad { nav.repo.funds() }
+    val all = (funds.res as? Res.Ok)?.value.orEmpty()
     val listState = rememberLazyListState()
-    LaunchedEffect(Unit) { left = runCatching { nav.repo.aiLeftToday() }.getOrNull() }
+    LaunchedEffect(Unit) { left = runCatching { nav.repo.aiLeftToday() }.getOrNull(); limit = runCatching { nav.repo.aiLimitToday() }.getOrNull() }
     LaunchedEffect(chat.size, busy) { if (chat.isNotEmpty()) listState.animateScrollToItem(chat.size + if (busy) 1 else 0) }
     fun send(text: String) {
         val t = text.trim(); if (t.isEmpty() || busy) return
@@ -333,35 +396,97 @@ fun AskTab(chat: SnapshotStateList<ChatMsg>, bottomPad: Dp) {
         }
     }
     Column(Modifier.fillMaxSize().background(Ma.c.bg).imePadding()) {
-        ChromeHeader("Ask Mod Alpha", actions = {
-            if (left != null) Text("$left left today", Modifier.clip(CircleShape).background(Ma.c.gold.copy(alpha = .18f)).padding(horizontal = 10.dp, vertical = 5.dp), color = Ma.c.gold, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-        }) {
-            Row(Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(8.dp).clip(CircleShape).background(Color(0xFF4ADE80))); Spacer(Modifier.width(6.dp))
-                Text("Answers from Mod Alpha's fund data", color = Ma.c.chromeSub, fontSize = 13.sp)
+        ChromeHeader("Ask Mod Alpha") {
+            Row(Modifier.padding(horizontal = 20.dp).padding(bottom = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(8.dp).clip(CircleShape).background(Mint)); HSpace(6.dp)
+                        Text("Answers from real fund data", color = Ma.c.chromeSub, fontSize = 13.sp)
+                    }
+                    VSpace(4.dp)
+                    Text("${all.size.takeIf { it > 0 } ?: "—"} funds · 10 years of NAVs · SIP date history", color = Ma.c.chromeMuted, fontSize = 11.5.sp)
+                }
+                val l = left; val lim = limit
+                if (l != null) Ring(if (lim != null && lim > 0) l.toFloat() / lim else 1f, 54.dp, 6.dp, listOf(Gold, GoldDeep)) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("$l", color = Ma.c.chromeText, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp, lineHeight = 16.sp)
+                        Text("left", color = Ma.c.chromeMuted, fontSize = 9.sp, lineHeight = 10.sp)
+                    }
+                }
             }
         }
         LazyColumn(Modifier.weight(1f).fillMaxWidth(), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             item { Bubble(ChatMsg(false, "Hi ${nav.user.firstName} 👋 Ask me about funds, returns or SIP dates.")) }
-            items(chat) { Bubble(it) }
+            if (chat.isEmpty()) item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
+                    Caption("Try asking")
+                    SUGGEST.chunked(2).forEach { row ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            row.forEach { (emo, q, tag) ->
+                                Column(Modifier.weight(1f).height(96.dp).clip(RoundedCornerShape(16.dp)).background(Ma.c.surface).border(1.dp, Ma.c.line, RoundedCornerShape(16.dp)).clickable { send(q) }.padding(12.dp)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(emo, fontSize = 16.sp); HSpace(6.dp)
+                                        Text(tag.uppercase(), color = Ma.c.muted, fontSize = 9.5.sp, fontWeight = FontWeight.Bold, letterSpacing = .8.sp)
+                                    }
+                                    VSpace(6.dp)
+                                    Text(q, color = Ma.c.text, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, lineHeight = 17.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            items(chat.size) { i ->
+                val m = chat[i]
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Bubble(m)
+                    if (!m.fromUser) {
+                        val q = chat.getOrNull(i - 1)?.text.orEmpty()
+                        val fs = mentioned(q + " " + m.text, all)
+                        if (fs.isNotEmpty()) Row(Modifier.padding(start = 38.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            fs.forEach { f -> FundDataCard(f, Modifier.weight(1f)) { nav.push(Route.Fund(f.id)) } }
+                            if (fs.size == 1) Spacer(Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
             if (busy) item { Bubble(ChatMsg(false, "Thinking…")) }
             err?.let { e -> item { Text(e, Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Ma.c.down.copy(alpha = .1f)).padding(12.dp), color = Ma.c.down, fontSize = 13.5.sp) } }
         }
         Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = bottomPad + 8.dp)) {
-            if (chat.isEmpty()) Row(Modifier.horizontalScroll(rememberScrollState()).padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SUGGEST.forEach { s -> Text(s, Modifier.clip(CircleShape).background(Ma.c.surface).border(1.dp, Ma.c.line, CircleShape).clickable { send(s) }.padding(horizontal = 12.dp, vertical = 8.dp), color = Ma.c.sub, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold) }
-            }
-            Row(Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(16.dp)).background(Ma.c.surface).border(1.dp, Ma.c.line, RoundedCornerShape(16.dp)).padding(start = 14.dp, end = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(18.dp)).background(Ma.c.surface).border(1.dp, Ma.c.line, RoundedCornerShape(18.dp)).padding(start = 14.dp, end = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.weight(1f)) {
                     if (input.isEmpty()) Text("Ask about funds, returns or SIP dates…", color = Ma.c.muted, fontSize = 14.sp)
                     BasicTextField(input, { input = it.take(2000) }, singleLine = true, textStyle = TextStyle(color = Ma.c.text, fontSize = 14.5.sp), cursorBrush = SolidColor(Ma.c.accent),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send), keyboardActions = KeyboardActions(onSend = { send(input) }), modifier = Modifier.fillMaxWidth())
                 }
-                Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(Ma.c.hiBrush).clickable(enabled = !busy) { send(input) }, contentAlignment = Alignment.Center) {
+                Box(Modifier.size(40.dp).clip(RoundedCornerShape(13.dp)).background(Ma.c.hiBrush).clickable(enabled = !busy) { send(input) }, contentAlignment = Alignment.Center) {
                     Icon(Icons.AutoMirrored.Outlined.ArrowForward, "Send", tint = Color.White, modifier = Modifier.size(20.dp))
                 }
             }
             Text("Historical analysis, not investment advice.", Modifier.fillMaxWidth().padding(top = 6.dp), color = Ma.c.muted, fontSize = 10.5.sp, textAlign = TextAlign.Center)
+        }
+    }
+}
+
+/** Small card with a fund's real numbers, shown under an answer that mentions it. */
+@Composable
+private fun FundDataCard(f: Fund, modifier: Modifier, onClick: () -> Unit) {
+    Column(modifier.clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Ma.c.chrome, Ma.c.chrome2))).clickable(onClick = onClick).padding(12.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            AmcLogo(f.amc, 22.dp); HSpace(6.dp)
+            Text(f.short, color = Ma.c.chromeText, fontSize = 12.5.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        VSpace(6.dp)
+        Sparkline(f.spark, SoftUp, Modifier.fillMaxWidth().height(30.dp))
+        VSpace(6.dp)
+        Row(Modifier.fillMaxWidth()) {
+            listOf("1Y" to f.r1, "3Y" to f.r3, "5Y" to f.r5).forEach { (k, v) ->
+                Column(Modifier.weight(1f)) {
+                    Text(k, color = Ma.c.chromeMuted, fontSize = 9.5.sp)
+                    Text(pct(v).replace(".0%", "%"), color = if ((v ?: 0.0) >= 0) Mint else Color(0xFFF87171), fontSize = 11.5.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                }
+            }
         }
     }
 }
@@ -390,51 +515,81 @@ private fun bold(s: String) = buildAnnotatedString {
 
 /* ============================== Notifications ============================== */
 
+private fun noticeGroup(n: Notice) = when {
+    n.kind.contains("sip") || n.kind.contains("remind") || n.kind.contains("date") -> "SIP dates"
+    n.kind.contains("bill") || n.kind.contains("pay") || n.kind.contains("support") || n.kind.contains("account") || n.kind.contains("sub") -> "Account"
+    else -> "Updates"
+}
+
 @Composable
 fun NotificationsScreen() {
     val nav = LocalNav.current
     val scope = rememberCoroutineScope()
     val l = rememberLoad { nav.repo.notifications() }
     var tab by rememberSaveable { mutableStateOf("All") }
+    val items = (l.res as? Res.Ok)?.value.orEmpty()
     Screen("Notifications", onBack = nav::pop, actions = {
         Text("Mark all read", Modifier.clickable { scope.launch { runCatching { nav.repo.markAllRead() }; l.reload(); nav.refreshHome() } }.padding(8.dp), color = Ma.c.chromeSub, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-    }, header = { Chips(listOf("All", "SIP dates", "Account", "Updates"), tab, { tab = it }, dark = true) }) {
+    }, header = {
+        Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf("Unread" to items.count { !it.read }, "SIP dates" to items.count { noticeGroup(it) == "SIP dates" }, "Account" to items.count { noticeGroup(it) == "Account" }).forEach { (k, v) ->
+                GlassCard(Modifier.weight(1f), gold = k == "Unread" && v > 0) { StatBlock(k, "$v", valueSize = 22) }
+            }
+        }
+        VSpace(12.dp)
+        Chips(listOf("All", "SIP dates", "Account", "Updates"), tab, { tab = it }, dark = true)
+    }) {
         LoadBox(l) { all ->
-            fun group(n: Notice) = when { n.kind.contains("sip") || n.kind.contains("remind") || n.kind.contains("date") -> "SIP dates"; n.kind.contains("bill") || n.kind.contains("pay") || n.kind.contains("support") || n.kind.contains("account") || n.kind.contains("sub") -> "Account"; else -> "Updates" }
-            val list = all.filter { tab == "All" || group(it) == tab }
+            val list = all.filter { tab == "All" || noticeGroup(it) == tab }
             if (list.isEmpty()) Empty(Icons.Outlined.NotificationsNone, "You're all caught up", "New SIP dates, reminders and account updates show up here.")
             else {
                 val today = LocalDate.now().toString()
                 val (t, e) = list.partition { it.createdAt.startsWith(today) }
-                Column(Modifier.verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) {
-                    if (t.isNotEmpty()) { Caption("Today", Modifier.padding(start = 24.dp, top = 18.dp, bottom = 8.dp)); CardList(rows = t.map { n -> { NoticeRow(n, group(n)) } }) }
-                    if (e.isNotEmpty()) { Caption("Earlier", Modifier.padding(start = 24.dp, top = 18.dp, bottom = 8.dp)); CardList(rows = e.map { n -> { NoticeRow(n, group(n)) } }) }
+                Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(bottom = 24.dp)) {
+                    listOf("Today" to t, "Earlier" to e).filter { it.second.isNotEmpty() }.forEach { (label, ns) ->
+                        Caption(label, Modifier.padding(start = 4.dp, top = 18.dp, bottom = 8.dp))
+                        ns.forEachIndexed { i, n -> NoticeRow(n, noticeGroup(n), last = i == ns.lastIndex) }
+                    }
                 }
             }
         }
     }
 }
 
+/** Timeline row: coloured node + line on the left, card with an action chip on the right. */
 @Composable
-private fun NoticeRow(n: Notice, group: String) {
-    val (icon, bg, fg) = when {
-        n.kind.contains("bill") || n.kind.contains("pay") -> Triple(Icons.Outlined.ReceiptLong, Color(0xFFDCFCE7), Color(0xFF15803D))
-        n.kind.contains("support") -> Triple(Icons.Outlined.ChatBubbleOutline, Color(0xFFEDE9FE), Color(0xFF6D28D9))
-        n.kind.contains("remind") -> Triple(Icons.Outlined.NotificationsActive, Color(0xFFFEF3C7), Color(0xFFB45309))
-        group == "SIP dates" -> Triple(Icons.Outlined.CalendarMonth, Color(0xFFDBEAFE), Color(0xFF1D4ED8))
-        n.kind.contains("insight") -> Triple(Icons.Outlined.Lightbulb, Color(0xFFFEE2E2), Color(0xFFB91C1C))
-        else -> Triple(Icons.Outlined.CheckCircle, Color(0xFFDBEAFE), Color(0xFF1D4ED8))
+private fun NoticeRow(n: Notice, group: String, last: Boolean) {
+    val nav = LocalNav.current
+    val (icon, fg, action) = when {
+        n.kind.contains("bill") || n.kind.contains("pay") -> Triple(Icons.Outlined.ReceiptLong, Color(0xFF16A34A), "Invoice" to { nav.push(Route.Subscription) })
+        n.kind.contains("support") -> Triple(Icons.Outlined.ChatBubbleOutline, Color(0xFF7C3AED), "Open" to { nav.push(Route.Help) })
+        n.kind.contains("remind") -> Triple(Icons.Outlined.NotificationsActive, Color(0xFFD97706), "Remind me" to { nav.remindMe(null) })
+        group == "SIP dates" -> Triple(Icons.Outlined.CalendarMonth, Color(0xFF2563EB), "See date" to { nav.remindMe(null) })
+        n.kind.contains("insight") -> Triple(Icons.Outlined.Lightbulb, Color(0xFFDC2626), "Read" to { nav.push(Route.Insights) })
+        else -> Triple(Icons.Outlined.CheckCircle, Color(0xFF2563EB), null)
     }
-    Row(Modifier.fillMaxWidth().padding(vertical = 13.dp)) {
-        Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(bg), contentAlignment = Alignment.Center) { Icon(icon, null, tint = fg, modifier = Modifier.size(20.dp)) }
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
+    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+        Column(Modifier.width(36.dp).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(Modifier.size(32.dp).clip(CircleShape).background(fg.copy(alpha = .14f)).border(1.5.dp, fg.copy(alpha = .5f), CircleShape), contentAlignment = Alignment.Center) { Icon(icon, null, tint = fg, modifier = Modifier.size(16.dp)) }
+            if (!last) Box(Modifier.width(2.dp).weight(1f).background(Brush.verticalGradient(listOf(fg.copy(alpha = .4f), Ma.c.line))))
+        }
+        HSpace(10.dp)
+        Column(
+            Modifier.weight(1f).padding(bottom = 10.dp).clip(RoundedCornerShape(16.dp)).background(Ma.c.surface)
+                .border(1.dp, if (!n.read) fg.copy(alpha = .45f) else Ma.c.line, RoundedCornerShape(16.dp)).padding(12.dp),
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(n.title, color = Ma.c.text, fontWeight = FontWeight.SemiBold, fontSize = 14.5.sp, modifier = Modifier.weight(1f, fill = false))
-                if (!n.read) { Spacer(Modifier.width(6.dp)); Box(Modifier.size(7.dp).clip(CircleShape).background(Ma.c.hi)) }
+                Text(n.title, color = Ma.c.text, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, modifier = Modifier.weight(1f))
+                if (!n.read) { HSpace(6.dp); Box(Modifier.size(7.dp).clip(CircleShape).background(fg)) }
             }
-            if (n.body.isNotBlank()) Text(n.body, color = Ma.c.sub, fontSize = 13.sp)
-            Text(runCatching { val d = java.time.LocalDateTime.parse(n.createdAt.take(19)); if (d.toLocalDate() == LocalDate.now()) d.toLocalTime().toString().take(5) else com.modalpha.app.ui.explore.prettyDate(n.createdAt) }.getOrDefault(n.createdAt.take(10)), color = Ma.c.muted, fontSize = 11.5.sp)
+            if (n.body.isNotBlank()) Text(n.body, color = Ma.c.sub, fontSize = 12.5.sp, lineHeight = 17.sp)
+            Row(Modifier.padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(runCatching { val d = java.time.LocalDateTime.parse(n.createdAt.take(19)); if (d.toLocalDate() == LocalDate.now()) d.toLocalTime().toString().take(5) else com.modalpha.app.ui.explore.prettyDate(n.createdAt) }.getOrDefault(n.createdAt.take(10)),
+                    color = Ma.c.muted, fontSize = 11.sp, modifier = Modifier.weight(1f))
+                action?.let { (label, go) ->
+                    Text(label, Modifier.clip(CircleShape).background(fg.copy(alpha = .12f)).clickable { go() }.padding(horizontal = 10.dp, vertical = 4.dp), color = fg, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                }
+            }
         }
     }
 }

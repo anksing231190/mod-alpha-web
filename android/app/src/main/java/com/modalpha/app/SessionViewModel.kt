@@ -35,6 +35,11 @@ class SessionViewModel(
     private val _theme = MutableStateFlow(prefs.theme)
     val theme: StateFlow<AppTheme> = _theme
     val biometricOn get() = prefs.biometric
+    /** First name of the last person who signed in on this phone (null = first visit). */
+    val returningName get() = prefs.lastName
+    val lastBestDay get() = prefs.lastBestDay.takeIf { it in 1..31 }
+    val lastBestMonth get() = prefs.lastBestMonth
+    fun rememberBest(day: Int, month: String) { prefs.lastBestDay = day; prefs.lastBestMonth = month }
 
     init {
         viewModelScope.launch {

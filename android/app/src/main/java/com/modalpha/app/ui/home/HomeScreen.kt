@@ -4,6 +4,7 @@ import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -26,9 +28,7 @@ import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -41,12 +41,8 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -55,12 +51,21 @@ import com.modalpha.app.data.HomeData
 import com.modalpha.app.data.SipCompare
 import com.modalpha.app.data.SipMonth
 import com.modalpha.app.ui.components.AmcLogo
+import com.modalpha.app.ui.components.BarStrip
 import com.modalpha.app.ui.components.ChartSeries
 import com.modalpha.app.ui.components.ErrorBanner
+import com.modalpha.app.ui.components.GhostChip
+import com.modalpha.app.ui.components.GlassCard
+import com.modalpha.app.ui.components.Gold
 import com.modalpha.app.ui.components.GradientButton
 import com.modalpha.app.ui.components.GridChart
 import com.modalpha.app.ui.components.Loader
 import com.modalpha.app.ui.components.MaCard
+import com.modalpha.app.ui.components.MeshHero
+import com.modalpha.app.ui.components.Mint
+import com.modalpha.app.ui.components.Ring
+import com.modalpha.app.ui.components.Sparkline
+import com.modalpha.app.ui.components.UpChip
 import com.modalpha.app.ui.components.VSpace
 import com.modalpha.app.ui.components.inr
 import com.modalpha.app.ui.components.inrShort
@@ -95,202 +100,169 @@ fun HomeScreen(vm: HomeViewModel, actions: HomeActions, contentPadding: PaddingV
     }
 }
 
+private fun sfx(n: Int) = when { n % 100 in 11..13 -> "th"; n % 10 == 1 -> "st"; n % 10 == 2 -> "nd"; n % 10 == 3 -> "rd"; else -> "th" }
+private fun monthName(m: String) = runCatching { YearMonth.parse(m).month.getDisplayName(TextStyle.FULL, Locale.ENGLISH) }.getOrDefault("this month")
+private fun pct(v: Double?) = v?.let { (if (it >= 0) "+" else "") + "%.1f%%".format(it) } ?: "—"
+
 /**
- * Home, "one big focus": this month's best SIP date in large type with Remind me / Why;
- * one card that shows what the dates are worth (backtest chart); the watchlist. Nothing else.
+ * Home: one glance — this month's date with its confidence, the historical edge of every day of the month,
+ * what the dates are worth (backtest), and the watchlist.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeContent(d: HomeData, refreshing: Boolean, onRefresh: () -> Unit, actions: HomeActions, contentPadding: PaddingValues = PaddingValues(), today: LocalDate = LocalDate.now()) {
     PullToRefreshBox(isRefreshing = refreshing, onRefresh = onRefresh, modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
-            Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = contentPadding.calculateBottomPadding() + 24.dp),
-        ) {
-            item {
-                Column(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp)).background(Ma.c.chromeBrush)
-                        .background(Brush.radialGradient(listOf(Ma.c.glow.copy(alpha = .28f), Color.Transparent), center = androidx.compose.ui.geometry.Offset(220f, 520f), radius = 760f))
-                        .padding(top = contentPadding.calculateTopPadding() + 8.dp, bottom = 24.dp)
-                ) {
-                    Header(d, actions)
-                    Hero(d.sip, d.locked, today, actions)
-                }
-            }
-            d.compare?.let { item { ValueCard(it, Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp)) } }
+        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = contentPadding.calculateBottomPadding() + 16.dp)) {
+            item { Hero(d, today, actions) }
+            d.compare?.let { item { EdgeCard(it, Modifier.padding(start = 18.dp, end = 18.dp, top = 14.dp)) } }
             item { Watchlist(d.watchlist, actions) }
         }
     }
 }
 
 @Composable
-private fun Header(d: HomeData, actions: HomeActions) {
-    val h = LocalTime.now().hour
-    val hello = when { h < 12 -> "Good morning"; h < 17 -> "Good afternoon"; else -> "Good evening" }
-    Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(42.dp).clip(CircleShape).background(Ma.c.hiBrush), contentAlignment = Alignment.Center) {
-            Text(d.user.initial, color = Ma.c.onAccent, fontWeight = FontWeight.Bold, fontSize = 17.sp)
-        }
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Text(hello, color = Ma.c.chromeMuted, style = MaterialTheme.typography.bodySmall)
-            Text(d.user.firstName, color = Ma.c.chromeText, fontSize = 18.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-        Box {
-            IconButton(onClick = actions.openNotifications, modifier = Modifier.size(42.dp).clip(CircleShape).background(Ma.c.chrome2).border(1.dp, Ma.c.chromeLine, CircleShape)) {
-                Icon(Icons.Outlined.NotificationsNone, "Notifications, ${d.unread} unread", tint = Ma.c.chromeText, modifier = Modifier.size(21.dp))
+private fun Hero(d: HomeData, today: LocalDate, actions: HomeActions) {
+    val c = Ma.c
+    val sip = d.sip
+    MeshHero {
+        // greeting row
+        Row(Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(40.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Color(0xFF60A5FA), Color(0xFF8B5CF6)))), contentAlignment = Alignment.Center) {
+                Text(d.user.initial, color = Color.White, fontWeight = FontWeight.Black, fontSize = 17.sp)
             }
-            if (d.unread > 0) Box(Modifier.align(Alignment.TopEnd).offset((-9).dp, 9.dp).size(9.dp).clip(CircleShape).background(Ma.c.down).border(2.dp, Ma.c.chrome2, CircleShape))
+            Spacer(Modifier.width(10.dp))
+            Column(Modifier.weight(1f)) {
+                val h = LocalTime.now().hour
+                Text(if (h < 12) "Good morning" else if (h < 17) "Good afternoon" else "Good evening", color = c.chromeMuted, fontSize = 12.sp)
+                Text(d.user.firstName, color = c.chromeText, fontSize = 17.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            if (d.plan != "Free") { GhostChip(d.plan.uppercase(), gold = true); Spacer(Modifier.width(8.dp)) }
+            Box(Modifier.size(40.dp).clip(RoundedCornerShape(13.dp)).background(Color.White.copy(alpha = .08f)).border(1.dp, Color.White.copy(alpha = .12f), RoundedCornerShape(13.dp)).clickable(onClick = actions.openNotifications), contentAlignment = Alignment.Center) {
+                Icon(Icons.Outlined.NotificationsNone, "Notifications, ${d.unread} unread", tint = c.chromeText, modifier = Modifier.size(20.dp))
+                if (d.unread > 0) Box(Modifier.align(Alignment.TopEnd).offset((-7).dp, 7.dp).size(8.dp).clip(CircleShape).background(Color(0xFFF43F5E)))
+            }
         }
-    }
-}
-
-private fun suffix(n: Int) = when { n % 100 in 11..13 -> "th"; n % 10 == 1 -> "st"; n % 10 == 2 -> "nd"; n % 10 == 3 -> "rd"; else -> "th" }
-private fun monthName(m: String) = runCatching { YearMonth.parse(m).month.getDisplayName(TextStyle.FULL, Locale.ENGLISH) }.getOrDefault("this month")
-private fun pct(v: Double?) = v?.let { (if (it >= 0) "+" else "") + "%.1f%%".format(it) } ?: "—"
-
-@Composable
-private fun Hero(sip: SipMonth?, locked: Boolean, today: LocalDate, actions: HomeActions) {
-    Column(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 28.dp)) {
-        Text("YOUR BEST SIP DATE · ${monthName(sip?.month ?: "").uppercase()}", color = Ma.c.chromeMuted, style = MaterialTheme.typography.labelSmall)
+        // date + confidence
+        Text("BEST SIP DATE · ${monthName(sip?.month ?: "").uppercase()}", Modifier.padding(start = 18.dp, top = 16.dp), color = c.chromeMuted, fontSize = 10.5.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.3.sp)
         if (sip == null) {
-            VSpace(12.dp)
-            Text("This month's date is being prepared. We'll notify you when it's ready.", color = Ma.c.chromeSub, style = MaterialTheme.typography.bodyLarge)
-            return@Column
+            Text("This month's date is being prepared. We'll notify you when it's ready.", Modifier.padding(18.dp), color = c.chromeSub, fontSize = 15.sp)
+            return@MeshHero
         }
-        if (locked || sip.day == null) {
-            VSpace(6.dp)
-            Box(contentAlignment = Alignment.Center) {
-                BigDay(18, Modifier.then(if (Build.VERSION.SDK_INT >= 31) Modifier.blur(10.dp) else Modifier.alpha(.12f)).alpha(.8f))
-                Box(Modifier.size(54.dp).clip(CircleShape).background(Ma.c.chrome2).border(1.dp, Ma.c.chromeLine, CircleShape), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Outlined.Lock, "Locked", tint = Ma.c.chromeText, modifier = Modifier.size(22.dp))
+        val locked = d.locked || sip.day == null
+        Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Box(contentAlignment = Alignment.CenterStart) {
+                    Row(verticalAlignment = Alignment.Top, modifier = if (locked) (if (Build.VERSION.SDK_INT >= 31) Modifier.blur(12.dp) else Modifier.alpha(.12f)) else Modifier) {
+                        Text("${sip.day ?: 18}", color = c.chromeText, fontSize = 84.sp, fontWeight = FontWeight.Black, letterSpacing = (-4).sp, lineHeight = 84.sp)
+                        Text(sfx(sip.day ?: 18), color = c.chromeText, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(start = 3.dp, top = 12.dp))
+                    }
+                    if (locked) Box(Modifier.padding(start = 26.dp).size(52.dp).clip(CircleShape).background(Color.White.copy(alpha = .12f)).border(1.dp, Color.White.copy(alpha = .2f), CircleShape), contentAlignment = Alignment.Center) {
+                        Icon(Icons.Outlined.Lock, "Locked", tint = c.chromeText, modifier = Modifier.size(22.dp))
+                    }
+                }
+                if (!locked) {
+                    val date = runCatching { LocalDate.parse("${sip.month}-%02d".format(sip.day)) }.getOrNull()
+                    val days = date?.let { ChronoUnit.DAYS.between(today, it) }
+                    val wd = date?.dayOfWeek?.getDisplayName(TextStyle.FULL, Locale.ENGLISH) ?: ""
+                    Text(when { days == null -> wd; days > 1 -> "$wd · in $days days"; days == 1L -> "$wd · tomorrow"; days == 0L -> "$wd · today"; else -> "$wd · done for this month" }, color = c.chromeSub, fontSize = 14.sp)
+                } else Text("This month's date is ready", color = c.chromeSub, fontSize = 14.sp)
+            }
+            if (!locked && sip.confidencePct > 0) Ring(sip.confidencePct / 100f, 96.dp, 9.dp, listOf(Mint, Color(0xFF22D3EE))) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("${sip.confidencePct}%", color = c.chromeText, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                    Text("CONFIDENCE", color = c.chromeMuted, fontSize = 8.5.sp, fontWeight = FontWeight.Bold, letterSpacing = .5.sp)
                 }
             }
-            VSpace(8.dp)
-            Text(buildAnnotatedString {
-                append("This month's date is ready. Historically ")
-                withStyle(SpanStyle(color = Color(0xFF4ADE80), fontWeight = FontWeight.Bold)) { append(pct(sip.upliftPct)) }
-                append(" vs a fixed date.")
-            }, color = Ma.c.chromeSub, style = MaterialTheme.typography.bodyLarge)
-            VSpace(20.dp)
-            GradientButton("Unlock with Pro", actions.openPlans, brush = Ma.c.hiBrush)
-            return@Column
         }
-        val date = runCatching { LocalDate.parse("${sip.month}-%02d".format(sip.day)) }.getOrNull()
-        val days = date?.let { ChronoUnit.DAYS.between(today, it) }
-        val wd = date?.dayOfWeek?.getDisplayName(TextStyle.FULL, Locale.ENGLISH) ?: ""
-        val whenText = when { days == null -> wd; days > 1 -> "$wd · in $days days"; days == 1L -> "$wd · tomorrow"; days == 0L -> "$wd · today"; else -> "$wd · done for this month" }
-        VSpace(6.dp)
-        BigDay(sip.day)
-        Text(whenText, color = Ma.c.chromeSub, fontSize = 16.sp)
-        VSpace(16.dp)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Chip("▲ ${pct(sip.upliftPct)} vs 1st of month", Color(0xFF4ADE80))
-            Chip("● High confidence", Ma.c.chromeSub)
+        Row(Modifier.padding(start = 18.dp, end = 18.dp, top = 12.dp).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            UpChip("${pct(sip.upliftPct)} vs 1st of month", up = (sip.upliftPct ?: 0.0) >= 0)
+            if (!locked) sip.leadPts?.let { GhostChip("Leads next date by %.1f pts".format(it)) }
+            if (!locked) GhostChip("${sip.confidenceLabel.ifBlank { "High" }} confidence")
         }
-        VSpace(20.dp)
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            GradientButton("Remind me", { actions.setReminder(sip.day) }, Modifier.weight(1.4f), brush = Ma.c.hiBrush,
-                leading = { Icon(Icons.Outlined.NotificationsActive, null, tint = Ma.c.onAccent, modifier = Modifier.size(18.dp)) })
-            Box(
-                Modifier.weight(1f).height(52.dp).clip(RoundedCornerShape(14.dp)).background(Ma.c.chrome2).border(1.dp, Ma.c.chromeLine, RoundedCornerShape(14.dp)).clickable(onClick = actions.whyDate),
-                contentAlignment = Alignment.Center,
-            ) { Text("Why ${sip.day}${suffix(sip.day)}?", color = Ma.c.chromeText, style = MaterialTheme.typography.labelLarge) }
+        // every day of the month
+        d.dayEdge?.let { edge ->
+            GlassCard(Modifier.padding(start = 18.dp, end = 18.dp, top = 12.dp).fillMaxWidth()) {
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Every day this month · historical edge", color = c.chromeMuted, fontSize = 11.sp, modifier = Modifier.weight(1f))
+                        if (!locked) { Text("■ ", color = Gold, fontSize = 10.sp); Text("best  ", color = c.chromeMuted, fontSize = 11.sp); Text("■ ", color = Mint, fontSize = 10.sp); Text("good", color = c.chromeMuted, fontSize = 11.sp) }
+                    }
+                    VSpace(6.dp)
+                    BarStrip(edge, Modifier.fillMaxWidth().height(46.dp), hi = if (locked) null else sip.day?.minus(1), good = if (locked) emptySet() else sip.alternatives.map { it.day - 1 }.toSet())
+                    Row(Modifier.fillMaxWidth().padding(top = 3.dp)) { listOf("1", "7", "14", "21", "28").forEachIndexed { i, s -> if (i > 0) Spacer(Modifier.weight(1f)); Text(s, color = c.chromeMuted, fontSize = 9.5.sp) } }
+                }
+            }
+        }
+        // actions
+        Row(Modifier.padding(start = 18.dp, end = 18.dp, top = 12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            if (locked) GradientButton("Unlock with Pro", actions.openPlans, brush = c.hiBrush)
+            else {
+                GradientButton("Remind me", { actions.setReminder(sip.day!!) }, Modifier.weight(1.4f), brush = c.hiBrush, leading = { Icon(Icons.Outlined.NotificationsActive, null, tint = Color.White, modifier = Modifier.size(18.dp)) })
+                Box(Modifier.weight(1f).height(52.dp).clip(RoundedCornerShape(14.dp)).background(Color.White.copy(alpha = .1f)).border(1.dp, Color.White.copy(alpha = .18f), RoundedCornerShape(14.dp)).clickable(onClick = actions.whyDate), contentAlignment = Alignment.Center) {
+                    Text("Why ${sip.day}${sfx(sip.day!!)}?", color = Color.White, style = MaterialTheme.typography.labelLarge)
+                }
+            }
         }
     }
 }
 
+/** Your edge since 2021: the backtest (POST /calc/sip-compare) on the checkered chart with the three totals. */
 @Composable
-private fun BigDay(day: Int, modifier: Modifier = Modifier) {
-    Row(modifier, verticalAlignment = Alignment.Top) {
-        Text("$day", color = Ma.c.chromeText, fontSize = 80.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-3).sp, lineHeight = 84.sp)
-        Text(suffix(day), color = Ma.c.chromeText, fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp, top = 14.dp))
-    }
-}
-
-@Composable
-private fun Chip(text: String, color: Color) {
-    Text(text, Modifier.clip(CircleShape).background(Ma.c.chrome2).border(1.dp, Ma.c.chromeLine, CircleShape).padding(horizontal = 11.dp, vertical = 6.dp),
-        color = color, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold)
-}
-
-/** What the dates are worth: the backtest from POST /calc/sip-compare on the standard checkered chart. */
-@Composable
-private fun ValueCard(c: SipCompare, modifier: Modifier = Modifier) {
-    MaCard(modifier.fillMaxWidth()) {
+private fun EdgeCard(c: SipCompare, modifier: Modifier = Modifier) {
+    MaCard(modifier.fillMaxWidth(), padding = 14.dp) {
         Column {
             Row(verticalAlignment = Alignment.Top) {
                 Column(Modifier.weight(1f)) {
-                    Text("${inr(c.amount.toLong())} a month since ${c.since}", color = Ma.c.muted, style = MaterialTheme.typography.bodySmall)
-                    Text("Mod Alpha dates would have added", color = Ma.c.sub, style = MaterialTheme.typography.bodyMedium)
+                    Text("YOUR EDGE SINCE ${c.since}", color = Ma.c.muted, fontSize = 10.5.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp)
+                    Text("${inr(c.amount.toLong())}/month on Mod Alpha dates", color = Ma.c.sub, fontSize = 12.sp)
                 }
-                Spacer(Modifier.width(10.dp))
-                Text((if (c.extra >= 0) "+" else "−") + inr(kotlin.math.abs(c.extra)), color = if (c.extra >= 0) Ma.c.up else Ma.c.down, fontSize = 22.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                Text((if (c.extra >= 0) "+" else "−") + inr(kotlin.math.abs(c.extra)), color = if (c.extra >= 0) Ma.c.up else Ma.c.down, fontSize = 22.sp, fontWeight = FontWeight.Black)
             }
-            VSpace(12.dp)
-            val years = c.points.map { it.month.take(4) }.distinct()
+            VSpace(8.dp)
             GridChart(
-                series = listOf(
-                    ChartSeries(c.points.map { it.modAlpha.toDouble() }, Ma.c.accent, fill = true),
-                    ChartSeries(c.points.map { it.fixed.toDouble() }, Ma.c.muted, dashed = true),
-                ),
-                xLabels = if (years.size > 4) listOf(years.first(), years[years.size / 3], years[2 * years.size / 3], years.last()) else years,
-                yFormat = ::inrShort,
-                modifier = Modifier.fillMaxWidth().height(150.dp),
+                listOf(ChartSeries(c.points.map { it.modAlpha.toDouble() }, Ma.c.accent, fill = true), ChartSeries(c.points.map { it.fixed.toDouble() }, Ma.c.muted, dashed = true)),
+                emptyList(), Modifier.fillMaxWidth().height(96.dp), yFormat = { inrShort(it) }, glow = true, showY = false,
             )
             VSpace(10.dp)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Legend(Ma.c.accent, "Mod Alpha dates"); Spacer(Modifier.width(14.dp))
-                Legend(Ma.c.muted, "Fixed date (${c.fixedDay}${suffix(c.fixedDay)})"); Spacer(Modifier.weight(1f))
-                Text("Backtest", color = Ma.c.muted, style = MaterialTheme.typography.bodySmall)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Mini("Invested", inrShort(c.invested.toDouble()), Ma.c.text, Modifier.weight(1f))
+                Mini("Fixed ${c.fixedDay}${sfx(c.fixedDay)}", inrShort(c.fixedValue.toDouble()), Ma.c.text, Modifier.weight(1f))
+                Mini("Mod Alpha", inrShort(c.modAlphaValue.toDouble()), Ma.c.up, Modifier.weight(1f))
             }
         }
     }
 }
 
-@Composable
-private fun Legend(color: Color, text: String) {
-    Box(Modifier.width(10.dp).height(3.dp).clip(CircleShape).background(color)); Spacer(Modifier.width(5.dp))
-    Text(text, color = Ma.c.muted, style = MaterialTheme.typography.bodySmall)
+@Composable private fun Mini(k: String, v: String, col: Color, modifier: Modifier) = Column(modifier.clip(RoundedCornerShape(12.dp)).background(Ma.c.surface2).padding(horizontal = 10.dp, vertical = 8.dp)) {
+    Text(k, color = Ma.c.muted, fontSize = 10.5.sp, maxLines = 1); Text(v, color = col, fontWeight = FontWeight.Bold, fontSize = 14.sp)
 }
 
 @Composable
 private fun Watchlist(list: List<Fund>, actions: HomeActions) {
-    Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp)) {
-        if (list.isEmpty()) {
-            Text("Start a watchlist", color = Ma.c.text, style = MaterialTheme.typography.titleMedium)
-            VSpace(10.dp)
-            MaCard(Modifier.fillMaxWidth().clickable(onClick = actions.openFunds), padding = 14.dp) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(38.dp).clip(RoundedCornerShape(10.dp)).background(Ma.c.surface2), contentAlignment = Alignment.Center) {
-                        Icon(Icons.Outlined.StarOutline, null, tint = Ma.c.warn, modifier = Modifier.size(20.dp))
-                    }
-                    Spacer(Modifier.width(12.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text("Track funds you like", color = Ma.c.text, style = MaterialTheme.typography.titleMedium)
-                        Text("Tap ☆ on any fund in Explore", color = Ma.c.muted, style = MaterialTheme.typography.bodySmall)
-                    }
-                    Text("Explore", color = Ma.c.accent, fontWeight = FontWeight.SemiBold)
-                }
+    Row(Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 16.dp, bottom = 8.dp), verticalAlignment = Alignment.Bottom) {
+        Text("Watchlist", color = Ma.c.text, fontSize = 15.5.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+        Text(if (list.isEmpty()) "Explore" else "See all", color = Ma.c.accent, fontWeight = FontWeight.SemiBold, fontSize = 12.5.sp, modifier = Modifier.clickable(onClick = actions.openFunds))
+    }
+    if (list.isEmpty()) {
+        MaCard(Modifier.padding(horizontal = 18.dp).fillMaxWidth().clickable(onClick = actions.openFunds), padding = 14.dp) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(38.dp).clip(RoundedCornerShape(11.dp)).background(Ma.c.surface2), contentAlignment = Alignment.Center) { Icon(Icons.Outlined.StarOutline, null, tint = Ma.c.warn, modifier = Modifier.size(20.dp)) }
+                Spacer(Modifier.width(12.dp))
+                Column { Text("Track funds you like", color = Ma.c.text, fontWeight = FontWeight.SemiBold); Text("Tap ☆ on any fund in Explore", color = Ma.c.muted, fontSize = 12.sp) }
             }
-            return@Column
         }
-        Row(verticalAlignment = Alignment.Bottom) {
-            Text("Watchlist", color = Ma.c.text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-            Text("See all", color = Ma.c.accent, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, modifier = Modifier.clickable(onClick = actions.openFunds))
-        }
-        VSpace(4.dp)
-        list.take(3).forEachIndexed { i, f ->
-            if (i > 0) HorizontalDivider(color = Ma.c.line)
-            Row(Modifier.fillMaxWidth().clickable { actions.openFund(f.id) }.padding(vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
-                AmcLogo(f.amc, 38.dp); Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(f.short, color = Ma.c.text, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(f.category, color = Ma.c.muted, style = MaterialTheme.typography.bodySmall)
-                }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(pct(f.r5), color = if ((f.r5 ?: 0.0) >= 0) Ma.c.up else Ma.c.down, fontWeight = FontWeight.Bold)
-                    Text("5Y", color = Ma.c.muted, style = MaterialTheme.typography.bodySmall)
+        return
+    }
+    Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        list.forEach { f ->
+            MaCard(Modifier.width(156.dp).clickable { actions.openFund(f.id) }, padding = 12.dp) {
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) { AmcLogo(f.amc, 28.dp); Spacer(Modifier.width(8.dp)); Text(f.category, color = Ma.c.muted, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                    Text(f.short, color = Ma.c.text, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(pct(f.r5), color = if ((f.r5 ?: 0.0) >= 0) Ma.c.up else Ma.c.down, fontWeight = FontWeight.Black, fontSize = 15.sp, modifier = Modifier.weight(1f))
+                        if (f.spark.size > 1) Sparkline(f.spark, Ma.c.up, Modifier.width(54.dp).height(22.dp))
+                    }
                 }
             }
         }

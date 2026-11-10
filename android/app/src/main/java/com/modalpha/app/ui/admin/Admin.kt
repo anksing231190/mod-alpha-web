@@ -62,6 +62,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -109,6 +110,11 @@ import com.modalpha.app.ui.kit.Tone
 import com.modalpha.app.ui.kit.rememberLoad
 import com.modalpha.app.ui.theme.AppTheme
 import com.modalpha.app.ui.theme.Ma
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.ui.graphics.Brush
+import com.modalpha.app.data.Analytics
+import com.modalpha.app.ui.components.*
 import kotlinx.coroutines.launch
 import java.time.YearMonth
 import java.time.format.TextStyle
@@ -141,12 +147,15 @@ fun AdminTabs(me: User, repo: Repository, session: SessionViewModel, bio: Biomet
     CompositionLocalProvider(LocalAdmin provides nav) {
         Box(Modifier.fillMaxSize()) {
             Scaffold(containerColor = Ma.c.bg, snackbarHost = { SnackbarHost(snack) }, bottomBar = {
-                Row(Modifier.fillMaxWidth().background(Ma.c.chrome).navigationBarsPadding().height(66.dp).padding(horizontal = 6.dp), horizontalArrangement = Arrangement.SpaceAround, verticalAlignment = Alignment.CenterVertically) {
-                    AdminTab.entries.forEach { t ->
-                        val on = t == tab
-                        Column(Modifier.width(66.dp).clip(RoundedCornerShape(12.dp)).clickable(role = Role.Tab) { tab = t }.padding(vertical = 6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(t.icon, null, tint = if (on) Ma.c.hi else Ma.c.chromeMuted, modifier = Modifier.size(23.dp)); VSpace(3.dp)
-                            Text(t.label, color = if (on) Ma.c.chromeText else Ma.c.chromeMuted, fontSize = 11.sp, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal, maxLines = 1)
+                Box(Modifier.fillMaxWidth().navigationBarsPadding().padding(start = 12.dp, end = 12.dp, bottom = 10.dp, top = 6.dp)) {
+                    Row(Modifier.fillMaxWidth().height(64.dp).clip(RoundedCornerShape(24.dp)).background(Ma.c.chrome.copy(alpha = .96f)).border(1.dp, Color.White.copy(alpha = .08f), RoundedCornerShape(24.dp)),
+                        horizontalArrangement = Arrangement.SpaceAround, verticalAlignment = Alignment.CenterVertically) {
+                        AdminTab.entries.forEach { t ->
+                            val on = t == tab
+                            Column(Modifier.width(64.dp).clip(RoundedCornerShape(12.dp)).clickable(role = Role.Tab) { tab = t }.padding(vertical = 6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(t.icon, null, tint = if (on) Ma.c.hi else Ma.c.chromeMuted, modifier = Modifier.size(22.dp)); VSpace(3.dp)
+                                Text(t.label, color = if (on) Color.White else Ma.c.chromeMuted, fontSize = 10.5.sp, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal, maxLines = 1)
+                            }
                         }
                     }
                 }
@@ -187,50 +196,124 @@ private fun AdminHeader(title: String, sub: String? = null, extra: @Composable (
 
 /* ============================== Overview ============================== */
 
+private val PLAN_COLORS = listOf(Color(0xFF94A3B8), Color(0xFF6366F1), Gold, Color(0xFF10B981), Color(0xFFEC4899))
+
 @Composable
 private fun OverviewTab(bottom: Dp) {
     val a = LocalAdmin.current
     val o = rememberLoad { a.repo.adminOverview() }
     Column(Modifier.fillMaxSize()) {
         val r = (o.res as? Res.Ok)?.value
-        AdminHeader("Overview", r?.let { "${prettyDate(it.from)} – ${prettyDate(it.to)} · vs previous period" } ?: "This month")
+        AdminHeader("Overview", r?.let { "${prettyDate(it.from)} – ${prettyDate(it.to)} · vs previous period" } ?: "This month") {
+            if (r != null) {
+                VSpace(12.dp)
+                val users = r.series.map { it.newUsers.toDouble() }
+                var cum = 0.0; val rev = r.series.map { cum += it.revenue; cum }
+                Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        GlassKpi("Total users", "%,d".format(r.totalUsers.value.toLong()), r.totalUsers, users, Modifier.weight(1f))
+                        GlassKpi("Subscribers", "%,d".format(r.activeSubs.value.toLong()), r.activeSubs, rev, Modifier.weight(1f))
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        GlassKpi("Revenue", inrShort(r.revenue.value), r.revenue, rev, Modifier.weight(1f), gold = true)
+                        GlassKpi("Conversion", "%.1f%%".format(r.conversion.value), r.conversion, users, Modifier.weight(1f), pp = true)
+                    }
+                }
+            }
+        }
         LoadBox(o) { d ->
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(bottom = bottom + 20.dp)) {
-                Row(Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    KpiTile("Total users", "%,d".format(d.totalUsers.value.toLong()), d.totalUsers, Icons.Outlined.Group, Modifier.weight(1f))
-                    KpiTile("Active subscribers", "%,d".format(d.activeSubs.value.toLong()), d.activeSubs, Icons.Outlined.WorkspacePremium, Modifier.weight(1f))
+            Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(top = 14.dp, bottom = bottom + 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // Plan mix donut
+                    MaCard(Modifier.weight(1.25f).fillMaxHeight(), padding = 14.dp) {
+                        Column {
+                            Text("Plan mix", color = Ma.c.text, fontWeight = FontWeight.SemiBold)
+                            VSpace(10.dp)
+                            val mix = d.planMix.filter { it.users > 0 }
+                            val tot = mix.sumOf { it.users }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Donut(mix.mapIndexed { i, p -> p.users.toFloat() to PLAN_COLORS[i % PLAN_COLORS.size] }, 74.dp, 11.dp) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(if (tot >= 10000) "%.1fK".format(tot / 1000.0) else "%,d".format(tot), color = Ma.c.text, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp)
+                                        Text("users", color = Ma.c.muted, fontSize = 9.5.sp)
+                                    }
+                                }
+                                HSpace(10.dp)
+                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    mix.forEachIndexed { i, p ->
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Box(Modifier.size(8.dp).clip(CircleShape).background(PLAN_COLORS[i % PLAN_COLORS.size])); HSpace(5.dp)
+                                            Text(p.plan, color = Ma.c.sub, fontSize = 11.5.sp, maxLines = 1)
+                                            HSpace(4.dp)
+                                            Text("${if (tot > 0) p.users * 100 / tot else 0}%", color = Ma.c.text, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // Support tile
+                    Column(
+                        Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(20.dp)).background(Brush.linearGradient(listOf(Color(0xFF7C3AED), Color(0xFF4F46E5))))
+                            .clickable { a.tab(AdminTab.Support) }.padding(14.dp),
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Outlined.SupportAgent, null, tint = Color.White, modifier = Modifier.size(18.dp)); HSpace(6.dp)
+                            Text("Support", color = Color.White, fontWeight = FontWeight.SemiBold)
+                        }
+                        VSpace(6.dp)
+                        Text("${d.openTickets}", color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold)
+                        Text("waiting", color = Color.White.copy(alpha = .8f), fontSize = 12.sp)
+                        Spacer(Modifier.weight(1f))
+                        Text(listOfNotNull(d.avgReplyHours?.let { "avg reply %.1fh".format(it) }, d.oldestWaiting?.let { "oldest ${prettyDate(it).substringBeforeLast(" ")}" }).joinToString(" · ").ifEmpty { "All caught up" },
+                            color = Color.White.copy(alpha = .85f), fontSize = 11.sp, lineHeight = 14.sp)
+                    }
                 }
-                Row(Modifier.padding(start = 20.dp, end = 20.dp, top = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    KpiTile("Revenue", inrShort(d.revenue.value), d.revenue, Icons.Outlined.TrendingUp, Modifier.weight(1f))
-                    KpiTile("Conversion", "%.1f%%".format(d.conversion.value), d.conversion, Icons.Outlined.Insights, Modifier.weight(1f), pp = true)
+                d.funnel?.let { f ->
+                    MaCard(Modifier.fillMaxWidth()) {
+                        Column {
+                            Row { Text("Sign-up funnel", color = Ma.c.text, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f)); Text("this period", color = Ma.c.muted, fontSize = 12.sp) }
+                            VSpace(10.dp)
+                            val top = f.signedUp.coerceAtLeast(1)
+                            listOf("Signed up" to f.signedUp, "Verified" to f.verified, "KYC done" to f.kyc, "Paid" to f.paid).forEachIndexed { i, (k, v) ->
+                                Row(Modifier.padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Text(k, Modifier.width(76.dp), color = Ma.c.sub, fontSize = 12.sp)
+                                    Box(Modifier.weight(1f).height(22.dp).clip(RoundedCornerShape(7.dp)).background(Ma.c.surface2)) {
+                                        Box(Modifier.fillMaxWidth((v.toFloat() / top).coerceIn(.04f, 1f)).height(22.dp).clip(RoundedCornerShape(7.dp))
+                                            .background(Brush.horizontalGradient(listOf(Ma.c.hi.copy(alpha = 1f - i * .18f), Ma.c.hi2.copy(alpha = 1f - i * .18f)))))
+                                    }
+                                    Text("%,d".format(v), Modifier.width(52.dp), color = Ma.c.text, fontSize = 12.5.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
+                                }
+                            }
+                            Text("${"%.1f".format(f.paid * 100.0 / top)}% of new sign-ups paid", color = Ma.c.muted, fontSize = 11.5.sp, modifier = Modifier.padding(top = 6.dp))
+                        }
+                    }
                 }
-                if (d.openTickets > 0) Row(
-                    Modifier.padding(start = 20.dp, end = 20.dp, top = 12.dp).fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFFDBEAFE)).clickable { a.tab(AdminTab.Support) }.padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(Icons.Outlined.SupportAgent, null, tint = Color(0xFF1E40AF)); Spacer(Modifier.width(10.dp))
-                    Text("${d.openTickets} support request${if (d.openTickets > 1) "s" else ""} waiting", Modifier.weight(1f), color = Color(0xFF1E3A8A), fontWeight = FontWeight.SemiBold)
-                    Text("Open", color = Color(0xFF1E40AF), fontWeight = FontWeight.Bold)
-                }
-                if (d.series.size > 1) MaCard(Modifier.padding(start = 20.dp, end = 20.dp, top = 12.dp).fillMaxWidth()) {
+                if (d.series.size > 1) MaCard(Modifier.fillMaxWidth()) {
                     Column {
                         Row { Text("Revenue", color = Ma.c.text, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f)); Text("${d.newUsers} new users", color = Ma.c.muted, fontSize = 12.5.sp) }
                         VSpace(10.dp)
                         var cum = 0.0
                         GridChart(listOf(ChartSeries(d.series.map { cum += it.revenue; cum }, Ma.c.accent, fill = true)),
                             listOf(d.series.first().bucket, d.series[d.series.size / 2].bucket, d.series.last().bucket).map { prettyDate(it).substringBeforeLast(" ") },
-                            Modifier.fillMaxWidth().height(150.dp), yFormat = { inrShort(it) })
+                            Modifier.fillMaxWidth().height(140.dp), yFormat = { inrShort(it) }, glow = true)
                         Text("Cumulative revenue this period", color = Ma.c.muted, fontSize = 11.5.sp, modifier = Modifier.padding(top = 6.dp))
                     }
                 }
-                SectionTitle("Recent sign-ups", "All users") { a.tab(AdminTab.Users) }
-                CardList(rows = d.signups.map { s -> { Row(Modifier.fillMaxWidth().padding(vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp, start = 4.dp)) {
+                    Text("Recent sign-ups", color = Ma.c.text, fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.weight(1f))
+                    Text("All users", Modifier.clickable { a.tab(AdminTab.Users) }, color = Ma.c.accent, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                }
+                CardList(Modifier.padding(horizontal = 0.dp), rows = d.signups.map { s -> { Row(Modifier.fillMaxWidth().padding(vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
                     Avatar(s.name); Spacer(Modifier.width(10.dp))
                     Column(Modifier.weight(1f)) { Text(s.name, color = Ma.c.text, fontWeight = FontWeight.SemiBold, fontSize = 14.sp); Text("${s.contact} · ${prettyDate(s.date)}", color = Ma.c.muted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) }
                     Tag(s.status, statusTone(s.status))
                 } } })
-                SectionTitle("Recent subscriptions", "Payments") { a.tab(AdminTab.More) }
-                CardList(rows = d.subs.map { s -> { Row(Modifier.fillMaxWidth().padding(vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp, start = 4.dp)) {
+                    Text("Recent subscriptions", color = Ma.c.text, fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.weight(1f))
+                    Text("Payments", Modifier.clickable { a.tab(AdminTab.More) }, color = Ma.c.accent, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                }
+                CardList(Modifier.padding(horizontal = 0.dp), rows = d.subs.map { s -> { Row(Modifier.fillMaxWidth().padding(vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) { Text(s.name, color = Ma.c.text, fontWeight = FontWeight.SemiBold, fontSize = 14.sp); Text("${s.plan} · ${s.cycle} · ${prettyDate(s.date)}", color = Ma.c.muted, fontSize = 12.sp) }
                     Text(inr(s.amount.toLong()), color = Ma.c.text, fontWeight = FontWeight.Bold)
                 } } })
@@ -239,14 +322,19 @@ private fun OverviewTab(bottom: Dp) {
     }
 }
 
+/** KPI on the dark header: value, change and a sparkline. */
 @Composable
-private fun KpiTile(label: String, value: String, k: Kpi, icon: ImageVector, modifier: Modifier, pp: Boolean = false) {
-    MaCard(modifier, padding = 14.dp) {
+private fun GlassKpi(label: String, value: String, k: Kpi, spark: List<Double>, modifier: Modifier, pp: Boolean = false, gold: Boolean = false) {
+    GlassCard(modifier, gold = gold) {
         Column {
-            Row(verticalAlignment = Alignment.CenterVertically) { Icon(icon, null, tint = Ma.c.accent, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text(label, color = Ma.c.muted, fontSize = 12.sp, maxLines = 1) }
-            VSpace(8.dp)
-            Text(value, color = Ma.c.text, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
-            k.changePct?.let { Text(if (pp) (if (it >= 0) "▲ " else "▼ ") + "%.1f pts".format(kotlin.math.abs(it)) else pctTxt(it), color = if (it >= 0) Ma.c.up else Ma.c.down, fontSize = 12.sp, fontWeight = FontWeight.SemiBold) }
+            Text(label.uppercase(), color = if (gold) Gold else Ma.c.chromeMuted, fontSize = 9.5.sp, fontWeight = FontWeight.Bold, letterSpacing = .8.sp, maxLines = 1)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(value, color = Ma.c.chromeText, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, modifier = Modifier.weight(1f))
+                if (spark.size > 1) Sparkline(spark, if (gold) SoftGold else SoftUp, Modifier.size(48.dp, 22.dp))
+            }
+            k.changePct?.let {
+                Text(if (pp) (if (it >= 0) "▲ " else "▼ ") + "%.1f pts".format(kotlin.math.abs(it)) else pctTxt(it), color = if (it >= 0) Mint else Color(0xFFF87171), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
@@ -349,34 +437,74 @@ private fun UserDetailScreen(id: String) {
 
 /* ============================== Support ============================== */
 
+private fun statusColor(s: String) = when (s) { "Open" -> Color(0xFF2563EB); "In progress" -> Color(0xFFD97706); "Answered" -> Color(0xFF059669); else -> Color(0xFF94A3B8) }
+
 @Composable
 private fun SupportTab(bottom: Dp) {
     val a = LocalAdmin.current
     var st by rememberSaveable { mutableStateOf("Open") }
     val l = rememberLoad(st) { a.repo.adminTickets(st.takeIf { it != "All" }) }
+    val avg = rememberLoad { a.repo.adminOverview().avgReplyHours }
     val counts = (l.res as? Res.Ok)?.value?.second.orEmpty()
     Column(Modifier.fillMaxSize()) {
-        AdminHeader("Support inbox", "${(counts["Open"] ?: 0) + (counts["In progress"] ?: 0)} waiting · replies are emailed and shown in the user's app") {
+        AdminHeader("Support inbox") {
+            Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("Open", "In progress", "Answered").forEach { s ->
+                    GlassCard(Modifier.weight(1f).clickable { st = s }, gold = s == st) {
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(Modifier.size(7.dp).clip(CircleShape).background(statusColor(s))); HSpace(5.dp)
+                                Text((if (s == "In progress") "Working" else s).uppercase(), color = Ma.c.chromeMuted, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = .6.sp, maxLines = 1)
+                            }
+                            Text("${counts[s] ?: 0}", color = Ma.c.chromeText, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
+                        }
+                    }
+                }
+                GlassCard(Modifier.weight(1f)) {
+                    Column {
+                        Text("AVG REPLY", color = Ma.c.chromeMuted, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = .6.sp, maxLines = 1)
+                        Text((avg.res as? Res.Ok)?.value?.let { "%.1fh".format(it) } ?: "—", color = Mint, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
+                    }
+                }
+            }
             VSpace(12.dp)
             Chips(listOf("Open", "In progress", "Answered", "Closed", "All"), st, { st = it }, dark = true)
         }
         LoadBox(l) { (list, _) ->
             if (list.isEmpty()) Empty(Icons.Outlined.CheckCircle, "Nothing here", if (st == "Open") "No open requests. Nice." else "No requests with this status.")
-            else Column(Modifier.verticalScroll(rememberScrollState()).padding(top = 12.dp, bottom = bottom + 20.dp)) {
-                CardList(rows = list.map { t -> {
-                    Column(Modifier.fillMaxWidth().clickable { a.push(AdminRoute.Ticket(t)) }.padding(vertical = 12.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(t.topic, Modifier.weight(1f), color = Ma.c.accent, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            Tag(t.status, statusTone(t.status))
+            else Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(top = 14.dp, bottom = bottom + 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                list.forEach { t ->
+                    val col = statusColor(t.status)
+                    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min).clip(RoundedCornerShape(16.dp)).background(Ma.c.surface).border(1.dp, Ma.c.line, RoundedCornerShape(16.dp)).clickable { a.push(AdminRoute.Ticket(t)) }) {
+                        Box(Modifier.width(5.dp).fillMaxHeight().background(col))
+                        Column(Modifier.weight(1f).padding(12.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(t.topic, Modifier.clip(CircleShape).background(col.copy(alpha = .12f)).padding(horizontal = 8.dp, vertical = 2.dp), color = col, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                Spacer(Modifier.weight(1f))
+                                Text(prettyDate(t.createdAt), color = Ma.c.muted, fontSize = 11.sp)
+                            }
+                            VSpace(6.dp)
+                            Text(t.message, color = Ma.c.text, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            VSpace(6.dp)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Avatar(t.name ?: t.email); HSpace(8.dp)
+                                Text("${t.name ?: t.email} · #${t.number}", Modifier.weight(1f), color = Ma.c.muted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Tag(t.status, statusTone(t.status))
+                            }
                         }
-                        Text(t.message, color = Ma.c.text, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                        Text("${t.name ?: t.email} · #${t.number} · ${prettyDate(t.createdAt)}", color = Ma.c.muted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
-                } })
+                }
             }
         }
     }
 }
+
+private val QUICK = listOf(
+    "Thanks for writing in — we're looking into this and will update you shortly.",
+    "Your payment has been confirmed and your plan is active now.",
+    "Please update the app and sign in again; that should fix it.",
+    "The best SIP date is published by the 25th for the next month.",
+)
 
 @Composable
 private fun TicketScreen(t0: AdminTicket) {
@@ -395,9 +523,18 @@ private fun TicketScreen(t0: AdminTicket) {
             busy = false
         }
     }
-    Screen("#${t.number}", onBack = a.pop, bottom = {
+    Screen("#${t.number}", onBack = a.pop, header = {
+        Row(Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
+            GhostChip(t.topic); HSpace(8.dp); GhostChip(t.status, gold = t.status == "Open")
+            Spacer(Modifier.weight(1f))
+            Text(prettyDate(t.createdAt), color = Ma.c.chromeMuted, fontSize = 12.sp)
+        }
+    }, bottom = {
         Column {
-            OutlinedTextField(reply, { reply = it.take(4000) }, Modifier.fillMaxWidth().height(110.dp), placeholder = { Text("Write a reply… (emailed to ${t.email})") },
+            Row(Modifier.horizontalScroll(rememberScrollState()).padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                QUICK.forEach { q -> Text(q.take(28) + "…", Modifier.clip(CircleShape).background(Ma.c.accent.copy(alpha = .1f)).clickable { reply = q }.padding(horizontal = 10.dp, vertical = 6.dp), color = Ma.c.accent, fontSize = 12.sp, fontWeight = FontWeight.SemiBold) }
+            }
+            OutlinedTextField(reply, { reply = it.take(4000) }, Modifier.fillMaxWidth().height(100.dp), placeholder = { Text("Write a reply… (emailed to ${t.email})") },
                 shape = RoundedCornerShape(14.dp), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Ma.c.accent, unfocusedBorderColor = Ma.c.line))
             VSpace(10.dp)
             GradientButton("Send reply", { update(reply.trim(), null) }, loading = busy, enabled = reply.trim().length >= 2)
@@ -405,15 +542,15 @@ private fun TicketScreen(t0: AdminTicket) {
     }) {
         Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(t.topic, Modifier.weight(1f), color = Ma.c.accent, fontWeight = FontWeight.SemiBold); Tag(t.status, statusTone(t.status))
+                Avatar(t.name ?: t.email); HSpace(10.dp)
+                Column { Text(t.name ?: "Visitor", color = Ma.c.text, fontWeight = FontWeight.SemiBold); Text(t.email, color = Ma.c.muted, fontSize = 12.5.sp) }
             }
-            VSpace(6.dp)
-            Text("${t.name ?: "Visitor"} · ${t.email} · ${prettyDate(t.createdAt)}", color = Ma.c.muted, fontSize = 12.5.sp)
             VSpace(12.dp)
-            Text(t.message, Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Ma.c.surface).border(1.dp, Ma.c.line, RoundedCornerShape(16.dp)).padding(14.dp), color = Ma.c.text, fontSize = 15.sp)
+            Text(t.message, Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp, 18.dp, 18.dp, 6.dp)).background(Ma.c.surface).border(1.dp, Ma.c.line, RoundedCornerShape(18.dp, 18.dp, 18.dp, 6.dp)).padding(14.dp), color = Ma.c.text, fontSize = 15.sp)
             t.reply?.let {
-                VSpace(12.dp); Caption("Our reply", Modifier.padding(bottom = 6.dp))
-                Text(it, Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Ma.c.accent.copy(alpha = .07f)).padding(14.dp), color = Ma.c.text, fontSize = 14.5.sp)
+                VSpace(12.dp)
+                Text(it, Modifier.padding(start = 40.dp).fillMaxWidth().clip(RoundedCornerShape(18.dp, 18.dp, 6.dp, 18.dp)).background(Ma.c.accentBrush).padding(14.dp), color = Color.White, fontSize = 14.5.sp)
+                Text("Our reply", Modifier.fillMaxWidth().padding(top = 4.dp), color = Ma.c.muted, fontSize = 11.sp, textAlign = TextAlign.End)
             }
             VSpace(14.dp)
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -439,29 +576,50 @@ private fun SipDateTab(bottom: Dp) {
     var busy by remember { mutableStateOf(false) }
     var confirm by remember { mutableStateOf(false) }
     var err by remember { mutableStateOf<String?>(null) }
+    val hist = rememberLoad { a.repo.sipHistory().first }
     val altList = alts.split(",", " ").mapNotNull { it.trim().toIntOrNull() }.filter { it in 1..28 && it != day }.distinct().take(3).map { AltDay(it, null) }
+    val up = uplift.toDoubleOrNull()
+    val (confPct, confLabel) = Analytics.confidence(up, altList.map { up?.let { u -> u * .6 } })
     fun mName(m: String) = YearMonth.parse(m).let { it.month.getDisplayName(TextStyle.SHORT, Locale.ENGLISH) + " " + it.year }
     fun validate(then: (() -> Unit)? = null) {
         busy = true; err = null
         scope.launch { runCatching { a.repo.adminValidateSip(month, day, reason.trim().ifEmpty { "Checking the date" }, uplift.toDoubleOrNull(), altList) }.onSuccess { check = it; then?.invoke() }.onFailure { err = it.message }; busy = false }
     }
     Column(Modifier.fillMaxSize()) {
-        AdminHeader("Publish SIP date", "Checks, then publishes and schedules the subscriber reminders")
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = bottom + 20.dp)) {
-            Caption("Month", Modifier.padding(bottom = 8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { months.forEach { m -> Pick(mName(m), m == month, Modifier.weight(1f)) { month = m; check = null } } }
-            Caption("Best day", Modifier.padding(top = 16.dp, bottom = 8.dp))
-            (1..28).chunked(7).forEach { w ->
-                Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    w.forEach { d -> val on = d == day; val alt = altList.any { it.day == d }
-                        Box(Modifier.weight(1f).height(40.dp).clip(RoundedCornerShape(10.dp)).background(if (on) Ma.c.accent else Ma.c.surface)
-                            .border(if (on) 2.dp else 1.dp, if (on) Ma.c.gold else if (alt) Ma.c.up else Ma.c.line, RoundedCornerShape(10.dp)).clickable { day = d; check = null }, contentAlignment = Alignment.Center) {
-                            Text("$d", color = if (on) Color.White else Ma.c.text, fontWeight = FontWeight.SemiBold)
+        AdminHeader("Publish SIP date") {
+            Column(Modifier.padding(horizontal = 16.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    months.forEach { m ->
+                        val on = m == month
+                        Text(mName(m), Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).background(if (on) Color.White.copy(alpha = .16f) else Color.White.copy(alpha = .05f))
+                            .border(1.dp, if (on) Gold.copy(alpha = .6f) else Color.White.copy(alpha = .1f), RoundedCornerShape(10.dp)).clickable { month = m; check = null }.padding(vertical = 8.dp),
+                            color = if (on) Ma.c.chromeText else Ma.c.chromeMuted, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
+                    }
+                }
+                VSpace(10.dp)
+                (1..28).chunked(7).forEach { w ->
+                    Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                        w.forEach { d ->
+                            val on = d == day; val alt = altList.any { it.day == d }
+                            Box(
+                                Modifier.weight(1f).height(34.dp).clip(RoundedCornerShape(9.dp))
+                                    .background(if (on) Brush.linearGradient(listOf(Gold, GoldDeep)) else Brush.linearGradient(listOf(Color.White.copy(alpha = if (alt) .14f else .06f), Color.White.copy(alpha = if (alt) .14f else .06f))))
+                                    .border(1.dp, if (alt) Mint.copy(alpha = .7f) else Color.Transparent, RoundedCornerShape(9.dp)).clickable { day = d; check = null },
+                                contentAlignment = Alignment.Center,
+                            ) { Text("$d", color = if (on) Color(0xFF3B2405) else Ma.c.chromeText, fontWeight = if (on) FontWeight.ExtraBold else FontWeight.SemiBold, fontSize = 13.sp) }
                         }
                     }
                 }
+                VSpace(10.dp)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    GlassCard(Modifier.weight(1f)) { StatBlock("Confidence", "$confPct%", confLabel, valueColor = if (confPct >= 80) Mint else Gold, valueSize = 18) }
+                    GlassCard(Modifier.weight(1f)) { StatBlock("Uplift", up?.let { pct(it) } ?: "—", "vs the 1st", valueSize = 18) }
+                    GlassCard(Modifier.weight(1f)) { StatBlock("Reminders", check?.let { "%,d".format(it.recipients) } ?: "—", "subscribers", valueSize = 18) }
+                }
             }
-            Row(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        }
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = bottom + 20.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Field("Uplift vs 1st (%)", uplift, { uplift = it.filter { c -> c.isDigit() || c == '.' || c == '-' }.take(6); check = null }, Modifier.weight(1f), KeyboardType.Decimal)
                 Field("Good days (up to 3)", alts, { alts = it.filter { c -> c.isDigit() || c == ',' || c == ' ' }.take(12); check = null }, Modifier.weight(1.3f), KeyboardType.Number)
             }
@@ -471,7 +629,11 @@ private fun SipDateTab(bottom: Dp) {
             check?.let { v ->
                 MaCard(Modifier.fillMaxWidth(), padding = 14.dp) {
                     Column {
-                        Text("Checks for ${prettyDate(v.date)}", color = Ma.c.text, fontWeight = FontWeight.SemiBold); VSpace(6.dp)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Checks for ${prettyDate(v.date)}", color = Ma.c.text, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                            Tag(if (v.ok) "Ready" else "Blocked", if (v.ok) Tone.Green else Tone.Red)
+                        }
+                        VSpace(6.dp)
                         v.checks.forEach { c ->
                             Row(Modifier.padding(vertical = 4.dp)) {
                                 val (ic, col) = when (c.level) { "error" -> Icons.Outlined.ErrorOutline to Ma.c.down; "warn" -> Icons.Outlined.Warning to Ma.c.warn; else -> Icons.Outlined.CheckCircle to Ma.c.up }
@@ -489,6 +651,22 @@ private fun SipDateTab(bottom: Dp) {
                 GradientButton("Publish", { validate { confirm = true } }, Modifier.weight(1.4f), loading = busy, enabled = reason.trim().length >= 5)
             }
             if (reason.trim().length < 5) Text("Add a reason (at least 5 characters) to publish.", Modifier.padding(top = 8.dp), color = Ma.c.muted, fontSize = 12.sp)
+            // Last 6 published months
+            val past = (hist.res as? Res.Ok)?.value.orEmpty().filter { it.day != null }.take(6).reversed()
+            if (past.size > 1) {
+                VSpace(14.dp)
+                MaCard(Modifier.fillMaxWidth()) {
+                    Column {
+                        Text("Last ${past.size} months", color = Ma.c.text, fontWeight = FontWeight.SemiBold)
+                        Caption("Published date and its edge over the 1st")
+                        VSpace(10.dp)
+                        Row(Modifier.fillMaxWidth()) { past.forEach { Text(pct(it.upliftPct), Modifier.weight(1f), color = if ((it.upliftPct ?: 0.0) >= 0) Ma.c.up else Ma.c.down, fontSize = 10.5.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, maxLines = 1) } }
+                        BarStrip(past.map { it.upliftPct ?: 0.0 }, Modifier.fillMaxWidth().height(70.dp), hi = past.lastIndex, good = past.indices.filter { (past[it].upliftPct ?: 0.0) > 0 }.toSet(), gap = 10.dp, signed = true)
+                        VSpace(4.dp)
+                        Row(Modifier.fillMaxWidth()) { past.forEach { m -> Text("${m.day}${ordinalSfx(m.day!!)} " + YearMonth.parse(m.month).month.getDisplayName(TextStyle.SHORT, Locale.ENGLISH), Modifier.weight(1f), color = Ma.c.muted, fontSize = 10.sp, textAlign = TextAlign.Center, maxLines = 1) } }
+                    }
+                }
+            }
         }
     }
     if (confirm) check?.let { v ->
@@ -497,11 +675,14 @@ private fun SipDateTab(bottom: Dp) {
             text = { Text(if (!v.ok) v.checks.filter { it.level == "error" }.joinToString("\n") { it.msg } else (if (v.existingDay != null) "This replaces the ${v.existingDay} for ${mName(month)} and notifies subscribers of the change. " else "") + "${"%,d".format(v.recipients)} subscribers get a reminder.", color = Ma.c.sub) },
             confirmButton = { if (v.ok) TextButton({
                 confirm = false; busy = true
-                scope.launch { runCatching { a.repo.adminPublishSip(month, day, reason.trim(), uplift.toDoubleOrNull(), altList) }.onSuccess { a.toast(it); check = null; reason = "" }.onFailure { err = it.message }; busy = false }
+                scope.launch { runCatching { a.repo.adminPublishSip(month, day, reason.trim(), uplift.toDoubleOrNull(), altList) }.onSuccess { a.toast(it); check = null; reason = ""; hist.reload() }.onFailure { err = it.message }; busy = false }
             }) { Text("Publish", color = Ma.c.accent, fontWeight = FontWeight.SemiBold) } },
             dismissButton = { TextButton({ confirm = false }) { Text(if (v.ok) "Cancel" else "OK", color = Ma.c.muted) } })
     }
 }
+
+private fun ordinalSfx(n: Int) = when { n % 100 in 11..13 -> "th"; n % 10 == 1 -> "st"; n % 10 == 2 -> "nd"; n % 10 == 3 -> "rd"; else -> "th" }
+private fun pct(v: Double?) = v?.let { (if (it >= 0) "+" else "") + "%.1f%%".format(it) } ?: "—"
 
 @Composable private fun Pick(t: String, on: Boolean, modifier: Modifier, onClick: () -> Unit) =
     Text(t, modifier.clip(RoundedCornerShape(12.dp)).background(if (on) Ma.c.accent else Ma.c.surface).border(1.dp, if (on) Ma.c.accent else Ma.c.line, RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(vertical = 11.dp),

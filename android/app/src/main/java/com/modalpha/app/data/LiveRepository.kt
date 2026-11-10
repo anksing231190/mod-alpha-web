@@ -65,7 +65,7 @@ class LiveRepository(context: Context, private val baseUrl: String) : Repository
 
     private fun JsonObject.toUser(): User {
         val u = (this["user"] as? JsonObject) ?: throw ApiException("Unexpected reply from the server")
-        return User(u.str("id") ?: "", u.str("name") ?: "Investor", u.str("email"), u.str("mobile"), u.str("role") ?: "user")
+        return User(u.str("id") ?: "", u.str("name") ?: "Investor", u.str("email"), u.str("mobile"), u.str("role") ?: "user", u.str("signupDate")?.take(10))
     }
 
     override suspend fun restore(): User? = if (!jar.hasSession()) null else runCatching { call("GET", "/auth/me").toUser() }.getOrNull()
@@ -113,6 +113,9 @@ class LiveRepository(context: Context, private val baseUrl: String) : Repository
                     day = c.int("recommended_day"),
                     upliftPct = c.num("uplift_pct"),
                     alternatives = (1..3).mapNotNull { i -> c.int("alt_day_$i")?.let { AltDay(it, c.num("alt_uplift_$i")) } },
+                    confidencePct = (c["confidence"] as? JsonObject).int("pct") ?: 0,
+                    confidenceLabel = (c["confidence"] as? JsonObject).str("label") ?: "",
+                    leadPts = (c["confidence"] as? JsonObject).num("gap"),
                 )
             },
             locked = (s["locked"] as? JsonPrimitive)?.content == "true",
@@ -133,7 +136,7 @@ class LiveRepository(context: Context, private val baseUrl: String) : Repository
             category = str("category") ?: "", r1 = ret?.num("1"), r3 = ret?.num("3"), r5 = ret?.num("5"),
             spark = (this["spark"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonPrimitive)?.content?.toDoubleOrNull() },
             r10 = ret?.num("10"), nav = num("nav"), navDate = str("navDate")?.take(10), aum = str("aum"), expense = num("expense"),
-            risk = str("riskLabel") ?: str("risk"), vol = num("vol"), benchmark = str("benchmark"),
+            risk = str("riskLabel") ?: str("risk"), vol = num("vol"), benchmark = str("benchmark"), sharpe = num("sharpe"),
         )
     }
 
@@ -196,6 +199,7 @@ class LiveRepository(context: Context, private val baseUrl: String) : Repository
         })
         return AskReply(r.str("reply") ?: "", (r["usage"] as? JsonObject).int("remainingToday"))
     }
+    override suspend fun aiLimitToday(): Int? = (call("GET", "/me/entitlements")["limits"] as? JsonObject).int("ai_queries_per_day")?.takeIf { it >= 0 }
     override suspend fun aiLeftToday(): Int? {
         val e = call("GET", "/me/entitlements")
         val lim = (e["limits"] as? JsonObject).int("ai_queries_per_day") ?: return null
@@ -278,6 +282,10 @@ class LiveRepository(context: Context, private val baseUrl: String) : Repository
             (r["signups"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.let { o -> RecentSignup(o.str("name") ?: "", o.str("contact") ?: "", o.str("signup_date")?.take(10) ?: "", o.str("status") ?: "") } },
             (r["subscriptions"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.let { o -> RecentSub(o.str("name") ?: "", o.str("plan") ?: "", o.str("cycle") ?: "", o.num("amount") ?: 0.0, o.str("start_date")?.take(10) ?: "", o.str("status") ?: "") } },
             (counts.int("Open") ?: 0) + (counts.int("In progress") ?: 0),
+            planMix = (mm["planMix"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.let { o -> PlanCount(o.str("plan") ?: "", o.int("users") ?: 0) } },
+            funnel = (mm["funnel"] as? JsonObject)?.let { f -> Funnel(f.int("signedUp") ?: 0, f.int("verified") ?: 0, f.int("kyc") ?: 0, f.int("paid") ?: 0) },
+            oldestWaiting = (mm["support"] as? JsonObject).str("oldest"),
+            avgReplyHours = (mm["support"] as? JsonObject).num("avgReplyHours"),
         )
     }
     private fun JsonObject.toAdminUser() = AdminUser(str("id") ?: "", str("ref") ?: str("external_ref") ?: "", str("name") ?: str("full_name") ?: "", str("email"), str("mobile"),
