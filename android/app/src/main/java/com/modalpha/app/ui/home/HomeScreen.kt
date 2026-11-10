@@ -71,7 +71,6 @@ import com.modalpha.app.ui.components.inr
 import com.modalpha.app.ui.components.inrShort
 import com.modalpha.app.ui.theme.Ma
 import java.time.LocalDate
-import java.time.LocalTime
 import java.time.YearMonth
 import java.time.format.TextStyle
 import java.time.temporal.ChronoUnit
@@ -132,9 +131,7 @@ private fun Hero(d: HomeData, today: LocalDate, actions: HomeActions) {
             }
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
-                val h = LocalTime.now().hour
-                Text(if (h < 12) "Good morning" else if (h < 17) "Good afternoon" else "Good evening", color = c.chromeMuted, fontSize = 12.sp)
-                Text(d.user.firstName, color = c.chromeText, fontSize = 17.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(d.user.firstName, color = c.chromeText, fontSize = 18.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             if (d.plan != "Free") { GhostChip(d.plan.uppercase(), gold = true); Spacer(Modifier.width(8.dp)) }
             Box(Modifier.size(40.dp).clip(RoundedCornerShape(13.dp)).background(Color.White.copy(alpha = .08f)).border(1.dp, Color.White.copy(alpha = .12f), RoundedCornerShape(13.dp)).clickable(onClick = actions.openNotifications), contentAlignment = Alignment.Center) {
