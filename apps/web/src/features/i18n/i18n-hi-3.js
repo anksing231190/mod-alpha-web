@@ -304,4 +304,7 @@ Object.assign(window.MA_I18N_DICT, {
   'Phone alerts': 'फ़ोन अलर्ट', 'On for this device.': 'इस डिवाइस पर चालू।', 'Get your SIP date reminder as a phone notification.': 'SIP तारीख का रिमाइंडर फ़ोन सूचना के रूप में पाएँ।', 'On': 'चालू', 'Turn on': 'चालू करें',
   'Popular banks': 'लोकप्रिय बैंक', 'All banks': 'सभी बैंक', 'Search banks': 'बैंक खोजें', 'Netbanking': 'नेटबैंकिंग', 'Card': 'कार्ड', 'Card number': 'कार्ड नंबर', 'Test mode': 'टेस्ट मोड', 'Secure checkout': 'सुरक्षित चेकआउट',
   'Reminders': 'रिमाइंडर', 'Billing': 'बिलिंग', 'Insights': 'इनसाइट्स', 'Account': 'अकाउंट', 'All': 'सभी',
+  'Theme': 'थीम', 'Midnight': 'मिडनाइट', 'Sand': 'सैंड', 'Ivory': 'आइवरी', 'Espresso': 'एस्प्रेसो', 'Auto': 'ऑटो',
+  'Dark, the original': 'डार्क, मूल थीम', 'Cream & beige': 'क्रीम और बेज', 'White & cream': 'सफ़ेद और क्रीम',
+  'Cream pages, dark sidebar': 'क्रीम पेज, गहरा साइडबार', 'Sand by day, Midnight at night': 'दिन में सैंड, रात में मिडनाइट', 'theme applied': 'थीम लागू',
 });

@@ -1127,3 +1127,8 @@ html[data-theme="light"] .ma-tk-st.blue{color:#1d4ed8}html[data-theme="light"] .
 .v22-pc .ma-lim-unl{display:inline-flex!important;flex-direction:row!important;align-items:center;gap:6px;flex:none;margin:0!important}
 .v22-pc .ma-lim-unl input{margin:0!important}
 @media (min-width:900px) and (max-width:1250px){.v22-pc .ma-lim-grid{grid-template-columns:1fr!important}}
+/* contrast fixes found by the all-screens audit */
+html[data-theme="light"] .ma-bill-kind{color:#6d28d9;background:rgba(109,40,217,.1)}
+html[data-theme="light"] .ma-bill-cn{color:#92400e!important}
+.v22-mailprev>small{color:#64748b!important}
+.v22-mini-table td{overflow:visible!important}
