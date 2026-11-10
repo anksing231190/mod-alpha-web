@@ -1150,3 +1150,15 @@ html[data-theme="light"] .ma-cmd mark{color:#155e75!important}
 .ma-cmd [aria-selected="true"] small,.ma-cmd .on small,.ma-th-menu button.on small{color:var(--ma-sub)!important}
 .main-area{padding-bottom:0!important}
 @media (min-width:761px){.workspace-footer{padding-right:190px!important}}
+
+/* How it works, stacked (tablet / phone): one clean vertical connector between steps instead of the sideways fibers / arrows */
+@media (max-width:1180px){
+ .v22-how .v22-conn,.v22-how .v22-conn.fibers{position:relative;height:56px!important;padding:0!important;margin:4px 0!important;display:block!important;clip-path:none!important}
+ .v22-how .v22-conn>svg{display:none!important}
+ .v22-how .v22-conn::before{content:"";position:absolute;left:50%;top:4px;bottom:14px;width:3px;margin-left:-1.5px;border-radius:3px;background:linear-gradient(180deg,rgba(59,130,246,.15),#38bdf8,rgba(59,130,246,.15));background-size:100% 200%;animation:maConnFlow 1.6s linear infinite}
+ .v22-how .v22-conn::after{content:"";position:absolute;left:50%;bottom:6px;width:11px;height:11px;margin-left:-7px;border-right:3px solid #5cc8ff;border-bottom:3px solid #5cc8ff;transform:rotate(45deg);border-radius:2px}
+ html[data-theme="light"] .v22-how .v22-conn::before{background:linear-gradient(180deg,rgba(100,116,139,.15),var(--ma-c,#64748b),rgba(100,116,139,.15));background-size:100% 200%}
+ html[data-theme="light"] .v22-how .v22-conn::after{border-color:var(--ma-c,#64748b)}
+}
+@keyframes maConnFlow{from{background-position:0 0}to{background-position:0 -200%}}
+@media (prefers-reduced-motion:reduce){.v22-how .v22-conn::before{animation:none!important}}
