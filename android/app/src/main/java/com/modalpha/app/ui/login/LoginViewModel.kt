@@ -44,6 +44,7 @@ class LoginViewModel(
     private var timer: Job? = null
 
     fun setMethod(m: LoginMethod) = _s.update { it.copy(method = m, step = LoginStep.Enter, error = null) }
+    fun setSignup(on: Boolean) = _s.update { it.copy(signup = on, step = LoginStep.Enter, error = null) }
     fun toggleSignup() = _s.update { it.copy(signup = !it.signup, step = LoginStep.Enter, error = null) }
     fun onMobile(v: String) {
         demo = false

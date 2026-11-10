@@ -52,6 +52,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
@@ -81,26 +82,33 @@ import com.modalpha.app.ui.theme.Ma
  * Smaller than the website's login: one card, no side illustration, the brand on top.
  */
 @Composable
-fun LoginScreen(vm: LoginViewModel) {
+fun LoginScreen(vm: LoginViewModel, onBack: (() -> Unit)? = null) {
     val s by vm.state.collectAsStateWithLifecycle()
-    Box(
-        Modifier.fillMaxSize().background(Ma.c.bg)
-            .background(Brush.radialGradient(listOf(Ma.c.accent.copy(alpha = if (Ma.c.dark) .28f else .14f), Color.Transparent), radius = 900f))
-    ) {
+    Box(Modifier.fillMaxSize().background(Ma.c.bg)) {
+        // dark brand panel at the top, the form card overlaps it
+        Box(
+            Modifier.fillMaxWidth().height(330.dp).clip(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp)).background(Ma.c.chromeBrush)
+                .background(Brush.radialGradient(listOf(Ma.c.glow.copy(alpha = .30f), Color.Transparent), radius = 700f))
+        )
         Column(
             Modifier.fillMaxSize().systemBarsPadding().imePadding().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            VSpace(36.dp)
-            BrandMark(72.dp)
-            VSpace(14.dp)
-            Text("Mod Alpha", color = Ma.c.text, style = MaterialTheme.typography.headlineSmall)
+            Box(Modifier.fillMaxWidth().height(48.dp)) {
+                if (onBack != null) IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
+                    Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Back", tint = Ma.c.chromeText)
+                }
+            }
+            BrandMark(68.dp, dark = true)
+            VSpace(12.dp)
+            Text("Mod Alpha", color = Ma.c.chromeText, style = MaterialTheme.typography.headlineSmall)
             VSpace(4.dp)
-            Text("Invest at the right time with AI", color = Ma.c.muted, style = MaterialTheme.typography.bodyMedium)
-            VSpace(28.dp)
+            Text("Invest at the right time with AI", color = Ma.c.chromeSub, style = MaterialTheme.typography.bodyMedium)
+            VSpace(26.dp)
 
             Column(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(Ma.c.surface)
+                Modifier.fillMaxWidth().shadow(18.dp, RoundedCornerShape(24.dp), ambientColor = Ma.c.chrome, spotColor = Ma.c.chrome)
+                    .clip(RoundedCornerShape(24.dp)).background(Ma.c.surface)
                     .border(1.dp, Ma.c.line, RoundedCornerShape(24.dp)).padding(20.dp)
             ) {
                 AnimatedContent(

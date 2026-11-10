@@ -54,7 +54,10 @@ class DemoRepository(private val latencyMs: Long = 450) : Repository {
             day = if (locked) null else 12, upliftPct = 2.8,
             alternatives = if (locked) emptyList() else listOf(AltDay(5, 1.6), AltDay(20, 1.4), AltDay(28, 1.2)),
         )
-        return HomeData(acc.user, acc.plan, sip, locked, demoFunds, fundsTracked = 24, unread = 2)
+        return HomeData(
+            acc.user, acc.plan, sip, locked, demoFunds, fundsTracked = 24, unread = if (locked) 0 else 2,
+            compare = demoCompare, watchlist = if (locked) emptyList() else demoFunds.take(2),
+        )
     }
 
     override suspend fun logout() { current = null }
@@ -62,6 +65,17 @@ class DemoRepository(private val latencyMs: Long = 450) : Repository {
     companion object {
         const val DEMO_CODE = "123456"
         private fun spark(seed: Int, growth: Double) = List(24) { i -> 100 * (1 + growth * i / 23.0) + 6 * sin(i * 0.9 + seed) + 3 * sin(i * 2.3 + seed * 2) }
+        /** ₹10,000 a month from Jan 2021: fixed 1st-of-month SIP vs Mod Alpha dates (sample backtest). */
+        val demoCompare: SipCompare by lazy {
+            var f = 0.0; var m = 0.0
+            val pts = (0 until 70).map { i ->
+                val r = 0.012 + 0.03 * sin(i * 0.55) + 0.012 * sin(i * 1.7)   // monthly market move
+                f = (f + 10000) * (1 + r); m = (m + 10000) * (1 + r + 0.00095)
+                ComparePoint("%d-%02d".format(2021 + i / 12, i % 12 + 1), f.toLong(), m.toLong())
+            }
+            val last = pts.last()
+            SipCompare(10000, "2021", 1, 70 * 10000L, last.fixed, last.modAlpha, last.modAlpha - last.fixed, pts)
+        }
         val demoFunds = listOf(
             Fund("QSC01", "Quant Small Cap Fund", "Quant Small Cap", "Quant", "Small Cap", 18.2, 29.7, 32.4, spark(1, 3.0)),
             Fund("SBC01", "SBI Contra Fund", "SBI Contra", "SBI", "Contra", 12.4, 24.9, 28.1, spark(2, 2.4)),

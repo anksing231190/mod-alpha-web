@@ -32,6 +32,22 @@ data class Fund(
     val spark: List<Double>,
 )
 
+/**
+ * Backtest from POST /calc/sip-compare: the same monthly SIP on each published Mod Alpha date vs a fixed day.
+ * Values in ₹; one point per month.
+ */
+data class SipCompare(
+    val amount: Int,                  // ₹ per month
+    val since: String,                // "2021"
+    val fixedDay: Int,
+    val invested: Long,
+    val fixedValue: Long,
+    val modAlphaValue: Long,
+    val extra: Long,
+    val points: List<ComparePoint>,
+)
+data class ComparePoint(val month: String, val fixed: Long, val modAlpha: Long)
+
 /** Everything the Home tab shows. */
 data class HomeData(
     val user: User,
@@ -41,6 +57,8 @@ data class HomeData(
     val topFunds: List<Fund>,
     val fundsTracked: Int,
     val unread: Int,
+    val compare: SipCompare? = null,
+    val watchlist: List<Fund> = emptyList(),
 )
 
 /** Result of asking for an OTP. `devCode` comes back only on stage (mock SMS) and in demo mode. */

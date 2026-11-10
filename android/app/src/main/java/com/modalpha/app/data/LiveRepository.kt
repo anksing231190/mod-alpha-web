@@ -91,11 +91,20 @@ class LiveRepository(context: Context, private val baseUrl: String) : Repository
     override suspend fun home(): HomeData = coroutineScope {
         val me = async { call("GET", "/auth/me").toUser() }
         val sip = async { call("GET", "/sip-dates/current") }
-        val funds = async { call("GET", "/funds?sort=5y&pageSize=6") }
+        val funds = async { call("GET", "/funds?sort=5y&pageSize=200") }
+        val watch = async { runCatching { call("GET", "/me/watchlist") }.getOrNull() }
+        val compare = async {
+            runCatching {
+                call("POST", "/calc/sip-compare", buildJsonObject {
+                    put("amount", 10000); put("start", "2021-01-01"); put("end", java.time.LocalDate.now().toString()); put("fixedDay", 1)
+                })
+            }.getOrNull()
+        }
         val ent = async { runCatching { call("GET", "/me/entitlements") }.getOrNull() }
         val notes = async { runCatching { call("GET", "/me/notifications") }.getOrNull() }
         val s = sip.await(); val f = funds.await()
         val cur = s["current"] as? JsonObject
+        val all = (f["items"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.toFund() }
         HomeData(
             user = me.await(),
             plan = ent.await()?.str("plan") ?: "Free",
@@ -108,9 +117,12 @@ class LiveRepository(context: Context, private val baseUrl: String) : Repository
                 )
             },
             locked = (s["locked"] as? JsonPrimitive)?.content == "true",
-            topFunds = (f["items"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.toFund() },
+            topFunds = all.take(6),
             fundsTracked = f.int("total") ?: 0,
             unread = notes.await()?.int("unread") ?: 0,
+            compare = compare.await()?.toCompare(),
+            watchlist = (watch.await()?.get("items") as? JsonArray).orEmpty()
+                .mapNotNull { (it as? JsonObject).str("fund_id") }.mapNotNull { id -> all.find { it.id == id } },
         )
     }
 
@@ -122,6 +134,16 @@ class LiveRepository(context: Context, private val baseUrl: String) : Repository
             category = str("category") ?: "", r1 = ret?.num("1"), r3 = ret?.num("3"), r5 = ret?.num("5"),
             spark = (this["spark"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonPrimitive)?.content?.toDoubleOrNull() },
         )
+    }
+
+    private fun JsonObject.toCompare(): SipCompare? {
+        val pts = (this["path"] as? JsonArray).orEmpty().mapNotNull { p ->
+            val o = p as? JsonObject ?: return@mapNotNull null
+            ComparePoint(o.str("month") ?: "", o.num("fixed")?.toLong() ?: return@mapNotNull null, o.num("modAlpha")?.toLong() ?: return@mapNotNull null)
+        }
+        if (pts.size < 2) return null
+        return SipCompare(10000, pts.first().month.take(4), int("fixedDay") ?: 1, num("invested")?.toLong() ?: 0,
+            num("fixedValue")?.toLong() ?: 0, num("modAlphaValue")?.toLong() ?: 0, num("extra")?.toLong() ?: 0, pts)
     }
 
     override suspend fun logout() {

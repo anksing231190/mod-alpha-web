@@ -2,12 +2,12 @@
 <resources>
     <!-- Splash: Midnight background with the Mod Alpha mark, then the Compose theme takes over -->
     <style name="Theme.ModAlpha.Splash" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">#080B18</item>
+        <item name="windowSplashScreenBackground">#0B1B3F</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_mark</item>
         <item name="postSplashScreenTheme">@style/Theme.ModAlpha</item>
     </style>
     <style name="Theme.ModAlpha" parent="android:Theme.Material.NoActionBar">
-        <item name="android:windowBackground">#080B18</item>
+        <item name="android:windowBackground">#0B1B3F</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>

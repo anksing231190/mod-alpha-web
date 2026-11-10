@@ -8,9 +8,14 @@ Built one screen at a time, designed for the phone (less content per screen than
 
 | Screen | Status |
 |---|---|
-| Splash, Login / Create account (mobile OTP, email + password, "Try the demo") | done |
-| Home: best SIP date (locked on Free), top funds, quick stats, bottom tabs | done |
-| Funds, SIP date, What if, Account (full), notifications, plans & payment | next |
+| Welcome (animated: data network + orbiting dates around the α), Log in / Create account, Try the demo | done |
+| Log in: mobile OTP (6 boxes, resend timer) or email + password | done |
+| Fingerprint unlock (offered after first log-in; on/off in You; re-locks after 5 min in background) | done |
+| Home: best SIP date (blurred on Free), backtest chart on the checkered grid, watchlist; tab bar with α centre | done |
+| Explore, Ask Mod Alpha, Calendar, You (full), notifications, plans & payment | next |
+
+**Themes** (You → Theme): **Navy** — white pages, dark navy top panel and tab bar (default); **Espresso** — cream
+pages, dark brown chrome (same as the website's Espresso).
 
 ## Build and run
 
@@ -41,7 +46,9 @@ in the stage database works. **Try the demo** (or these numbers) uses built-in s
 app/src/main/java/com/modalpha/app/
   MainActivity.kt, ModAlphaApp.kt, SessionViewModel.kt   start-up, signed in / out
   data/      Repository (interface), LiveRepository (API + saved session cookies), DemoRepository, models
-  ui/theme/  Midnight (phone dark mode) and Sand (light mode) colours — same as the website
+  ui/theme/  Navy and Espresso colours (pages + dark chrome)
+  ui/welcome/  animated backdrop, Welcome, fingerprint Lock screen
+  data/AppPrefs.kt  theme, fingerprint on/off
   ui/components/  cards, buttons, fund logos, sparkline, loader
   ui/login/  LoginScreen + LoginViewModel
   ui/home/   HomeScreen + HomeViewModel

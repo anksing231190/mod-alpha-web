@@ -52,8 +52,8 @@ fun MaCard(modifier: Modifier = Modifier, padding: Dp = 16.dp, content: @Composa
 
 /** The Mod Alpha α mark (gold) — used on Login and as the avatar fallback. */
 @Composable
-fun BrandMark(size: Dp, modifier: Modifier = Modifier) {
-    Box(modifier.size(size).clip(RoundedCornerShape(size * 0.26f)).background(Ma.c.surface).border(1.dp, Ma.c.line, RoundedCornerShape(size * 0.26f)), contentAlignment = Alignment.Center) {
+fun BrandMark(size: Dp, modifier: Modifier = Modifier, dark: Boolean = false) {
+    Box(modifier.size(size).clip(RoundedCornerShape(size * 0.26f)).background(if (dark) Ma.c.chrome2 else Ma.c.surface).border(1.dp, if (dark) Ma.c.chromeLine else Ma.c.line, RoundedCornerShape(size * 0.26f)), contentAlignment = Alignment.Center) {
         Image(painterResource(R.drawable.brand_mark), contentDescription = "Mod Alpha", Modifier.size(size * 0.7f))
     }
 }
