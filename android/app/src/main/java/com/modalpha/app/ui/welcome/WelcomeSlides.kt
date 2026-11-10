@@ -120,29 +120,39 @@ fun NavFlowSlide(modifier: Modifier = Modifier, autoPlay: Boolean = true) {
     }
 }
 
+/** Illustrative yearly NAV candles 2016–2026 (open, close, high, low): a small-cap-like path with three down years. */
+private val CANDLES: List<List<Double>> = run {
+    val rets = listOf(.12, -.06, .28, .15, -.09, .34, .22, .08, -.04, .26)
+    var nav = 40.0
+    rets.mapIndexed { k, r -> val o = nav; val c = o * (1 + r); nav = c; listOf(o, c, maxOf(o, c) * (1.05 + .02 * (k % 3)), minOf(o, c) * (.95 - .02 * (k % 2))) }
+}
+
 /** One fund's NAV over 10 years on a checkered band, drawn left to right; label on the left, return on the right. */
 @Composable
 private fun TenYearChart(f: Fund, autoPlay: Boolean) {
     val c = Ma.c
     val p by rememberInfiniteTransition(label = "ten").animateFloat(0f, 1f, infiniteRepeatable(tween(5200, easing = LinearEasing)), label = "p")
     val prog = if (autoPlay) (p / .75f).coerceAtMost(1f) else 1f
-    // a smooth 10-year path from the fund's own sparkline (repeated with growth so it spans the decade)
-    val pts = remember(f.id) {
-        // chain the sparkline end to end (each copy starts where the last ended) so the 10-year path is continuous
-        val base = f.spark.ifEmpty { listOf(1.0, 1.1) }; val out = ArrayList<Double>(); var scale = 1.0
-        while (out.size < 40) { base.forEach { out += scale * it / base.first() }; scale = out.last() }
-        out.take(40)
-    }
-    Box(Modifier.padding(horizontal = 10.dp).fillMaxWidth().height(74.dp).clip(RoundedCornerShape(10.dp)).background(c.surface)) {
+    Box(Modifier.padding(horizontal = 10.dp).fillMaxWidth().height(84.dp).clip(RoundedCornerShape(10.dp)).background(c.surface)) {
         Canvas(Modifier.fillMaxSize()) {
             val rows = 3; val ch = size.height / rows; val cols = (size.width / ch).toInt().coerceAtLeast(6); val cw = size.width / cols
             for (r in 0 until rows) for (k in 0 until cols) if ((r + k) % 2 == 0) drawRect(INK.copy(alpha = .045f), Offset(k * cw, r * ch), Size(cw, ch))
             for (r in 1 until rows) drawLine(INK.copy(alpha = .06f), Offset(0f, r * ch), Offset(size.width, r * ch), 1f)
-            val n = (pts.size * prog).toInt().coerceIn(2, pts.size)
-            val path = linePath(pts.take(n), size.width * (n - 1) / (pts.size - 1), size.height, pad = 10f, lo0 = pts.min(), hi0 = pts.max())
-            drawPath(path, c.accent, style = Stroke(1.8.dp.toPx(), cap = StrokeCap.Round))
+            // one candle per year (2016–2026), log scale so early and late years read the same size
+            val lo = kotlin.math.ln(CANDLES.minOf { it[3] }); val hi = kotlin.math.ln(CANDLES.maxOf { it[2] })
+            val padT = 24.dp.toPx(); val padB = 6.dp.toPx()
+            fun y(v: Double) = (padT + (size.height - padT - padB) * (1 - (kotlin.math.ln(v) - lo) / (hi - lo))).toFloat()
+            val slot = size.width / CANDLES.size; val bw = slot * .5f
+            val shown = (CANDLES.size * prog).toInt().coerceIn(1, CANDLES.size)
+            CANDLES.take(shown).forEachIndexed { k, (o, cl, h, l) ->
+                val col = if (cl >= o) Color(0xFF16A34A) else Color(0xFFDC2626)
+                val cx = slot * k + slot / 2
+                drawLine(col, Offset(cx, y(h)), Offset(cx, y(l)), 1.3.dp.toPx())
+                val top = y(maxOf(o, cl)); val bot = y(minOf(o, cl))
+                drawRoundRect(col, Offset(cx - bw / 2, top), Size(bw, (bot - top).coerceAtLeast(2.dp.toPx())), androidx.compose.ui.geometry.CornerRadius(2.dp.toPx()))
+            }
         }
-        Text("${f.short} · 2016–2026", Modifier.align(Alignment.TopStart).padding(6.dp).clip(RoundedCornerShape(6.dp)).background(c.surface).padding(horizontal = 4.dp, vertical = 1.dp), color = c.sub, fontSize = 9.sp, fontWeight = FontWeight.SemiBold)
+        Text("Yearly NAV · 2016–2026", Modifier.align(Alignment.TopStart).padding(6.dp).clip(RoundedCornerShape(6.dp)).background(c.surface).padding(horizontal = 4.dp, vertical = 1.dp), color = c.sub, fontSize = 9.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
