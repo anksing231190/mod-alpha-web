@@ -96,3 +96,11 @@ html[data-theme="light"][data-skin="slate"]:root .sidebar .nav-link.active .v22-
 html[data-theme="light"][data-skin="slate"]:root .workspace-topbar .ma-lang-toggle span.on.on:not(.x):not(.y){background:#f5f6f8!important;color:#1f2227!important}
 html[data-theme="light"][data-skin="slate"]:root .workspace-topbar .v22-upgrade{background:rgba(255,255,255,.1)!important;border-color:rgba(255,255,255,.3)!important;color:#fff!important}
 .v22-theme-prev.slate{background:#f5f6f8!important}.v22-theme-prev.slate i{background:#fff!important}
+
+/* public footer matches the dark top bar in Espresso and Graphite */
+html[data-theme="light"]:is([data-skin="duo"],[data-skin="slate"]):root #app>footer.public-footer,html[data-theme="light"]:is([data-skin="duo"],[data-skin="slate"]):root #app footer.public-footer{background:var(--esp)!important;border-top:1px solid var(--esp-line)!important;color:var(--esp-sub)!important}
+html[data-theme="light"]:is([data-skin="duo"],[data-skin="slate"]):root #app footer.public-footer :is(.footer-brand-name,h3){color:var(--esp-tx)!important}
+html[data-theme="light"]:is([data-skin="duo"],[data-skin="slate"]):root #app footer.public-footer :is(p,span,i,a:not(.v22-socials a)){color:var(--esp-sub)!important}
+html[data-theme="light"]:is([data-skin="duo"],[data-skin="slate"]):root #app footer.public-footer a:not(.v22-socials a):hover{color:var(--esp-tx)!important}
+html[data-theme="light"]:is([data-skin="duo"],[data-skin="slate"]):root #app footer.public-footer .footer-bottom{border-top-color:var(--esp-line)!important}
+footer.public-footer .footer-legal-links i{margin:0 6px;font-style:normal}
