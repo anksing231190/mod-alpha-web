@@ -59,6 +59,7 @@ import com.modalpha.app.ui.components.GoldDeep
 import com.modalpha.app.ui.components.GlassCard
 import com.modalpha.app.ui.components.StatBlock
 import com.modalpha.app.ui.components.UpChip
+import com.modalpha.app.ui.components.*
 import com.modalpha.app.ui.theme.Ma
 import kotlin.math.PI
 import kotlin.math.cos
@@ -91,14 +92,15 @@ fun WaveWelcome(modifier: Modifier = Modifier, autoPlay: Boolean = true) {
     val prog = if (autoPlay) (cycle / .65f).coerceIn(0f, 1f) else 1f             // draw for 65% of the loop, then hold
     val measurer = rememberTextMeasurer()
     val c = Ma.c
-    val grey = Color(0xFFB8C2D6); val line = Color(0xFFA9C4F5)
+    val grey = Color(0xFF94A3B8); val line = Ma.c.accent
     val shown = (prog * (NAV.size - 1)).toInt()
     var u1 = 0.0; var u2 = 0.0
     for (m in 0 until MONTHS) { if (m * DAYS <= shown) u1 += 10000 / NAV[m * DAYS]; if (m * DAYS + BEST <= shown) u2 += 10000 / NAV[m * DAYS + BEST] }
     val more = if (u1 > 0) (u2 / u1 - 1) * 100 else 0.0
     val months = listOf("Jun", "Jul", "Aug", "Sep", "Oct", "Nov")
     Column(modifier.padding(horizontal = 20.dp)) {
-        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(Color.White.copy(alpha = .05f)).border(1.dp, Color.White.copy(alpha = .1f), RoundedCornerShape(22.dp)).padding(16.dp)) {
+        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(Ma.c.surface).border(1.dp, Ma.c.line, RoundedCornerShape(22.dp)).padding(16.dp)) { OnLight {
+            val c = Ma.c
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("₹10,000 every month", color = c.chromeText, fontSize = 14.sp, fontWeight = FontWeight.Bold)
@@ -114,11 +116,11 @@ fun WaveWelcome(modifier: Modifier = Modifier, autoPlay: Boolean = true) {
                 fun py(v: Double) = (H * (1 - (v - lo) / (hi - lo))).toFloat()
                 // checkered plot area (same look as the app's charts) + month labels
                 val rows = 5; val ch = H / rows; val cols = (W / ch).toInt().coerceAtLeast(6); val cw = W / cols
-                for (r in 0 until rows) for (k in 0 until cols) if ((r + k) % 2 == 0) drawRect(Color.White.copy(alpha = .075f), Offset(k * cw, r * ch), androidx.compose.ui.geometry.Size(cw, ch))
-                for (r in 0..rows) drawLine(Color.White.copy(alpha = .08f), Offset(0f, r * ch), Offset(W, r * ch), 1f)
+                for (r in 0 until rows) for (k in 0 until cols) if ((r + k) % 2 == 0) drawRect(Color(0xFF0D1730).copy(alpha = .045f), Offset(k * cw, r * ch), androidx.compose.ui.geometry.Size(cw, ch))
+                for (r in 0..rows) drawLine(Color(0xFF0D1730).copy(alpha = .06f), Offset(0f, r * ch), Offset(W, r * ch), 1f)
                 for (m in 0 until MONTHS) {
                     val x = px(m * DAYS)
-                    if (m > 0) drawLine(Color.White.copy(alpha = .05f), Offset(x, 0f), Offset(x, H), 1f)
+                    if (m > 0) drawLine(Color(0xFF0D1730).copy(alpha = .05f), Offset(x, 0f), Offset(x, H), 1f)
                     val tl = measurer.measure(months[m], TextStyle(color = c.chromeMuted, fontSize = 10.sp)); drawText(tl, topLeft = Offset(x + 4.dp.toPx(), H + 3.dp.toPx()))
                 }
                 if (shown < 1) return@Canvas
@@ -129,18 +131,18 @@ fun WaveWelcome(modifier: Modifier = Modifier, autoPlay: Boolean = true) {
                 // buys
                 for (m in 0 until MONTHS) {
                     val i1 = m * DAYS; val ib = m * DAYS + BEST
-                    if (i1 <= shown) { drawCircle(c.chrome2, 5.dp.toPx(), Offset(px(i1), py(NAV[i1]))); drawCircle(grey, 3.5.dp.toPx(), Offset(px(i1), py(NAV[i1]))) }
+                    if (i1 <= shown) { drawCircle(c.surface, 5.dp.toPx(), Offset(px(i1), py(NAV[i1]))); drawCircle(grey, 3.5.dp.toPx(), Offset(px(i1), py(NAV[i1]))) }
                     if (ib <= shown) {
                         val o = Offset(px(ib), py(NAV[ib]))
                         val fresh = shown - ib < 6
                         drawCircle(Gold.copy(alpha = if (fresh) .35f else .12f + .1f * pulse), (if (fresh) 11 else 8).dp.toPx(), o)
-                        drawCircle(c.chrome2, 5.5.dp.toPx(), o); drawCircle(Gold, 4.dp.toPx(), o)
+                        drawCircle(c.surface, 5.5.dp.toPx(), o); drawCircle(Color(0xFFD9A441), 4.dp.toPx(), o)
                         // dashed drop showing how much cheaper than the 1st
-                        if (NAV[ib] < NAV[i1]) drawLine(Gold.copy(alpha = .45f), Offset(px(ib), py(NAV[i1])), o, 1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 4f)))
+                        if (NAV[ib] < NAV[i1]) drawLine(Color(0xFFD9A441).copy(alpha = .6f), Offset(px(ib), py(NAV[i1])), o, 1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 4f)))
                     }
                 }
                 // live end point
-                val e = Offset(px(shown), py(NAV[shown])); drawCircle(line.copy(alpha = .25f), 7.dp.toPx(), e); drawCircle(Color.White, 3.dp.toPx(), e)
+                val e = Offset(px(shown), py(NAV[shown])); drawCircle(line.copy(alpha = .25f), 7.dp.toPx(), e); drawCircle(line, 3.dp.toPx(), e)
             }
             Spacer(Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -148,13 +150,13 @@ fun WaveWelcome(modifier: Modifier = Modifier, autoPlay: Boolean = true) {
                 Spacer(Modifier.width(14.dp))
                 Box(Modifier.size(8.dp).clip(CircleShape).background(Gold)); Spacer(Modifier.width(5.dp)); Text("Buy on Mod Alpha date", color = c.chromeSub, fontSize = 11.sp)
             }
-        }
+        } }
         Spacer(Modifier.height(10.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             GlassCard(Modifier.weight(1f)) { StatBlock("On the 1st", "%,.0f".format(u1), "units bought", valueSize = 18) }
             GlassCard(Modifier.weight(1f), gold = true) {
                 Row(verticalAlignment = Alignment.Bottom) {
-                    Box(Modifier.weight(1f)) { StatBlock("Mod Alpha date", "%,.0f".format(u2), "units bought", valueColor = Gold, valueSize = 18) }
+                    Box(Modifier.weight(1f)) { StatBlock("Mod Alpha date", "%,.0f".format(u2), "units bought", valueColor = goldInk(), valueSize = 18) }
                     if (more > 0.05) Box(Modifier.padding(bottom = 2.dp)) { UpChip("%.1f%%".format(more)) }
                 }
             }
@@ -200,8 +202,9 @@ fun DialLock(day: Int?, month: String?, modifier: Modifier = Modifier, play: Boo
                 }
             }
             // knob with the α
-            Box(Modifier.size(140.dp).shadow(14.dp, CircleShape).clip(CircleShape).background(Brush.sweepGradient(listOf(c.hi2, c.hi, c.hi2, c.mesh2, c.hi2))).rotate(rot.value * .25f), contentAlignment = Alignment.Center) {
-                Box(Modifier.size(104.dp).clip(CircleShape).background(Brush.radialGradient(listOf(c.chrome, c.chrome2))).border(1.dp, Gold.copy(alpha = .4f), CircleShape).rotate(-rot.value * .25f), contentAlignment = Alignment.Center) {
+            // knob: a fixed ring (no colour shift while the dial turns) around a light badge with the mark
+            Box(Modifier.size(132.dp).shadow(14.dp, CircleShape).clip(CircleShape).background(Brush.linearGradient(listOf(c.hi, c.hi2))), contentAlignment = Alignment.Center) {
+                Box(Modifier.size(108.dp).clip(CircleShape).background(c.surface).border(1.5.dp, Gold, CircleShape), contentAlignment = Alignment.Center) {
                     Image(painterResource(R.drawable.brand_mark), "Mod Alpha", Modifier.size(58.dp))
                 }
             }

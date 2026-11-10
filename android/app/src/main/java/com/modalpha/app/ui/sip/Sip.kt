@@ -146,13 +146,13 @@ fun CalendarTab(bottomPad: Dp) {
             Row(Modifier.padding(horizontal = 16.dp).padding(top = 4.dp).height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 GlassCard(Modifier.weight(1.15f).fillMaxHeight(), gold = true) {
                     Column {
-                        Text("BEST DATE", color = Gold, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                        Text("BEST DATE", color = goldInk(), fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                         if (cur?.day != null) {
                             Row(verticalAlignment = Alignment.Top) {
                                 Text("${cur.day}", color = Ma.c.chromeText, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold)
                                 Text(sfx(cur.day), Modifier.padding(top = 5.dp, start = 1.dp), color = Ma.c.chromeSub, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                             }
-                            Text("${pct(cur.upliftPct)} vs 1st", color = Mint, fontSize = 11.5.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                            Text("${pct(cur.upliftPct)} vs 1st", color = mintInk(), fontSize = 11.5.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                         } else {
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 6.dp)) {
                                 Icon(Icons.Outlined.Lock, null, tint = Gold, modifier = Modifier.size(22.dp))
@@ -472,23 +472,23 @@ fun AskTab(chat: SnapshotStateList<ChatMsg>, bottomPad: Dp) {
 /** Small card with a fund's real numbers, shown under an answer that mentions it. */
 @Composable
 private fun FundDataCard(f: Fund, modifier: Modifier, onClick: () -> Unit) {
-    Column(modifier.clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Ma.c.chrome, Ma.c.chrome2))).clickable(onClick = onClick).padding(12.dp)) {
+    Column(modifier.clip(RoundedCornerShape(16.dp)).background(Ma.c.surface).border(1.dp, Ma.c.line, RoundedCornerShape(16.dp)).clickable(onClick = onClick).padding(12.dp)) { OnLight {
         Row(verticalAlignment = Alignment.CenterVertically) {
             AmcLogo(f.amc, 22.dp); HSpace(6.dp)
             Text(f.short, color = Ma.c.chromeText, fontSize = 12.5.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         VSpace(6.dp)
-        Sparkline(f.spark, SoftUp, Modifier.fillMaxWidth().height(30.dp))
+        Sparkline(f.spark, Ma.c.up, Modifier.fillMaxWidth().height(30.dp))
         VSpace(6.dp)
         Row(Modifier.fillMaxWidth()) {
             listOf("1Y" to f.r1, "3Y" to f.r3, "5Y" to f.r5).forEach { (k, v) ->
                 Column(Modifier.weight(1f)) {
                     Text(k, color = Ma.c.chromeMuted, fontSize = 9.5.sp)
-                    Text(pct(v).replace(".0%", "%"), color = if ((v ?: 0.0) >= 0) Mint else Color(0xFFF87171), fontSize = 11.5.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                    Text(pct(v).replace(".0%", "%"), color = if ((v ?: 0.0) >= 0) Ma.c.up else Ma.c.down, fontSize = 11.5.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                 }
             }
         }
-    }
+    } }
 }
 
 @Composable

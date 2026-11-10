@@ -111,7 +111,7 @@ fun LoginScreen(vm: LoginViewModel, onBack: (() -> Unit)? = null) {
                 Modifier.size(92.dp).drawBehind {
                     val r = size.minDimension / 2
                     drawCircle(Brush.radialGradient(listOf(com.modalpha.app.ui.components.Gold.copy(alpha = .16f + .16f * glow), Color.Transparent), radius = r * (1.55f + .25f * glow)), r * (1.55f + .25f * glow))
-                }.clip(CircleShape).background(Brush.radialGradient(listOf(Ma.c.chrome, Ma.c.chrome2)))
+                }.clip(CircleShape).background(Ma.c.surface)
                     .border(1.5.dp, com.modalpha.app.ui.components.Gold.copy(alpha = .45f + .35f * glow), CircleShape),
                 contentAlignment = Alignment.Center,
             ) { androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(com.modalpha.app.R.drawable.brand_mark), "Mod Alpha", Modifier.size(56.dp)) }
@@ -201,24 +201,6 @@ private fun EnterStep(s: LoginState, vm: LoginViewModel) {
             }
             if (s.error != null) { ErrorBanner(s.error); VSpace(12.dp) }
             GradientButton("Log in", vm::loginEmail, loading = s.busy)
-        }
-        if (!s.signup) {
-            VSpace(18.dp)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                HorizontalDivider(Modifier.weight(1f), color = Ma.c.line)
-                Text("  or  ", color = Ma.c.muted, style = MaterialTheme.typography.bodySmall)
-                HorizontalDivider(Modifier.weight(1f), color = Ma.c.line)
-            }
-            VSpace(14.dp)
-            Row(
-                Modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(14.dp)).border(1.dp, Ma.c.line, RoundedCornerShape(14.dp))
-                    .clickable(enabled = !s.busy, onClick = vm::tryDemo),
-                horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(Icons.Outlined.PlayCircle, null, tint = Ma.c.accent, modifier = Modifier.size(20.dp))
-                Spacer(Modifier.width(8.dp))
-                Text("Try the demo", color = Ma.c.text, style = MaterialTheme.typography.labelLarge)
-            }
         }
     }
 }

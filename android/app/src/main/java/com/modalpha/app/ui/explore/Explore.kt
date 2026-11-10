@@ -122,8 +122,8 @@ private fun riskShort(r: String?) = r?.replace("Very High", "V. high", true)?.re
 private fun heat(v: Double, max: Double): List<Color> {
     val t = (v / max.coerceAtLeast(1.0)).coerceIn(0.0, 1.0)
     // one hue, strength by return: subtle tint on the dark header
-    val a = (.06 + .16 * t).toFloat()
-    return listOf(Color(0xFF8CCFB2).copy(alpha = a), Color(0xFF8CCFB2).copy(alpha = a * .6f))
+    val tint = androidx.compose.ui.graphics.lerp(Color.White, Color(0xFFBFE6D3), t.toFloat())
+    return listOf(tint, androidx.compose.ui.graphics.lerp(tint, Color.White, .4f))
 }
 
 @Composable
@@ -199,14 +199,14 @@ fun ExploreTab(bottomPad: androidx.compose.ui.unit.Dp) {
 @Composable
 private fun HeatTile(c: Triple<String, Int, Double>, max: Double, on: Boolean, modifier: Modifier, big: Boolean = false, onClick: (String) -> Unit) {
     Column(
-        modifier.clip(RoundedCornerShape(14.dp)).background(Brush.linearGradient(heat(c.third, max))).border(1.dp, if (on) Color.White.copy(alpha = .8f) else Color.White.copy(alpha = .1f), RoundedCornerShape(14.dp))
+        modifier.clip(RoundedCornerShape(14.dp)).background(Brush.linearGradient(heat(c.third, max))).border(if (on) 2.dp else 1.dp, if (on) Ma.c.accent else Color(0x1A0D1730), RoundedCornerShape(14.dp))
             .clickable { onClick(c.first) }.padding(horizontal = 10.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text("${c.first} · ${c.second}", color = Ma.c.chromeSub, fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text("${c.first} · ${c.second}", color = Color(0xFF475569), fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Column {
-            Text("%.1f%%".format(c.third), color = Ma.c.chromeText, fontSize = if (big) 24.sp else 17.sp, fontWeight = FontWeight.Black)
-            if (big && c.third >= max - .01) Text("▲ best category", color = SoftUp, fontSize = 10.5.sp)
+            Text("%.1f%%".format(c.third), color = Color(0xFF0F172A), fontSize = if (big) 24.sp else 17.sp, fontWeight = FontWeight.Black)
+            if (big && c.third >= max - .01) Text("▲ best category", color = Color(0xFF047857), fontSize = 10.5.sp)
         }
     }
 }
@@ -247,13 +247,13 @@ fun FundRow(f: Fund, period: String = "5Y", maxRet: Double = 40.0, onClick: () -
 @Composable
 fun SearchField(value: String, onChange: (String) -> Unit, hint: String, modifier: Modifier = Modifier) {
     Row(
-        modifier.fillMaxWidth().height(46.dp).clip(RoundedCornerShape(14.dp)).background(Color.White.copy(alpha = .08f)).border(1.dp, Ma.c.chromeLine, RoundedCornerShape(14.dp)).padding(horizontal = 14.dp),
+        modifier.fillMaxWidth().height(46.dp).clip(RoundedCornerShape(14.dp)).background(Ma.c.surface).border(1.dp, Ma.c.line, RoundedCornerShape(14.dp)).padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(Icons.Outlined.Search, null, tint = Ma.c.chromeMuted, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(10.dp))
+        Icon(Icons.Outlined.Search, null, tint = Ma.c.muted, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(10.dp))
         Box(Modifier.weight(1f)) {
-            if (value.isEmpty()) Text(hint, color = Ma.c.chromeMuted, fontSize = 14.5.sp)
-            BasicTextField(value, onChange, singleLine = true, textStyle = TextStyle(color = Ma.c.chromeText, fontSize = 14.5.sp), cursorBrush = SolidColor(Ma.c.hi), modifier = Modifier.fillMaxWidth())
+            if (value.isEmpty()) Text(hint, color = Ma.c.muted, fontSize = 14.5.sp)
+            BasicTextField(value, onChange, singleLine = true, textStyle = TextStyle(color = Ma.c.text, fontSize = 14.5.sp), cursorBrush = SolidColor(Ma.c.accent), modifier = Modifier.fillMaxWidth())
         }
     }
 }
@@ -300,12 +300,14 @@ fun FundScreen(id: String) {
                     if (chg != null) Box(Modifier.padding(bottom = 6.dp)) { UpChip("%.1f%% · %s".format(kotlin.math.abs(chg), if (period == "MAX") "max" else period), up = chg >= 0) }
                 }
                 VSpace(8.dp)
-                if (pts.size > 1) GridChart(
-                    listOf(ChartSeries(pts.map { it.value }, SoftUp, fill = true)), yearLabels(pts.map { it.date }, period),
-                    Modifier.fillMaxWidth().height(140.dp), yFormat = { "₹%.0f".format(it) }, onDark = true, glow = true, showY = false,
-                ) else Box(Modifier.fillMaxWidth().height(140.dp), contentAlignment = Alignment.Center) { Text(if (navPts.res is Res.Err) "No NAV history" else "Loading…", color = Ma.c.chromeMuted) }
-                VSpace(10.dp)
-                GlassPills(listOf("1M", "6M", "1Y", "3Y", "5Y", "MAX"), period) { period = it }
+                GlassCard(Modifier.fillMaxWidth()) { Column {
+                    if (pts.size > 1) GridChart(
+                        listOf(ChartSeries(pts.map { it.value }, Ma.c.accent, fill = true)), yearLabels(pts.map { it.date }, period),
+                        Modifier.fillMaxWidth().height(140.dp), yFormat = { "₹%.0f".format(it) }, showY = false,
+                    ) else Box(Modifier.fillMaxWidth().height(140.dp), contentAlignment = Alignment.Center) { Text(if (navPts.res is Res.Err) "No NAV history" else "Loading…", color = Ma.c.muted) }
+                    VSpace(8.dp)
+                    GlassPills(listOf("1M", "6M", "1Y", "3Y", "5Y", "MAX"), period) { period = it }
+                } }
             }
         },
         bottom = {
@@ -356,25 +358,22 @@ fun FundScreen(id: String) {
                 // Mod Alpha edge
                 (cmp.res as? Res.Ok)?.value?.let { c ->
                     val top = maxOf(c.modAlphaValue, c.fixedValue).toFloat().coerceAtLeast(1f)
-                    Column(
-                        Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp))
-                            .background(Brush.linearGradient(listOf(Ma.c.chrome, Ma.c.chrome2))).padding(16.dp),
-                    ) {
+                    GlassCard(Modifier.fillMaxWidth(), gold = true) { Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Outlined.AutoAwesome, null, tint = Gold, modifier = Modifier.size(18.dp)); HSpace(8.dp)
+                            Icon(Icons.Outlined.AutoAwesome, null, tint = goldInk(), modifier = Modifier.size(18.dp)); HSpace(8.dp)
                             Text("Mod Alpha edge", color = Ma.c.chromeText, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                             GhostChip("${inr(c.amount.toLong())}/mo since ${c.since}")
                         }
                         VSpace(12.dp)
-                        Text("${if (c.extra >= 0) "+" else "−"}${inr(kotlin.math.abs(c.extra))}", color = Gold, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)
+                        Text("${if (c.extra >= 0) "+" else "−"}${inr(kotlin.math.abs(c.extra))}", color = goldInk(), fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)
                         Text("more than a SIP on the ${ordinal(c.fixedDay)} every month", color = Ma.c.chromeSub, fontSize = 12.5.sp)
                         VSpace(12.dp)
-                        DarkBar("Mod Alpha dates · ${inr(c.modAlphaValue)}", c.modAlphaValue / top, SolidColor(SoftGold))
+                        DarkBar("Mod Alpha dates · ${inr(c.modAlphaValue)}", c.modAlphaValue / top, SolidColor(Color(0xFFD9A441)))
                         VSpace(8.dp)
-                        DarkBar("Fixed date · ${inr(c.fixedValue)}", c.fixedValue / top, Brush.horizontalGradient(listOf(Color.White.copy(alpha = .45f), Color.White.copy(alpha = .3f))))
+                        DarkBar("Fixed date · ${inr(c.fixedValue)}", c.fixedValue / top, SolidColor(Ma.c.muted.copy(alpha = .45f)))
                         VSpace(8.dp)
                         Text("Invested ${inr(c.invested)} · backtest on real NAVs", color = Ma.c.chromeMuted, fontSize = 11.sp)
-                    }
+                    } }
                 }
                 if (fd.benchmark != null && fd.benchmark != "—") Fact("Benchmark", fd.benchmark, Modifier.fillMaxWidth())
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -394,7 +393,7 @@ private fun ordinal(d: Int) = "$d" + if (d in 11..13) "th" else when (d % 10) { 
 @Composable private fun DarkBar(label: String, frac: Float, brush: Brush) {
     Column(Modifier.fillMaxWidth()) {
         Text(label, color = Ma.c.chromeSub, fontSize = 11.5.sp, maxLines = 1)
-        Box(Modifier.padding(top = 4.dp).fillMaxWidth().height(10.dp).clip(CircleShape).background(Color.White.copy(alpha = .08f))) {
+        Box(Modifier.padding(top = 4.dp).fillMaxWidth().height(10.dp).clip(CircleShape).background(if (LocalOnLight.current) Ma.c.line else Color.White.copy(alpha = .08f))) {
             Box(Modifier.fillMaxWidth(frac.coerceIn(.03f, 1f)).height(10.dp).clip(CircleShape).background(brush))
         }
     }
@@ -403,11 +402,11 @@ private fun ordinal(d: Int) = "$d" + if (d in 11..13) "th" else when (d % 10) { 
 /** Period pills on a dark header. */
 @Composable
 fun GlassPills(options: List<String>, selected: String, onSelect: (String) -> Unit) {
-    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Color.White.copy(alpha = .07f)).border(1.dp, Color.White.copy(alpha = .1f), RoundedCornerShape(12.dp)).padding(3.dp)) {
+    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Ma.c.surface2).border(1.dp, Ma.c.line, RoundedCornerShape(12.dp)).padding(3.dp)) {
         options.forEach { o ->
             val on = o == selected
-            Box(Modifier.weight(1f).height(28.dp).clip(RoundedCornerShape(9.dp)).background(if (on) Color.White.copy(alpha = .16f) else Color.Transparent).clickable { onSelect(o) }, contentAlignment = Alignment.Center) {
-                Text(if (o == "MAX") "Max" else o, color = if (on) Ma.c.chromeText else Ma.c.chromeMuted, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Box(Modifier.weight(1f).height(28.dp).clip(RoundedCornerShape(9.dp)).background(if (on) Ma.c.accent else Color.Transparent).clickable { onSelect(o) }, contentAlignment = Alignment.Center) {
+                Text(if (o == "MAX") "Max" else o, color = if (on) Color.White else Ma.c.sub, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -494,9 +493,10 @@ fun WhatIfScreen(startFund: String?) {
             }
             if (r != null) Text("Invested ${inr(r.invested)} · gain ${inr(r.gain)}${r.cagr?.let { " · %.1f%% a year".format(it) } ?: ""}", color = Ma.c.chromeMuted, fontSize = 12.sp)
             VSpace(8.dp)
+            GlassCard(Modifier.fillMaxWidth()) { Column {
             if (r != null && r.series.size > 1) GridChart(
-                listOfNotNull(ChartSeries(r.series, SoftUp, fill = true), ChartSeries(r.invested2 ?: List(r.series.size) { r.invested.toDouble() }, Color.White.copy(alpha = .35f), dashed = true)),
-                yearLabels(r.dates), Modifier.fillMaxWidth().height(130.dp), yFormat = { inrShort(it) }, onDark = true, glow = true, showY = false,
+                listOfNotNull(ChartSeries(r.series, Ma.c.accent, fill = true), ChartSeries(r.invested2 ?: List(r.series.size) { r.invested.toDouble() }, Ma.c.muted, dashed = true)),
+                yearLabels(r.dates), Modifier.fillMaxWidth().height(130.dp), yFormat = { inrShort(it) }, showY = false,
             ) else Box(Modifier.fillMaxWidth().height(130.dp), contentAlignment = Alignment.Center) {
                 Text(when (val s = result.res) { is Res.Err -> s.message; Res.Loading -> "Working it out…"; else -> "Enter an amount of at least ₹500." }, color = Ma.c.chromeMuted, fontSize = 12.5.sp)
             }
@@ -506,9 +506,10 @@ fun WhatIfScreen(startFund: String?) {
                 Slider(
                     value = yearsAgo.toFloat(), onValueChange = { v -> date = LocalDate.now().minusYears(v.toLong()).withDayOfMonth(15).toString() },
                     valueRange = 1f..10f, steps = 8, modifier = Modifier.weight(1f),
-                    colors = SliderDefaults.colors(thumbColor = Gold, activeTrackColor = Gold, inactiveTrackColor = Color.White.copy(alpha = .15f), activeTickColor = Color.Transparent, inactiveTickColor = Color.Transparent),
+                    colors = SliderDefaults.colors(thumbColor = Ma.c.accent, activeTrackColor = Ma.c.accent, inactiveTrackColor = Ma.c.line, activeTickColor = Color.Transparent, inactiveTickColor = Color.Transparent),
                 )
             }
+            } }
         }
     }) {
         Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(top = 14.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -533,17 +534,17 @@ fun WhatIfScreen(startFund: String?) {
                 r.modAlpha?.let { ma ->
                     val extra = ma - r.value
                     val top = maxOf(ma, r.value).toFloat().coerceAtLeast(1f)
-                    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Brush.linearGradient(listOf(Ma.c.chrome, Ma.c.chrome2))).padding(16.dp)) {
+                    GlassCard(Modifier.fillMaxWidth(), gold = true) { Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Outlined.AutoAwesome, null, tint = Gold, modifier = Modifier.size(18.dp)); HSpace(8.dp)
+                            Icon(Icons.Outlined.AutoAwesome, null, tint = goldInk(), modifier = Modifier.size(18.dp)); HSpace(8.dp)
                             Text("With Mod Alpha dates", color = Ma.c.chromeText, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                            Text("${if (extra >= 0) "+" else "−"}${inr(kotlin.math.abs(extra))}", color = Gold, fontWeight = FontWeight.ExtraBold)
+                            Text("${if (extra >= 0) "+" else "−"}${inr(kotlin.math.abs(extra))}", color = goldInk(), fontWeight = FontWeight.ExtraBold)
                         }
                         VSpace(10.dp)
-                        DarkBar("Mod Alpha dates · ${inr(ma)}", ma / top, SolidColor(SoftGold))
+                        DarkBar("Mod Alpha dates · ${inr(ma)}", ma / top, SolidColor(Color(0xFFD9A441)))
                         VSpace(8.dp)
-                        DarkBar("Same date every month · ${inr(r.value)}", r.value / top, Brush.horizontalGradient(listOf(Color.White.copy(alpha = .45f), Color.White.copy(alpha = .3f))))
-                    }
+                        DarkBar("Same date every month · ${inr(r.value)}", r.value / top, SolidColor(Ma.c.muted.copy(alpha = .45f)))
+                    } }
                 }
                 // vs fixed deposit
                 MaCard(Modifier.fillMaxWidth()) {
@@ -692,9 +693,9 @@ fun CompareScreen(a0: String?, b0: String?) {
 }
 
 @Composable private fun Pick(f: Fund?, modifier: Modifier, onClick: () -> Unit) {
-    Row(modifier.clip(RoundedCornerShape(14.dp)).background(Color.White.copy(alpha = .08f)).border(1.dp, Ma.c.chromeLine, RoundedCornerShape(14.dp)).clickable(onClick = onClick).padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier.clip(RoundedCornerShape(14.dp)).background(Ma.c.surface).border(1.dp, Ma.c.line, RoundedCornerShape(14.dp)).clickable(onClick = onClick).padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
         if (f != null) { AmcLogo(f.amc, 28.dp); Spacer(Modifier.width(8.dp)) }
-        Text(f?.short ?: "Choose", color = Ma.c.chromeText, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Text(f?.short ?: "Choose", color = Ma.c.text, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
     }
 }
 @Composable private fun Legend(c: Color, t: String) = Row(verticalAlignment = Alignment.CenterVertically) {

@@ -147,7 +147,7 @@ fun AdminTabs(me: User, repo: Repository, session: SessionViewModel, bio: Biomet
     CompositionLocalProvider(LocalAdmin provides nav) {
         Box(Modifier.fillMaxSize()) {
             Scaffold(containerColor = Ma.c.bg, snackbarHost = { SnackbarHost(snack) }, bottomBar = {
-                Box(Modifier.fillMaxWidth().navigationBarsPadding().padding(start = 12.dp, end = 12.dp, bottom = 10.dp, top = 6.dp)) {
+                Box(Modifier.fillMaxWidth().background(Ma.c.bg).navigationBarsPadding().padding(start = 12.dp, end = 12.dp, bottom = 8.dp, top = 6.dp)) {
                     Row(Modifier.fillMaxWidth().height(64.dp).clip(RoundedCornerShape(24.dp)).background(Ma.c.chrome.copy(alpha = .96f)).border(1.dp, Color.White.copy(alpha = .08f), RoundedCornerShape(24.dp)),
                         horizontalArrangement = Arrangement.SpaceAround, verticalAlignment = Alignment.CenterVertically) {
                         AdminTab.entries.forEach { t ->
@@ -186,8 +186,8 @@ fun AdminTabs(me: User, repo: Repository, session: SessionViewModel, bio: Biomet
 private fun AdminHeader(title: String, sub: String? = null, extra: @Composable () -> Unit = {}) {
     val a = LocalAdmin.current
     ChromeHeader(title, actions = {
-        Text((if (a.me.role == "superadmin") "Super admin" else "Admin").uppercase(), Modifier.clip(CircleShape).background(Ma.c.gold.copy(alpha = .16f)).border(1.dp, Ma.c.gold.copy(alpha = .4f), CircleShape).padding(horizontal = 10.dp, vertical = 4.dp),
-            color = Ma.c.gold, fontSize = 10.5.sp, fontWeight = FontWeight.Bold, letterSpacing = .4.sp)
+        Text((if (a.me.role == "superadmin") "Super admin" else "Admin").uppercase(), Modifier.clip(CircleShape).background(Color(0xFFFDF3DC)).border(1.dp, Ma.c.gold, CircleShape).padding(horizontal = 10.dp, vertical = 4.dp),
+            color = Color(0xFF92600A), fontSize = 10.5.sp, fontWeight = FontWeight.Bold, letterSpacing = .4.sp)
     }) {
         if (sub != null) Text(sub, Modifier.padding(horizontal = 20.dp), color = Ma.c.chromeSub, fontSize = 13.5.sp)
         extra()
@@ -327,13 +327,13 @@ private fun OverviewTab(bottom: Dp) {
 private fun GlassKpi(label: String, value: String, k: Kpi, spark: List<Double>, modifier: Modifier, pp: Boolean = false, gold: Boolean = false) {
     GlassCard(modifier, gold = gold) {
         Column {
-            Text(label.uppercase(), color = if (gold) Gold else Ma.c.chromeMuted, fontSize = 9.5.sp, fontWeight = FontWeight.Bold, letterSpacing = .8.sp, maxLines = 1)
+            Text(label.uppercase(), color = if (gold) goldInk() else Ma.c.chromeMuted, fontSize = 9.5.sp, fontWeight = FontWeight.Bold, letterSpacing = .8.sp, maxLines = 1)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(value, color = Ma.c.chromeText, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, modifier = Modifier.weight(1f))
-                if (spark.size > 1) Sparkline(spark, if (gold) SoftGold else SoftUp, Modifier.size(48.dp, 22.dp))
+                if (spark.size > 1) Sparkline(spark, if (gold) GoldDeep else Ma.c.up, Modifier.size(48.dp, 22.dp))
             }
             k.changePct?.let {
-                Text(if (pp) (if (it >= 0) "▲ " else "▼ ") + "%.1f pts".format(kotlin.math.abs(it)) else pctTxt(it), color = if (it >= 0) Mint else Color(0xFFF87171), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text(if (pp) (if (it >= 0) "▲ " else "▼ ") + "%.1f pts".format(kotlin.math.abs(it)) else pctTxt(it), color = if (it >= 0) mintInk() else Color(0xFFF87171), fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -463,7 +463,7 @@ private fun SupportTab(bottom: Dp) {
                 GlassCard(Modifier.weight(1f)) {
                     Column {
                         Text("AVG REPLY", color = Ma.c.chromeMuted, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = .6.sp, maxLines = 1)
-                        Text((avg.res as? Res.Ok)?.value?.let { "%.1fh".format(it) } ?: "—", color = Mint, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
+                        Text((avg.res as? Res.Ok)?.value?.let { "%.1fh".format(it) } ?: "—", color = mintInk(), fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
                     }
                 }
             }
@@ -591,9 +591,9 @@ private fun SipDateTab(bottom: Dp) {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     months.forEach { m ->
                         val on = m == month
-                        Text(mName(m), Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).background(if (on) Color.White.copy(alpha = .16f) else Color.White.copy(alpha = .05f))
-                            .border(1.dp, if (on) Gold.copy(alpha = .6f) else Color.White.copy(alpha = .1f), RoundedCornerShape(10.dp)).clickable { month = m; check = null }.padding(vertical = 8.dp),
-                            color = if (on) Ma.c.chromeText else Ma.c.chromeMuted, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
+                        Text(mName(m), Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).background(if (on) Ma.c.accent else Ma.c.surface)
+                            .border(1.dp, if (on) Ma.c.accent else Ma.c.line, RoundedCornerShape(10.dp)).clickable { month = m; check = null }.padding(vertical = 8.dp),
+                            color = if (on) Color.White else Ma.c.sub, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
                     }
                 }
                 VSpace(10.dp)
@@ -603,16 +603,16 @@ private fun SipDateTab(bottom: Dp) {
                             val on = d == day; val alt = altList.any { it.day == d }
                             Box(
                                 Modifier.weight(1f).height(34.dp).clip(RoundedCornerShape(9.dp))
-                                    .background(if (on) Brush.linearGradient(listOf(Gold, GoldDeep)) else Brush.linearGradient(listOf(Color.White.copy(alpha = if (alt) .14f else .06f), Color.White.copy(alpha = if (alt) .14f else .06f))))
-                                    .border(1.dp, if (alt) Mint.copy(alpha = .7f) else Color.Transparent, RoundedCornerShape(9.dp)).clickable { day = d; check = null },
+                                    .background(if (on) Brush.linearGradient(listOf(Gold, GoldDeep)) else Brush.linearGradient(listOf(if (alt) Color(0xFFE3F5EC) else Ma.c.surface, if (alt) Color(0xFFE3F5EC) else Ma.c.surface)))
+                                    .border(1.dp, if (alt) Ma.c.up else Ma.c.line, RoundedCornerShape(9.dp)).clickable { day = d; check = null },
                                 contentAlignment = Alignment.Center,
-                            ) { Text("$d", color = if (on) Color(0xFF3B2405) else Ma.c.chromeText, fontWeight = if (on) FontWeight.ExtraBold else FontWeight.SemiBold, fontSize = 13.sp) }
+                            ) { Text("$d", color = if (on) Color(0xFF3B2405) else Ma.c.text, fontWeight = if (on) FontWeight.ExtraBold else FontWeight.SemiBold, fontSize = 13.sp) }
                         }
                     }
                 }
                 VSpace(10.dp)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    GlassCard(Modifier.weight(1f)) { StatBlock("Confidence", "$confPct%", confLabel, valueColor = if (confPct >= 80) Mint else Gold, valueSize = 18) }
+                    GlassCard(Modifier.weight(1f)) { StatBlock("Confidence", "$confPct%", confLabel, valueColor = if (confPct >= 80) mintInk() else goldInk(), valueSize = 18) }
                     GlassCard(Modifier.weight(1f)) { StatBlock("Uplift", up?.let { pct(it) } ?: "—", "vs the 1st", valueSize = 18) }
                     GlassCard(Modifier.weight(1f)) { StatBlock("Reminders", check?.let { "%,d".format(it.recipients) } ?: "—", "subscribers", valueSize = 18) }
                 }

@@ -131,8 +131,8 @@ fun ChromeHeader(title: String, onBack: (() -> Unit)? = null, actions: @Composab
 
 /** Round icon button on the dark header. */
 @Composable
-fun ChromeIcon(icon: ImageVector, label: String, tint: Color = Ma.c.chromeText, onClick: () -> Unit) {
-    Box(Modifier.size(40.dp).clip(RoundedCornerShape(13.dp)).background(Color.White.copy(alpha = .08f)).border(1.dp, Color.White.copy(alpha = .12f), RoundedCornerShape(13.dp)).clickable(role = Role.Button, onClick = onClick), contentAlignment = Alignment.Center) {
+fun ChromeIcon(icon: ImageVector, label: String, tint: Color = Ma.c.text, onClick: () -> Unit) {
+    Box(Modifier.size(40.dp).clip(RoundedCornerShape(13.dp)).background(Ma.c.surface).border(1.dp, Ma.c.line, RoundedCornerShape(13.dp)).clickable(role = Role.Button, onClick = onClick), contentAlignment = Alignment.Center) {
         Icon(icon, label, tint = tint, modifier = Modifier.size(19.dp))
     }
 }
@@ -197,9 +197,10 @@ fun Chips(options: List<String>, selected: String, onSelect: (String) -> Unit, d
     Row(modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         options.forEach { o ->
             val on = o == selected
-            val bg = when { on && dark -> Ma.c.hi; on -> Ma.c.accent; dark -> Color.White.copy(alpha = .07f); else -> Ma.c.surface }
-            val fg = when { on -> Color.White; dark -> Ma.c.chromeSub; else -> Ma.c.sub }
-            Text(o, Modifier.clip(CircleShape).background(bg).border(1.dp, if (on) bg else if (dark) Ma.c.chromeLine else Ma.c.line, CircleShape)
+            // on dark headers too, chips are light: selected = accent, others = surface
+            val bg = when { on && dark -> Ma.c.hi; on -> Ma.c.accent; else -> Ma.c.surface }
+            val fg = when { on -> Color.White; else -> Ma.c.sub }
+            Text(o, Modifier.clip(CircleShape).background(bg).border(1.dp, if (on) bg else Ma.c.line, CircleShape)
                 .clickable(role = Role.Tab) { onSelect(o) }.padding(horizontal = 14.dp, vertical = 8.dp), color = fg, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
         }
     }
@@ -210,14 +211,14 @@ fun Chips(options: List<String>, selected: String, onSelect: (String) -> Unit, d
 fun Segmented(options: List<String>, selected: String, onSelect: (String) -> Unit, dark: Boolean = true, modifier: Modifier = Modifier, label: (String) -> String = { it }) {
     Row(
         modifier.fillMaxWidth().padding(horizontal = 20.dp).clip(RoundedCornerShape(12.dp))
-            .background(if (dark) Color.White.copy(alpha = .07f) else Ma.c.surface2).border(1.dp, if (dark) Ma.c.chromeLine else Ma.c.line, RoundedCornerShape(12.dp)).padding(4.dp)
+            .background(if (dark) Ma.c.surface else Ma.c.surface2).border(1.dp, Ma.c.line, RoundedCornerShape(12.dp)).padding(4.dp)
     ) {
         options.forEach { o ->
             val on = o == selected
             Box(
                 Modifier.weight(1f).height(36.dp).clip(RoundedCornerShape(9.dp)).background(if (on) (if (dark) Ma.c.hi else Ma.c.accent) else Color.Transparent).clickable(role = Role.Tab) { onSelect(o) },
                 contentAlignment = Alignment.Center,
-            ) { Text(label(o), color = if (on) Color.White else if (dark) Ma.c.chromeSub else Ma.c.sub, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1) }
+            ) { Text(label(o), color = if (on) Color.White else Ma.c.sub, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1) }
         }
     }
 }

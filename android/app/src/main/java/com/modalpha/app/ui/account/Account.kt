@@ -160,24 +160,19 @@ fun YouTab(session: SessionViewModel, bio: Biometrics, bottomPad: Dp) {
                 }
                 VSpace(14.dp)
                 // Membership card
-                Column(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp))
-                        .background(if (planName == "Free") Brush.linearGradient(listOf(Color.White.copy(alpha = .1f), Color.White.copy(alpha = .04f))) else Brush.linearGradient(listOf(Color(0xFF3A2A0E), Color(0xFF1E1508))))
-                        .border(1.dp, Gold.copy(alpha = .5f), RoundedCornerShape(20.dp))
-                        .clickable { nav.push(if (planName == "Free") Route.Plans else Route.Subscription) }.padding(16.dp),
-                ) {
+                GlassCard(Modifier.fillMaxWidth().clickable { nav.push(if (planName == "Free") Route.Plans else Route.Subscription) }, gold = true) { Column(Modifier.padding(4.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Outlined.WorkspacePremium, null, tint = Gold, modifier = Modifier.size(20.dp)); HSpace(8.dp)
-                        Text("MOD ALPHA ${(sub?.plan ?: planName).uppercase()}", color = Gold, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, letterSpacing = 1.2.sp, modifier = Modifier.weight(1f))
+                        Icon(Icons.Outlined.WorkspacePremium, null, tint = goldInk(), modifier = Modifier.size(20.dp)); HSpace(8.dp)
+                        Text("MOD ALPHA ${(sub?.plan ?: planName).uppercase()}", color = goldInk(), fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, letterSpacing = 1.2.sp, modifier = Modifier.weight(1f))
                         Text(if (planName == "Free") "Upgrade ›" else "Manage ›", color = Ma.c.chromeText, fontWeight = FontWeight.SemiBold, fontSize = 12.5.sp)
                     }
                     VSpace(12.dp)
                     Row {
                         Box(Modifier.weight(1f)) { StatBlock(if (sub?.cancelling == true) "Ends" else "Renews", sub?.renewalDate?.let { prettyDate(it) } ?: "—", sub?.cycle, valueSize = 14) }
-                        Box(Modifier.weight(1f)) { StatBlock("KYC", k ?: "…", null, valueColor = if (k == "Verified") Mint else Gold, valueSize = 14) }
+                        Box(Modifier.weight(1f)) { StatBlock("KYC", k ?: "…", null, valueColor = if (k == "Verified") mintInk() else goldInk(), valueSize = 14) }
                         Box(Modifier.weight(1f)) { StatBlock("Member since", u.signupDate?.let { runCatching { LocalDate.parse(it.take(10)).format(DateTimeFormatter.ofPattern("MMM yyyy", Locale.ENGLISH)) }.getOrNull() } ?: "—", null, valueSize = 14) }
                     }
-                }
+                } }
             }
         }
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(top = 14.dp, bottom = bottomPad + 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -390,8 +385,8 @@ fun CheckoutScreen(planId: String, cycle: String) {
         }
     }
     Screen("Pay", onBack = nav::pop, actions = {
-        Row(Modifier.clip(CircleShape).background(Color.White.copy(alpha = .1f)).padding(horizontal = 10.dp, vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Outlined.Lock, null, tint = Ma.c.chromeSub, modifier = Modifier.size(12.dp)); Spacer(Modifier.width(4.dp)); Text("SECURE", color = Ma.c.chromeSub, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        Row(Modifier.clip(CircleShape).background(Ma.c.surface).border(1.dp, Ma.c.line, CircleShape).padding(horizontal = 10.dp, vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Outlined.Lock, null, tint = Ma.c.up, modifier = Modifier.size(12.dp)); Spacer(Modifier.width(4.dp)); Text("SECURE", color = Ma.c.sub, fontSize = 11.sp, fontWeight = FontWeight.Bold)
         }
     }, bottom = {
         Column {

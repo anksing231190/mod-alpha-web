@@ -69,6 +69,7 @@ import com.modalpha.app.ui.components.UpChip
 import com.modalpha.app.ui.components.VSpace
 import com.modalpha.app.ui.components.inr
 import com.modalpha.app.ui.components.inrShort
+import com.modalpha.app.ui.components.*
 import com.modalpha.app.ui.theme.Ma
 import java.time.LocalDate
 import java.time.YearMonth
@@ -134,8 +135,8 @@ private fun Hero(d: HomeData, today: LocalDate, actions: HomeActions) {
                 Text(d.user.firstName, color = c.chromeText, fontSize = 18.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             if (d.plan != "Free") { GhostChip(d.plan.uppercase(), gold = true); Spacer(Modifier.width(8.dp)) }
-            Box(Modifier.size(40.dp).clip(RoundedCornerShape(13.dp)).background(Color.White.copy(alpha = .08f)).border(1.dp, Color.White.copy(alpha = .12f), RoundedCornerShape(13.dp)).clickable(onClick = actions.openNotifications), contentAlignment = Alignment.Center) {
-                Icon(Icons.Outlined.NotificationsNone, "Notifications, ${d.unread} unread", tint = c.chromeText, modifier = Modifier.size(20.dp))
+            Box(Modifier.size(40.dp).clip(RoundedCornerShape(13.dp)).background(c.surface).border(1.dp, c.line, RoundedCornerShape(13.dp)).clickable(onClick = actions.openNotifications), contentAlignment = Alignment.Center) {
+                Icon(Icons.Outlined.NotificationsNone, "Notifications, ${d.unread} unread", tint = c.text, modifier = Modifier.size(20.dp))
                 if (d.unread > 0) Box(Modifier.align(Alignment.TopEnd).offset((-7).dp, 7.dp).size(8.dp).clip(CircleShape).background(Color(0xFFF43F5E)))
             }
         }
@@ -153,8 +154,8 @@ private fun Hero(d: HomeData, today: LocalDate, actions: HomeActions) {
                         Text("${sip.day ?: 18}", color = c.chromeText, fontSize = 84.sp, fontWeight = FontWeight.Black, letterSpacing = (-4).sp, lineHeight = 84.sp)
                         Text(sfx(sip.day ?: 18), color = c.chromeText, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(start = 3.dp, top = 12.dp))
                     }
-                    if (locked) Box(Modifier.padding(start = 26.dp).size(52.dp).clip(CircleShape).background(Color.White.copy(alpha = .12f)).border(1.dp, Color.White.copy(alpha = .2f), CircleShape), contentAlignment = Alignment.Center) {
-                        Icon(Icons.Outlined.Lock, "Locked", tint = c.chromeText, modifier = Modifier.size(22.dp))
+                    if (locked) Box(Modifier.padding(start = 26.dp).size(52.dp).clip(CircleShape).background(c.surface).border(1.dp, c.line, CircleShape), contentAlignment = Alignment.Center) {
+                        Icon(Icons.Outlined.Lock, "Locked", tint = c.text, modifier = Modifier.size(22.dp))
                     }
                 }
                 if (!locked) {
@@ -182,7 +183,7 @@ private fun Hero(d: HomeData, today: LocalDate, actions: HomeActions) {
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("Every day this month · historical edge", color = c.chromeMuted, fontSize = 11.sp, modifier = Modifier.weight(1f))
-                        if (!locked) { Text("■ ", color = Gold, fontSize = 10.sp); Text("best  ", color = c.chromeMuted, fontSize = 11.sp); Text("■ ", color = Mint, fontSize = 10.sp); Text("good", color = c.chromeMuted, fontSize = 11.sp) }
+                        if (!locked) { Text("■ ", color = SoftGold, fontSize = 10.sp); Text("best  ", color = c.chromeMuted, fontSize = 11.sp); Text("■ ", color = SoftGood, fontSize = 10.sp); Text("good", color = c.chromeMuted, fontSize = 11.sp) }
                     }
                     VSpace(6.dp)
                     BarStrip(edge, Modifier.fillMaxWidth().height(46.dp), hi = if (locked) null else sip.day?.minus(1), good = if (locked) emptySet() else sip.alternatives.map { it.day - 1 }.toSet())
@@ -195,8 +196,8 @@ private fun Hero(d: HomeData, today: LocalDate, actions: HomeActions) {
             if (locked) GradientButton("Unlock with Pro", actions.openPlans, brush = c.hiBrush)
             else {
                 GradientButton("Remind me", { actions.setReminder(sip.day!!) }, Modifier.weight(1.4f), brush = c.hiBrush, leading = { Icon(Icons.Outlined.NotificationsActive, null, tint = Color.White, modifier = Modifier.size(18.dp)) })
-                Box(Modifier.weight(1f).height(52.dp).clip(RoundedCornerShape(14.dp)).background(Color.White.copy(alpha = .1f)).border(1.dp, Color.White.copy(alpha = .18f), RoundedCornerShape(14.dp)).clickable(onClick = actions.whyDate), contentAlignment = Alignment.Center) {
-                    Text("Why ${sip.day}${sfx(sip.day!!)}?", color = Color.White, style = MaterialTheme.typography.labelLarge)
+                Box(Modifier.weight(1f).height(52.dp).clip(RoundedCornerShape(14.dp)).background(c.surface).border(1.dp, c.line, RoundedCornerShape(14.dp)).clickable(onClick = actions.whyDate), contentAlignment = Alignment.Center) {
+                    Text("Why ${sip.day}${sfx(sip.day!!)}?", color = c.text, style = MaterialTheme.typography.labelLarge)
                 }
             }
         }

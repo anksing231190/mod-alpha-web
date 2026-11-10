@@ -70,10 +70,31 @@ fun MeshHero(modifier: Modifier = Modifier, bottomPad: Dp = 16.dp, content: @Com
     )
 }
 
-/** Frosted card for use on dark headers. */
+/** True inside a light card that sits on a dark header: "chrome" text colours are remapped to dark ink. */
+val LocalOnLight = androidx.compose.runtime.compositionLocalOf { false }
+
+/** Gold / mint text that stays readable on light cards. */
+@Composable fun goldInk() = if (LocalOnLight.current) Color(0xFFA16207) else Gold
+@Composable fun mintInk() = if (LocalOnLight.current) Color(0xFF047857) else Mint
+
+/** Provides light-card colours to `content` (chrome text → page ink), for any light surface on a dark header. */
 @Composable
-fun GlassCard(modifier: Modifier = Modifier, gold: Boolean = false, content: @Composable BoxScope.() -> Unit) =
-    Box(modifier.clip(RoundedCornerShape(18.dp)).background(Color.White.copy(alpha = .07f)).border(1.dp, if (gold) Gold.copy(alpha = .45f) else Color.White.copy(alpha = .12f), RoundedCornerShape(18.dp)).padding(12.dp), content = content)
+fun OnLight(content: @Composable () -> Unit) {
+    val c = Ma.c
+    androidx.compose.runtime.CompositionLocalProvider(
+        com.modalpha.app.ui.theme.LocalMa provides c.copy(chromeText = c.text, chromeSub = c.sub, chromeMuted = c.muted, chromeLine = c.line),
+        LocalOnLight provides true, content = content,
+    )
+}
+
+/** Card for use on dark headers: a light surface (white / cream) so it stands out from the dark background. */
+@Composable
+fun GlassCard(modifier: Modifier = Modifier, gold: Boolean = false, content: @Composable BoxScope.() -> Unit) {
+    val c = Ma.c
+    Box(modifier.clip(RoundedCornerShape(18.dp)).background(c.surface).border(if (gold) 1.5.dp else 1.dp, if (gold) Gold else c.line, RoundedCornerShape(18.dp)).padding(12.dp)) {
+        OnLight { Box(content = content) }
+    }
+}
 
 /** Progress ring with a gradient arc; `center` is drawn inside. */
 @Composable
@@ -103,7 +124,7 @@ fun Donut(parts: List<Pair<Float, Color>>, size: Dp, stroke: Dp, center: @Compos
 
 /** Vertical bar strip; `hi` (gold, glowing) and `good` (green) are 0-based indexes. */
 @Composable
-fun BarStrip(values: List<Double>, modifier: Modifier, hi: Int? = null, good: Set<Int> = emptySet(), base: Color = Color.White.copy(alpha = .18f), gap: Dp = 3.dp, signed: Boolean = false) {
+fun BarStrip(values: List<Double>, modifier: Modifier, hi: Int? = null, good: Set<Int> = emptySet(), base: Color = if (LocalOnLight.current) Ma.c.line else Color.White.copy(alpha = .18f), gap: Dp = 3.dp, signed: Boolean = false) {
     if (values.isEmpty()) return
     Canvas(modifier) {
         val n = values.size; val g = gap.toPx(); val w = (size.width - g * (n - 1)) / n
@@ -138,17 +159,17 @@ fun Riskometer(level: Int, modifier: Modifier = Modifier.size(84.dp, 50.dp), nee
 
 /** Return chip like "▲ +2.8% vs 1st" — on dark (mint) or light (green) backgrounds. */
 @Composable
-fun UpChip(text: String, dark: Boolean = true, up: Boolean = true) {
+fun UpChip(text: String, dark: Boolean = false, up: Boolean = true) {
     val fg = if (up) (if (dark) Mint else Color(0xFF047857)) else (if (dark) Color(0xFFF87171) else Color(0xFFB91C1C))
     val bg = if (up) (if (dark) Emerald.copy(alpha = .16f) else Color(0xFFD1FAE5)) else Color(0xFFEF4444).copy(alpha = .14f)
     Text((if (up) "▲ " else "▼ ") + text, Modifier.clip(CircleShape).background(bg).padding(horizontal = 10.dp, vertical = 5.dp), color = fg, fontSize = 11.5.sp, fontWeight = FontWeight.Bold, maxLines = 1)
 }
 
-/** Neutral chip on dark headers. */
+/** Light chip (used on dark headers and light pages alike). */
 @Composable
 fun GhostChip(text: String, gold: Boolean = false) =
-    Text(text, Modifier.clip(CircleShape).background(if (gold) Gold.copy(alpha = .16f) else Color.White.copy(alpha = .08f)).border(1.dp, if (gold) Gold.copy(alpha = .4f) else Color.White.copy(alpha = .14f), CircleShape).padding(horizontal = 10.dp, vertical = 5.dp),
-        color = if (gold) Gold else Ma.c.chromeSub, fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+    Text(text, Modifier.clip(CircleShape).background(if (gold) Color(0xFFFDF3DC) else Ma.c.surface).border(1.dp, if (gold) Gold else Ma.c.line, CircleShape).padding(horizontal = 10.dp, vertical = 5.dp),
+        color = if (gold) Color(0xFF92600A) else Ma.c.sub, fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
 
 /** Small "label over value" block used in glass cards. */
 @Composable

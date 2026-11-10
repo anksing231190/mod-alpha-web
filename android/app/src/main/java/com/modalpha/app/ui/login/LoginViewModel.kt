@@ -93,7 +93,7 @@ class LoginViewModel(
     fun loginEmail() {
         val s = _s.value
         if (!s.email.contains('@') || s.password.isEmpty()) return _s.update { it.copy(error = "Enter your email and password") }
-        demo = s.email.lowercase() in setOf("demo@modalpha.in", "admin@modalpha.in")
+        demo = false                                  // email logins always use the live API; sample data only via "Try the demo"
         run {
             val repo = repoFor(demo)
             try { onSignedIn(repo.loginWithEmail(s.email, s.password), repo) }

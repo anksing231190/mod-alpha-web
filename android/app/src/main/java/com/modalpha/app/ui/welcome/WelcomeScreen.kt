@@ -81,11 +81,8 @@ fun WelcomeScreen(
     Column(Modifier.fillMaxSize().background(c.bg)) {
         // dark panel: brand row + the animation
         Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)).meshBackdrop(c).statusBarsPadding().padding(bottom = 18.dp)) {
-            Row(Modifier.fillMaxWidth().padding(start = 22.dp, end = 22.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().padding(start = 22.dp, end = 22.dp, top = 14.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("Mod Alpha", color = c.chromeText, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.weight(1f))
-                Text("Try the demo", Modifier.clip(CircleShape).background(Color.White.copy(alpha = .08f)).border(1.dp, Color.White.copy(alpha = .14f), CircleShape).clickable(role = Role.Button, onClick = onDemo).padding(horizontal = 14.dp, vertical = 8.dp),
-                    color = c.chromeSub, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             }
             VSpace(14.dp)
             if (returningName == null) WaveWelcome(Modifier.fillMaxWidth(), autoPlay)

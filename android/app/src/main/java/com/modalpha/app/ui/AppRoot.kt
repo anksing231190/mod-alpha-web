@@ -242,7 +242,7 @@ fun TabsScaffold(tab: Tab, onTab: (Tab) -> Unit, snack: SnackbarHostState, conte
         snackbarHost = { SnackbarHost(snack) },
         bottomBar = {
             // floating bar: rounded, dark, glowing α in the middle
-            Box(Modifier.fillMaxWidth().navigationBarsPadding().padding(start = 12.dp, end = 12.dp, bottom = 10.dp, top = 6.dp)) {
+            Box(Modifier.fillMaxWidth().background(Ma.c.bg).navigationBarsPadding().padding(start = 12.dp, end = 12.dp, bottom = 8.dp, top = 6.dp)) {
                 Row(
                     Modifier.fillMaxWidth().height(66.dp).shadow(18.dp, RoundedCornerShape(24.dp), spotColor = Ma.c.chrome).clip(RoundedCornerShape(24.dp))
                         .background(Ma.c.chrome.copy(alpha = .96f)).border(1.dp, Color.White.copy(alpha = .08f), RoundedCornerShape(24.dp)).padding(horizontal = 4.dp),
