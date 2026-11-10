@@ -17,6 +17,11 @@ Built one screen at a time, designed for the phone (less content per screen than
 | Ask Mod Alpha (POST /assistant/messages, daily limit shown) · Notifications (filters, mark all read) | done |
 | You (plan, KYC, reminders, theme, fingerprint) · Plans · Checkout (stage: simulated payment) · KYC (PAN) · Payment success · Subscription & invoices (PDF, cancel / keep) · Help (FAQ, my requests, new request) | done |
 
+| **Admin** (admin / super admin accounts): sign-in with password + email code + SMS code · Overview (KPIs vs previous period, revenue chart, recent sign-ups and subscriptions) · Users (search, filter, detail, suspend / reactivate with reason) · Support inbox (reply, change status) · Publish SIP date (checks, then publish + reminder campaign) · More (payments this month, theme, fingerprint) | done |
+
+Admin demo account: **admin@modalpha.in / admin1234**, codes 111111 (email) and 222222 (SMS). Refunds, role changes,
+data uploads, templates and settings stay on the website admin.
+
 **Not in the app yet:** live Razorpay checkout (needs the Razorpay Android SDK + key; stage uses the mock provider end
 to end), changing an existing plan (opens the website), push notifications (FCM), Hindi.
 

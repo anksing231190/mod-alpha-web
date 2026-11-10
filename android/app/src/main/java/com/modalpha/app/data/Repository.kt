@@ -50,6 +50,19 @@ interface Repository {
     suspend fun faqs(): List<Faq>
     suspend fun tickets(): List<Ticket>
     suspend fun newTicket(email: String, topic: String, message: String): String
+
+    // ---------- admin (admin / superadmin accounts only) ----------
+    suspend fun verifyAdminCodes(challengeId: String, emailCode: String, smsCode: String): User
+    suspend fun resendAdminCodes(challengeId: String): AdminChallenge?
+    suspend fun adminOverview(): AdminOverview
+    suspend fun adminUsers(q: String, status: String?): List<AdminUser>
+    suspend fun adminUser(id: String): AdminUserDetail
+    suspend fun adminSetStatus(id: String, status: String, reason: String)
+    suspend fun adminTickets(status: String?): Pair<List<AdminTicket>, Map<String, Int>>
+    suspend fun adminUpdateTicket(number: String, reply: String?, status: String?)
+    suspend fun adminValidateSip(month: String, day: Int, reason: String, uplift: Double?, alts: List<AltDay>): SipValidation
+    suspend fun adminPublishSip(month: String, day: Int, reason: String, uplift: Double?, alts: List<AltDay>): String
+    suspend fun adminPayments(): Pair<List<AdminPayment>, PaymentMonth>
 }
 
 /** Indian mobile numbers as the API expects them: +91 and 10 digits. */

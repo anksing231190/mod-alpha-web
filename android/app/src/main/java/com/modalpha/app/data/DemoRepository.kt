@@ -39,6 +39,8 @@ class DemoRepository(private val latencyMs: Long = 450) : Repository {
 
     override suspend fun loginWithEmail(email: String, password: String): User {
         delay(latencyMs)
+        if (email.trim().lowercase() == "admin@modalpha.in" && password == "admin1234")
+            throw AdminChallenge("demo-challenge", "a•••••@modalpha.in", "+91 •••••• 0001", "111111", "222222")
         if (email.trim().lowercase() != "demo@modalpha.in" || password != "demo1234") throw ApiException("Incorrect email or password", 401)
         current = accounts.getValue("+919876543210")
         return current!!.user
@@ -59,6 +61,71 @@ class DemoRepository(private val latencyMs: Long = 450) : Repository {
             compare = demoCompare, watchlist = if (locked) emptyList() else demoFunds.take(2),
         )
     }
+
+
+    /* ---------------- admin (demo) ---------------- */
+    override suspend fun verifyAdminCodes(challengeId: String, emailCode: String, smsCode: String): User {
+        delay(latencyMs)
+        if (emailCode != "111111" && smsCode != "222222") throw ApiException("Both codes are incorrect.", 400)
+        if (emailCode != "111111") throw ApiException("The email code is incorrect.", 400)
+        if (smsCode != "222222") throw ApiException("The SMS code is incorrect.", 400)
+        current = Account(User("a1", "Neha Kapoor", "admin@modalpha.in", "+919800000001", "superadmin"), "Free"); return current!!.user
+    }
+    override suspend fun resendAdminCodes(challengeId: String) = AdminChallenge(challengeId, "", "", "111111", "222222")
+    private val demoUsers = mutableListOf(
+        AdminUser("u1", "MA-10231", "Ankit Singh", "ankit@example.com", "+919876543210", "2026-03-14", "Active", "Verified", "user", "Pro (Yearly)"),
+        AdminUser("u2", "MA-10544", "Riya Sharma", null, "+919876500000", "2026-11-09", "Active", "Not started", "user", "Free"),
+        AdminUser("u3", "MA-10540", "Kabir Mehta", "kabir.m@example.com", "+919812345678", "2026-11-08", "Active", "Verified", "user", "Premium (Monthly)"),
+        AdminUser("u4", "MA-10512", "Sana Iqbal", "sana@example.com", null, "2026-11-02", "Suspended", "Rejected", "user", "Free"),
+        AdminUser("u5", "MA-10498", "Rahul Khanna", "rahulk@example.com", "+919899911122", "2026-10-28", "Active", "Verified", "user", "Pro (Monthly)"),
+        AdminUser("u6", "MA-10477", "Meera Iyer", "meera.iyer@example.com", "+919845000111", "2026-10-21", "Active", "In review", "user", "Free"),
+    )
+    private val demoTickets = mutableListOf(
+        AdminTicket("MA-261110-1051", "Ankit Singh", "ankit@example.com", "Product question", "My reminder came a day late.", "Open", null, "2026-11-10T08:12:00"),
+        AdminTicket("MA-261109-1049", "Meera Iyer", "meera.iyer@example.com", "Account & privacy", "KYC is stuck in review since Monday, can you check?", "In progress", null, "2026-11-09T17:40:00"),
+        AdminTicket("MA-261108-1046", null, "visitor@example.com", "Subscription", "Do you offer a student discount on the yearly plan?", "Open", null, "2026-11-08T11:05:00"),
+        AdminTicket("MA-261102-1042", "Ankit Singh", "ankit@example.com", "Subscription", "Please update the billing address on my invoice.", "Answered", "We've updated your billing address and re-issued the invoice.", "2026-11-02T10:00:00"),
+    )
+    override suspend fun adminOverview(): AdminOverview {
+        delay(latencyMs)
+        val series = (1..10).map { d -> AdminSeries("2026-11-%02d".format(d), listOf(31, 28, 35, 40, 33, 52, 47, 38, 44, 29)[d - 1], listOf(8970.0, 4485.0, 12558.0, 2868.0, 5980.0, 17940.0, 9568.0, 4485.0, 14340.0, 5736.0)[d - 1]) }
+        return AdminOverview("2026-11-01", "2026-11-10", Kpi(12568.0, 3.4), Kpi(1846.0, 5.1), Kpi(series.sumOf { it.revenue }, 12.7), Kpi(14.7, 0.4), series.sumOf { it.newUsers }, series,
+            listOf(RecentSignup("Riya Sharma", "+91 98765 00000", "2026-11-09", "Active"), RecentSignup("Kabir Mehta", "kabir.m@example.com", "2026-11-08", "Active"), RecentSignup("Sana Iqbal", "sana@example.com", "2026-11-02", "Suspended")),
+            listOf(RecentSub("Kabir Mehta", "Premium", "Monthly", 499.0, "2026-11-08", "Active"), RecentSub("Ankit Singh", "Pro", "Yearly", 2868.0, "2026-11-04", "Active"), RecentSub("Rahul Khanna", "Pro", "Monthly", 299.0, "2026-10-28", "Active")),
+            demoTickets.count { it.status == "Open" || it.status == "In progress" })
+    }
+    override suspend fun adminUsers(q: String, status: String?): List<AdminUser> { delay(latencyMs / 2)
+        return demoUsers.filter { (status == null || it.status == status) && (q.isBlank() || listOfNotNull(it.name, it.email, it.mobile, it.ref).any { s -> s.contains(q, true) }) } }
+    override suspend fun adminUser(id: String): AdminUserDetail { delay(latencyMs / 2)
+        val u = demoUsers.first { it.id == id }
+        val subs = when { u.plan.startsWith("Pro (Yearly)") -> listOf(AdminSubRow("SUB-9F2A1C3D", "Pro", "Yearly", 2868.0, "Active", "2026-11-04", "2027-11-04"), AdminSubRow("SUB-77B0E412", "Pro", "Monthly", 299.0, "Upgraded", "2026-10-04", "2026-11-04"))
+            u.plan.startsWith("Free") -> emptyList(); else -> listOf(AdminSubRow("SUB-1A2B3C4D", u.plan.substringBefore(" ("), u.plan.substringAfter("(").removeSuffix(")"), if (u.plan.startsWith("Premium")) 499.0 else 299.0, "Active", u.signupDate, null)) }
+        return AdminUserDetail(u, subs, u.email != null, u.mobile != null) }
+    override suspend fun adminSetStatus(id: String, status: String, reason: String) { delay(latencyMs / 2); val i = demoUsers.indexOfFirst { it.id == id }; demoUsers[i] = demoUsers[i].copy(status = status) }
+    override suspend fun adminTickets(status: String?): Pair<List<AdminTicket>, Map<String, Int>> { delay(latencyMs / 2)
+        return demoTickets.filter { status == null || it.status == status } to demoTickets.groupingBy { it.status }.eachCount() }
+    override suspend fun adminUpdateTicket(number: String, reply: String?, status: String?) { delay(latencyMs / 2)
+        val i = demoTickets.indexOfFirst { it.number == number }; demoTickets[i] = demoTickets[i].copy(reply = reply ?: demoTickets[i].reply, status = status ?: if (reply != null) "Answered" else demoTickets[i].status) }
+    override suspend fun adminValidateSip(month: String, day: Int, reason: String, uplift: Double?, alts: List<AltDay>): SipValidation {
+        delay(latencyMs / 2)
+        val d = runCatching { java.time.YearMonth.parse(month).atDay(day) }.getOrNull() ?: throw ApiException("Use YYYY-MM")
+        val checks = mutableListOf(if (d.dayOfWeek.value >= 6) SipCheck("warn", "$d is a ${d.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }} — most SIPs execute on the next business day.") else SipCheck("ok", "$d is a weekday."), SipCheck("ok", "Not a market holiday."))
+        if (month == "2026-11") checks += SipCheck("warn", "$month is already published for the 12th. Publishing creates a new version and notifies subscribers of the change.")
+        if (d.isBefore(LocalDate.now())) checks += SipCheck("error", "The date is in the past.")
+        return SipValidation(d.toString(), checks.none { it.level == "error" }, checks, 1846, if (month == "2026-11") 12 else null)
+    }
+    override suspend fun adminPublishSip(month: String, day: Int, reason: String, uplift: Double?, alts: List<AltDay>): String {
+        val v = adminValidateSip(month, day, reason, uplift, alts); if (!v.ok) throw ApiException("Configuration has blocking problems")
+        return "Published ${v.date} (v${month.replace("-", "")}.0). Reminders go to ${v.recipients} subscribers on ${java.time.LocalDate.parse(v.date).minusDays(2)}."
+    }
+    override suspend fun adminPayments(): Pair<List<AdminPayment>, PaymentMonth> { delay(latencyMs / 2)
+        return listOf(
+            AdminPayment("p5", 499.0, 0.0, "captured", "new", "2026-11-08", "Premium", "Monthly", "Kabir Mehta", "kabir.m@example.com", "MA/26-27/00047"),
+            AdminPayment("p4", 2868.0, 0.0, "captured", "upgrade", "2026-11-04", "Pro", "Yearly", "Ankit Singh", "ankit@example.com", "MA/26-27/00042"),
+            AdminPayment("p3", 299.0, 299.0, "refunded", "renewal", "2026-11-01", "Pro", "Monthly", "Sana Iqbal", "sana@example.com", "MA/26-27/00038"),
+            AdminPayment("p2", 299.0, 0.0, "failed", "renewal", "2026-10-31", "Pro", "Monthly", "Dev Patel", "dev.p@example.com", null),
+            AdminPayment("p1", 299.0, 0.0, "captured", "new", "2026-10-28", "Pro", "Monthly", "Rahul Khanna", "rahulk@example.com", "MA/26-27/00031"),
+        ) to PaymentMonth(3666.0, 299.0, 1) }
 
     override suspend fun logout() { current = null; sub = null; kyc = "Not started"; asked = 2 }
 

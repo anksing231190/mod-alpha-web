@@ -6,7 +6,9 @@ data class User(
     val name: String,
     val email: String?,
     val mobile: String?,
+    val role: String = "user",            // user | admin | superadmin
 ) {
+    val isAdmin: Boolean get() = role == "admin" || role == "superadmin"
     val firstName: String get() = name.trim().split(" ").firstOrNull()?.ifBlank { null } ?: "there"
     val initial: String get() = name.trim().take(1).uppercase().ifBlank { "M" }
 }
@@ -110,3 +112,27 @@ data class Prefs(
     val push: Boolean, val sms: Boolean, val email: Boolean,
     val sipReminder: Boolean, val datePublished: Boolean,
 )
+
+/* ---------- admin ---------- */
+
+/** Admin sign-in step 2: both codes (email + SMS) are needed. `devCodes` only on stage mocks / demo. */
+class AdminChallenge(val challengeId: String, val email: String, val mobile: String, val devEmail: String?, val devSms: String?) :
+    Exception("Enter the codes sent to your email and phone")
+
+data class Kpi(val value: Double, val changePct: Double?)
+data class AdminSeries(val bucket: String, val newUsers: Int, val revenue: Double)
+data class RecentSignup(val name: String, val contact: String, val date: String, val status: String)
+data class RecentSub(val name: String, val plan: String, val cycle: String, val amount: Double, val date: String, val status: String)
+data class AdminOverview(
+    val from: String, val to: String,
+    val totalUsers: Kpi, val activeSubs: Kpi, val revenue: Kpi, val conversion: Kpi, val newUsers: Int,
+    val series: List<AdminSeries>, val signups: List<RecentSignup>, val subs: List<RecentSub>, val openTickets: Int,
+)
+data class AdminUser(val id: String, val ref: String, val name: String, val email: String?, val mobile: String?, val signupDate: String, val status: String, val kyc: String, val role: String, val plan: String)
+data class AdminSubRow(val id: String, val plan: String, val cycle: String, val amount: Double, val status: String, val start: String, val renewal: String?)
+data class AdminUserDetail(val user: AdminUser, val subs: List<AdminSubRow>, val emailVerified: Boolean, val mobileVerified: Boolean)
+data class AdminTicket(val number: String, val name: String?, val email: String, val topic: String, val message: String, val status: String, val reply: String?, val createdAt: String)
+data class SipCheck(val level: String, val msg: String)
+data class SipValidation(val date: String, val ok: Boolean, val checks: List<SipCheck>, val recipients: Int, val existingDay: Int?)
+data class AdminPayment(val id: String, val amount: Double, val refunded: Double, val status: String, val kind: String, val paidOn: String, val plan: String?, val cycle: String?, val name: String?, val email: String?, val invoice: String?)
+data class PaymentMonth(val gross: Double, val refunded: Double, val refunds: Int)

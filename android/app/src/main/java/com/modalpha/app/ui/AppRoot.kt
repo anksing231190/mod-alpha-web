@@ -117,7 +117,8 @@ fun AppRoot(state: Session, session: SessionViewModel, bio: Biometrics) {
                 onUseOtp = session::logout, onSwitch = session::logout,
             )
             is Session.SignedIn -> {
-                MainTabs(state.user, state.repo, session, bio)
+                if (state.user.isAdmin) com.modalpha.app.ui.admin.AdminTabs(state.user, state.repo, session, bio)
+                else MainTabs(state.user, state.repo, session, bio)
                 if (state.offerBiometric) AlertDialog(
                     onDismissRequest = { session.setBiometric(false) },
                     icon = { Icon(Icons.Outlined.Fingerprint, null, tint = Ma.c.accent, modifier = Modifier.size(36.dp)) },

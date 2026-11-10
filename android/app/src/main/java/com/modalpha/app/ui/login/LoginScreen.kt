@@ -116,7 +116,7 @@ fun LoginScreen(vm: LoginViewModel, onBack: (() -> Unit)? = null) {
                     transitionSpec = { (slideInHorizontally { it / 3 } + fadeIn()) togetherWith fadeOut() },
                     label = "login-step",
                 ) { step ->
-                    if (step == LoginStep.Otp) OtpStep(s, vm) else EnterStep(s, vm)
+                    when (step) { LoginStep.Otp -> OtpStep(s, vm); LoginStep.AdminCodes -> AdminCodesStep(s, vm); else -> EnterStep(s, vm) }
                 }
             }
 
@@ -283,3 +283,33 @@ private fun fieldColors() = OutlinedTextFieldDefaults.colors(
     focusedContainerColor = Ma.c.surface2, unfocusedContainerColor = Ma.c.surface2,
     focusedPlaceholderColor = Ma.c.muted, unfocusedPlaceholderColor = Ma.c.muted,
 )
+
+/** Admin sign-in: a code by email AND a code by SMS (both required). */
+@Composable
+private fun AdminCodesStep(s: LoginState, vm: LoginViewModel) {
+    val c = s.challenge ?: return
+    Column {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = vm::changeNumber, modifier = Modifier.size(36.dp)) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Back", tint = Ma.c.text) }
+            Spacer(Modifier.width(6.dp))
+            Text("Admin sign-in", color = Ma.c.text, style = MaterialTheme.typography.titleLarge)
+        }
+        VSpace(6.dp)
+        Text("For your security we sent two codes. Enter both to continue.", color = Ma.c.muted, style = MaterialTheme.typography.bodyMedium)
+        VSpace(16.dp)
+        OutlinedTextField(s.emailCode, vm::onEmailCode, Modifier.fillMaxWidth(), singleLine = true, label = { Text("Email code") },
+            supportingText = { Text("Sent to ${c.email}") }, leadingIcon = { Icon(Icons.Outlined.Email, null) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword, imeAction = ImeAction.Next), colors = fieldColors(), shape = RoundedCornerShape(14.dp))
+        VSpace(6.dp)
+        OutlinedTextField(s.smsCode, vm::onSmsCode, Modifier.fillMaxWidth(), singleLine = true, label = { Text("SMS code") },
+            supportingText = { Text("Sent to ${c.mobile}") }, leadingIcon = { Icon(Icons.Outlined.PhoneAndroid, null) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword, imeAction = ImeAction.Done), keyboardActions = KeyboardActions(onDone = { vm.verifyAdmin() }), colors = fieldColors(), shape = RoundedCornerShape(14.dp))
+        if (c.devEmail != null) { VSpace(8.dp); Text("Test codes: email ${c.devEmail} · SMS ${c.devSms}", color = Ma.c.warn, style = MaterialTheme.typography.bodySmall) }
+        if (s.error != null) { VSpace(12.dp); ErrorBanner(s.error) }
+        VSpace(16.dp)
+        GradientButton("Verify & sign in", vm::verifyAdmin, loading = s.busy, enabled = s.emailCode.length == 6 && s.smsCode.length == 6)
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            TextButton(onClick = vm::resendAdmin, enabled = !s.busy && s.resendIn == 0) { Text(if (s.resendIn > 0) "Resend codes in 0:%02d".format(s.resendIn) else "Resend codes", color = Ma.c.accent, fontWeight = FontWeight.SemiBold) }
+        }
+    }
+}

@@ -65,8 +65,7 @@ class LiveRepository(context: Context, private val baseUrl: String) : Repository
 
     private fun JsonObject.toUser(): User {
         val u = (this["user"] as? JsonObject) ?: throw ApiException("Unexpected reply from the server")
-        if (u.str("role") != null && u.str("role") != "user") throw ApiException("Admin accounts sign in on the website.", 403)
-        return User(u.str("id") ?: "", u.str("name") ?: "Investor", u.str("email"), u.str("mobile"))
+        return User(u.str("id") ?: "", u.str("name") ?: "Investor", u.str("email"), u.str("mobile"), u.str("role") ?: "user")
     }
 
     override suspend fun restore(): User? = if (!jar.hasSession()) null else runCatching { call("GET", "/auth/me").toUser() }.getOrNull()
@@ -78,13 +77,13 @@ class LiveRepository(context: Context, private val baseUrl: String) : Repository
 
     override suspend fun verifyOtp(mobile: String, code: String, signup: Boolean): User {
         val r = call("POST", "/auth/otp/verify", buildJsonObject { put("mobile", mobile); put("code", code); put("intent", if (signup) "signup" else "login") })
-        if (r["challenge"] != null || r["mfa"] != null) throw ApiException("Admin accounts sign in on the website.", 403)
+        r.challengeOrNull()?.let { throw it }
         return r.toUser()
     }
 
     override suspend fun loginWithEmail(email: String, password: String): User {
         val r = call("POST", "/auth/login", buildJsonObject { put("email", email.trim()); put("password", password) })
-        if (r["user"] == null) throw ApiException("Admin accounts sign in on the website.", 403)
+        r.challengeOrNull()?.let { throw it }
         return r.toUser()
     }
 
@@ -252,7 +251,80 @@ class LiveRepository(context: Context, private val baseUrl: String) : Repository
     override suspend fun newTicket(email: String, topic: String, message: String): String =
         call("POST", "/support/tickets", buildJsonObject { put("email", email); put("topic", topic); put("message", message) }).str("number") ?: ""
 
-    private fun enc(s: String) = java.net.URLEncoder.encode(s, "UTF-8")
+
+    /* ---------------- admin ---------------- */
+    private fun JsonObject.challengeOrNull(): AdminChallenge? {
+        if (str("mfaRequired") != "true") return null
+        val dc = this["devCodes"] as? JsonObject
+        return AdminChallenge(str("challengeId") ?: "", str("email") ?: "", str("mobile") ?: "", dc.str("email"), dc.str("sms"))
+    }
+    override suspend fun verifyAdminCodes(challengeId: String, emailCode: String, smsCode: String): User =
+        call("POST", "/auth/login/verify", buildJsonObject { put("challengeId", challengeId); put("emailCode", emailCode); put("smsCode", smsCode) }).toUser()
+    override suspend fun resendAdminCodes(challengeId: String): AdminChallenge? {
+        val r = call("POST", "/auth/login/resend", buildJsonObject { put("challengeId", challengeId) })
+        val dc = r["devCodes"] as? JsonObject
+        return AdminChallenge(challengeId, "", "", dc.str("email"), dc.str("sms"))
+    }
+    private fun JsonObject?.kpi(k: String): Kpi { val o = this?.get(k) as? JsonObject; return Kpi(o.num("value") ?: 0.0, o.num("changePct") ?: o.num("changePp")) }
+    override suspend fun adminOverview(): AdminOverview = coroutineScope {
+        val m = async { call("GET", "/admin/metrics") }; val rc = async { call("GET", "/admin/recent") }
+        val t = async { runCatching { call("GET", "/admin/support/tickets") }.getOrNull() }
+        val mm = m.await(); val k = mm["kpis"] as? JsonObject; val range = mm["range"] as? JsonObject; val r = rc.await()
+        val counts = t.await()?.get("counts") as? JsonObject
+        AdminOverview(
+            range.str("from") ?: "", range.str("to") ?: "",
+            k.kpi("totalUsers"), k.kpi("activeSubscriptions"), k.kpi("revenue"), k.kpi("conversionRate"), (k?.get("newUsers") as? JsonObject).int("value") ?: 0,
+            (mm["series"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.let { o -> AdminSeries(o.str("bucket")?.take(10) ?: "", o.int("new_users") ?: 0, o.num("revenue") ?: 0.0) } },
+            (r["signups"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.let { o -> RecentSignup(o.str("name") ?: "", o.str("contact") ?: "", o.str("signup_date")?.take(10) ?: "", o.str("status") ?: "") } },
+            (r["subscriptions"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.let { o -> RecentSub(o.str("name") ?: "", o.str("plan") ?: "", o.str("cycle") ?: "", o.num("amount") ?: 0.0, o.str("start_date")?.take(10) ?: "", o.str("status") ?: "") } },
+            (counts.int("Open") ?: 0) + (counts.int("In progress") ?: 0),
+        )
+    }
+    private fun JsonObject.toAdminUser() = AdminUser(str("id") ?: "", str("ref") ?: str("external_ref") ?: "", str("name") ?: str("full_name") ?: "", str("email"), str("mobile"),
+        str("signup_date")?.take(10) ?: "", str("status") ?: str("account_status") ?: "", str("kyc") ?: str("kyc_status") ?: "", str("role") ?: "user", str("plan") ?: "Free")
+    override suspend fun adminUsers(q: String, status: String?): List<AdminUser> {
+        val qs = buildString { append("?pageSize=50"); if (q.isNotBlank()) append("&q=" + enc(q)); status?.let { append("&status=" + enc(it)) } }
+        return (call("GET", "/admin/users$qs")["items"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.toAdminUser() }
+    }
+    override suspend fun adminUser(id: String): AdminUserDetail {
+        val r = call("GET", "/admin/users/${enc(id)}"); val u = r["user"] as? JsonObject ?: throw ApiException("User not found")
+        val subs = (r["subscriptions"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.let { o -> AdminSubRow(o.str("id") ?: "", o.str("plan_id") ?: "", o.str("billing_cycle") ?: "", o.num("amount_inr") ?: 0.0, o.str("status") ?: "", o.str("start_date")?.take(10) ?: "", o.str("renewal_date")?.take(10)) } }
+        val au = u.toAdminUser().copy(plan = subs.firstOrNull { it.status == "Active" }?.let { "${it.plan} (${it.cycle})" } ?: "Free")
+        return AdminUserDetail(au, subs, u.str("email_verified_at") != null, u.str("mobile_verified_at") != null)
+    }
+    override suspend fun adminSetStatus(id: String, status: String, reason: String) { call("PATCH", "/admin/users/${enc(id)}", buildJsonObject { put("accountStatus", status); put("reason", reason) }) }
+    override suspend fun adminTickets(status: String?): Pair<List<AdminTicket>, Map<String, Int>> {
+        val r = call("GET", "/admin/support/tickets" + (status?.let { "?status=" + enc(it) } ?: ""))
+        val items = (r["items"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.let { o -> AdminTicket(o.str("number") ?: "", o.str("full_name"), o.str("email") ?: "", o.str("topic") ?: "", o.str("message") ?: "", o.str("status") ?: "Open", o.str("reply"), o.str("created_at") ?: "") } }
+        val c = r["counts"] as? JsonObject
+        return items to (c?.keys?.associateWith { c.int(it) ?: 0 } ?: emptyMap())
+    }
+    override suspend fun adminUpdateTicket(number: String, reply: String?, status: String?) {
+        call("PATCH", "/admin/support/tickets/${enc(number)}", buildJsonObject { reply?.let { put("reply", it) }; status?.let { put("status", it) } })
+    }
+    private fun sipBody(month: String, day: Int, reason: String, uplift: Double?, alts: List<AltDay>) = buildJsonObject {
+        put("month", month); put("day", day); put("reason", reason); uplift?.let { put("upliftPct", it) }
+        if (alts.isNotEmpty()) put("alternatives", kotlinx.serialization.json.buildJsonArray { alts.forEach { a -> add(buildJsonObject { put("day", a.day); put("upliftPct", a.upliftPct ?: 0.0) }) } })
+    }
+    override suspend fun adminValidateSip(month: String, day: Int, reason: String, uplift: Double?, alts: List<AltDay>): SipValidation {
+        val r = call("POST", "/admin/sip-dates/validate", sipBody(month, day, reason, uplift, alts))
+        return SipValidation(r.str("date") ?: "", r.str("ok") == "true",
+            (r["checks"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.let { o -> SipCheck(o.str("level") ?: "ok", o.str("msg") ?: "") } },
+            r.int("recipients") ?: 0, (r["existing"] as? JsonObject).int("recommended_day"))
+    }
+    override suspend fun adminPublishSip(month: String, day: Int, reason: String, uplift: Double?, alts: List<AltDay>): String {
+        val r = call("POST", "/admin/sip-dates/publish", sipBody(month, day, reason, uplift, alts))
+        return "Published ${r.str("date") ?: ""} (${r.str("version") ?: ""}). Reminders go to ${r.int("recipients") ?: 0} subscribers on ${r.str("reminderOn") ?: ""}."
+    }
+    override suspend fun adminPayments(): Pair<List<AdminPayment>, PaymentMonth> {
+        val r = call("GET", "/admin/payments")
+        val items = (r["items"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.let { o -> AdminPayment(o.str("id") ?: "", o.num("amount_inr") ?: 0.0, o.num("refunded_inr") ?: 0.0, o.str("status") ?: "",
+            o.str("kind") ?: "new", (o.str("paid_on") ?: o.str("created_at"))?.take(10) ?: "", o.str("plan_id"), o.str("billing_cycle"), o.str("full_name"), o.str("email"), o.str("invoice_number")) } }
+        val m = r["month"] as? JsonObject
+        return items to PaymentMonth(m.num("gross") ?: 0.0, m.num("refunded") ?: 0.0, m.int("refunds") ?: 0)
+    }
+
+    private fun enc(s: String) = java.net.URLEncoder.encode(s, "UTF-8").replace("+", "%20")
 
     private fun JsonObject.toCompare(): SipCompare? {
         val pts = (this["path"] as? JsonArray).orEmpty().mapNotNull { p ->
