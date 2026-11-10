@@ -33,6 +33,10 @@ class AppPrefs(context: Context) {
     var notifAsked: Boolean
         get() = p.getBoolean("notif_asked", false)
         set(v) = p.edit().putBoolean("notif_asked", v).apply()
+    /** Insights the user has opened (story rings turn grey). */
+    var seenInsights: Set<String>
+        get() = p.getStringSet("seen_insights", emptySet()) ?: emptySet()
+        set(v) = p.edit().putStringSet("seen_insights", v).apply()
     var lastName: String?
         get() = p.getString("last_name", null)
         set(v) = p.edit().putString("last_name", v).apply()

@@ -21,6 +21,7 @@ sealed interface Route {
     data object Help : Route
     data object Profile : Route
     data object MyProfile : Route
+    data class Article(val insight: com.modalpha.app.data.Insight) : Route
 }
 
 /** What every screen can reach: data, the signed-in user, navigation, toasts and the Remind me sheet. */

@@ -92,6 +92,7 @@ class AllScreensTest {
     @Test fun whatif() = shot("09-whatif") { WhatIfScreen("QSC01") }
     @Test fun compare() = shot("10-compare") { CompareScreen("QSC01", "SBC01") }
     @Test fun insights() = shot("11-insights") { InsightsScreen() }
+    @Test fun article() = shot("11b-article") { com.modalpha.app.ui.explore.ArticleScreen(runBlocking { repo.insights() }.first { it.kind != "instagram" }) }
     @Test fun calendar() = tab("12-calendar", Tab.Calendar) { CalendarTab(it) }
     @Test fun calendar_espresso() = tab("12-calendar", Tab.Calendar, AppTheme.Espresso) { CalendarTab(it) }
     @Test fun reminder() = shot("13-reminder", screen = true) { MainTabsPreview(runBlocking { repo.home() }); ReminderSheet(12) {} }

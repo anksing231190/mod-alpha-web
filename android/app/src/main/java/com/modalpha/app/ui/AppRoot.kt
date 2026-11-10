@@ -250,6 +250,7 @@ fun MainTabs(user: User, repo: Repository, session: SessionViewModel, bio: Biome
                             Route.Help -> HelpScreen()
                             Route.Profile -> YouTab(session, bio, 0.dp, onBack = nav::pop)
                             Route.MyProfile -> MyProfileScreen()
+                            is Route.Article -> com.modalpha.app.ui.explore.ArticleScreen(r.insight)
                         }
                     }
                 }
