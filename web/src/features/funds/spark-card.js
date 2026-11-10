@@ -25,7 +25,7 @@
     const val = (x) => (real ? '₹' + x.toFixed(2) : '');
     const chg = (v[L] / v[0] - 1) * 100;
     return `<div class="ma-spc-head"><b>${esc(f.short || f.name)}</b><span class="${up ? 'up' : 'down'}">${up ? '▲' : '▼'} ${Math.abs(chg).toFixed(1)}% · ${T('1 year')}</span></div>
-      <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="maSpcG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${up ? '#34d399' : '#fb7185'}" stop-opacity=".35"/><stop offset="1" stop-color="${up ? '#34d399' : '#fb7185'}" stop-opacity="0"/></linearGradient></defs>
+      <svg class="ma-chk-bg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="maSpcG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${up ? '#34d399' : '#fb7185'}" stop-opacity=".35"/><stop offset="1" stop-color="${up ? '#34d399' : '#fb7185'}" stop-opacity="0"/></linearGradient></defs>
       <polygon points="0,${H} ${pts} ${W},${H}" fill="url(#maSpcG)"/><polyline points="${pts}" fill="none" stroke="${up ? '#34d399' : '#fb7185'}" stroke-width="2.2" vector-effect="non-scaling-stroke"/>
       <circle cx="${X(hi)}" cy="${Y(mx)}" r="4" class="hi"/><circle cx="${X(lo)}" cy="${Y(mn)}" r="4" class="lo"/><circle cx="${X(L)}" cy="${Y(v[L])}" r="4.5" class="now"/></svg>
       ${real ? `<div class="ma-spc-stats"><div><small>${T('High')}</small><b class="hi">${val(mx)}</b><em>${fmtD(d[hi])}</em></div><div><small>${T('Low')}</small><b class="lo">${val(mn)}</b><em>${fmtD(d[lo])}</em></div><div><small>${T('Latest')}</small><b>${val(v[L])}</b><em>${fmtD(d[L])}</em></div></div>` : `<p class="ma-spc-note">${T('Illustrative shape (sample data)')}</p>`}`;

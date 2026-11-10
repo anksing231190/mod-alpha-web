@@ -195,7 +195,7 @@
     }
     async function sparks(s) {
       place('top');
-      scr.innerHTML = `<svg class="mr-chart" viewBox="0 0 254 120" preserveAspectRatio="none" aria-hidden="true"><path class="area" d="M4 104 L40 92 L76 96 L112 72 L148 78 L184 50 L220 38 L250 14 L250 120 L4 120Z"/><path class="line" d="M4 104 L40 92 L76 96 L112 72 L148 78 L184 50 L220 38 L250 14"/></svg><b class="mr-chip">${UPLIFT} ✦</b>`;
+      scr.innerHTML = `<svg class="mr-chart ma-chk-bg" viewBox="0 0 254 120" preserveAspectRatio="none" aria-hidden="true"><path class="area" d="M4 104 L40 92 L76 96 L112 72 L148 78 L184 50 L220 38 L250 14 L250 120 L4 120Z"/><path class="line" d="M4 104 L40 92 L76 96 L112 72 L148 78 L184 50 L220 38 L250 14"/></svg><b class="mr-chip">${UPLIFT} ✦</b>`;
       await s.wait(600); pose(b, 'think');
       const tgt = inStage(b.querySelector('.core')), W = stage.offsetWidth, H = stage.offsetHeight, glyphs = ['₹', '%', 'NAV', '₹', '%', '10Y', '₹', 'SIP'];
       const live = [];

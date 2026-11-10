@@ -23,6 +23,14 @@ function v22Chart(o){
  });
  if(o.bars)s+=`<linearGradient id="${gid}b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3d8cff"/><stop offset="1" stop-color="#1a3fae"/></linearGradient><linearGradient id="${gid}bp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8b5cf6"/><stop offset="1" stop-color="#3b2a9e"/></linearGradient>`;
  s+=`</defs>`;
+ // checkered plot area (same look as the Android app): every other cell between the grid lines is tinted.
+ // Rows follow the y ticks; columns follow the x labels when there are 3–14 of them, otherwise 8 even columns.
+ {const ys=o.yTicks&&o.yTicks.length>1?o.yTicks.map(Y):Array.from({length:5},(_,i)=>P.t+i*ih/4);
+  const xl0=o.xLabels||[],xp0=o.xPos||xl0.map((_,i)=>P.l+(xl0.length<=1?0:i*iw/(xl0.length-1)));
+  const xs=o.vGrid===false||xp0.length<3||xp0.length>14?Array.from({length:9},(_,i)=>P.l+i*iw/8):xp0;
+  const edges=(a,lo,hi)=>[...new Set([lo,...a.filter(v=>v>lo+.5&&v<hi-.5).map(v=>+v.toFixed(1)),hi])].sort((p,q)=>p-q);
+  const ye=edges(ys,P.t,P.t+ih),xe=edges(xs,P.l,P.l+iw);
+  for(let r=0;r<ye.length-1;r++)for(let c=0;c<xe.length-1;c++)if((r+c)%2===0)s+=`<rect class="v22-chk" x="${xe[c]}" y="${ye[r]}" width="${(xe[c+1]-xe[c]).toFixed(1)}" height="${(ye[r+1]-ye[r]).toFixed(1)}"/>`}
  // grid
  (o.yTicks||[]).forEach(t=>{const y=Y(t);s+=`<line class="v22-grid" x1="${P.l}" x2="${W-P.r}" y1="${y}" y2="${y}"/><text class="v22-axis" x="${P.l-14}" y="${y+5}" text-anchor="end">${o.yFmt?o.yFmt(t):t}</text>`});
  if(o.yRight)o.yRight.ticks.forEach((t,i)=>{const y=Y(o.yTicks[i]);s+=`<text class="v22-axis" x="${W-P.r+12}" y="${y+5}" text-anchor="start">${t}</text>`});

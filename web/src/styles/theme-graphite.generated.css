@@ -1911,3 +1911,5 @@ html[data-theme="light"]:where([data-skin="slate"]) .ma-bsel-pop{background:#fdf
 html[data-theme="light"]:where([data-skin="slate"]) .ma-tk-st.amber{color:#3a4c66}
 html[data-theme="light"]:where([data-skin="slate"]) .ma-tk-st.rose{color:#405177}
 html[data-theme="light"]:where([data-skin="slate"]) .ma-bill-cn{color:#3a4c66!important}
+html[data-theme="light"]:where([data-skin="slate"]) .v22-chk{fill:rgba(65,69,77,.05)}
+html[data-theme="light"]:where([data-skin="slate"]) .ma-chk-bg{--chk:rgba(65,69,77,.055)}

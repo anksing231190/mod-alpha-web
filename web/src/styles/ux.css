@@ -1164,3 +1164,12 @@ html[data-theme="light"] .ma-cmd mark{color:#155e75!important}
 @media (min-width:1181px){.v22-how .v22-conn[style*="--i:1"]>svg{visibility:hidden}}
 @keyframes maConnFlow{from{background-position:0 0}to{background-position:0 -200%}}
 @media (prefers-reduced-motion:reduce){.v22-how .v22-conn::before{animation:none!important}}
+
+/* Checkered chart backgrounds everywhere (same look as the Android app).
+   v22Chart() draws .v22-chk cells between its grid lines; hand-drawn SVG charts get .ma-chk-bg (CSS checkerboard). */
+.v22-chk{fill:rgba(130,157,220,.055)}
+html[data-theme="light"] .v22-chk{fill:rgba(90,70,52,.05)}
+.ma-chk-bg{--chk:rgba(130,157,220,.07);background-color:transparent;
+ background-image:linear-gradient(45deg,var(--chk) 25%,transparent 25%,transparent 75%,var(--chk) 75%),linear-gradient(45deg,var(--chk) 25%,transparent 25%,transparent 75%,var(--chk) 75%);
+ background-size:36px 36px;background-position:0 0,18px 18px;border-radius:8px}
+html[data-theme="light"] .ma-chk-bg{--chk:rgba(90,70,52,.055)}
