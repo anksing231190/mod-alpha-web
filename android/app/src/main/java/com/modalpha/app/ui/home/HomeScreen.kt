@@ -101,6 +101,7 @@ class HomeActions(
     val logout: () -> Unit = {},
     val openCompare: () -> Unit = {},
     val openAsk: () -> Unit = {},
+    val openSubscription: () -> Unit = {},
 )
 
 @Composable
@@ -157,10 +158,9 @@ private fun Hero(d: HomeData, today: LocalDate, actions: HomeActions) {
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
                 Text(d.user.firstName, color = c.chromeText, fontSize = 18.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text("View profile ›", color = c.chromeMuted, fontSize = 11.sp)
             }
           }
-            if (d.plan != "Free") { GhostChip(d.plan.uppercase(), gold = true); Spacer(Modifier.width(8.dp)) }
+            if (d.plan != "Free") { Box(Modifier.clip(CircleShape).clickable(onClickLabel = "Open subscription", onClick = actions.openSubscription)) { GhostChip(d.plan.uppercase(), gold = true) }; Spacer(Modifier.width(8.dp)) }
             Box(Modifier.size(40.dp).clip(RoundedCornerShape(13.dp)).background(Color.White).border(1.dp, c.line, RoundedCornerShape(13.dp)).clickable(onClick = actions.openNotifications), contentAlignment = Alignment.Center) {
                 Icon(Icons.Outlined.NotificationsNone, "Notifications, ${d.unread} unread", tint = Color(0xFF0F1A33), modifier = Modifier.size(20.dp))
                 if (d.unread > 0) Box(Modifier.align(Alignment.TopEnd).offset((-7).dp, 7.dp).size(8.dp).clip(CircleShape).background(Color(0xFFF43F5E)))
@@ -208,7 +208,7 @@ private fun Hero(d: HomeData, today: LocalDate, actions: HomeActions) {
             HeroTile(pct(sip.upliftPct), "vs the 1st", Modifier.weight(1f))
             if (!locked) {
                 if (sip.leadPts != null) HeroTile("%.1f pts".format(sip.leadPts), "ahead of next", Modifier.weight(1f))
-                else HeroTile("${sip.confidencePct}%", "confidence", Modifier.weight(1f))
+                else HeroTile("${sip.alternatives.size + 1}", "good days", Modifier.weight(1f))
                 val backup = sip.alternatives.maxByOrNull { it.upliftPct ?: 0.0 }?.day
                 HeroTile(backup?.let { "$it${sfx(it)}" } ?: "—", "backup day", Modifier.weight(1f))
             }
@@ -227,9 +227,9 @@ private fun Hero(d: HomeData, today: LocalDate, actions: HomeActions) {
 }
 
 @Composable private fun HeroTile(value: String, label: String, modifier: Modifier) =
-    Column(modifier.clip(RoundedCornerShape(12.dp)).background(Color.White.copy(alpha = .1f)).border(1.dp, Color.White.copy(alpha = .12f), RoundedCornerShape(12.dp)).padding(vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, color = Ma.c.chromeText, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
-        Text(label, color = Ma.c.chromeMuted, fontSize = 10.5.sp, maxLines = 1)
+    Column(modifier.clip(RoundedCornerShape(12.dp)).background(Ma.c.surface).border(1.dp, Ma.c.line, RoundedCornerShape(12.dp)).padding(vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, color = Ma.c.text, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
+        Text(label, color = Ma.c.muted, fontSize = 10.5.sp, maxLines = 1)
     }
 
 @Composable private fun HeroButton(text: String, modifier: Modifier, onClick: () -> Unit) =

@@ -181,7 +181,6 @@ fun ExploreTab(bottomPad: androidx.compose.ui.unit.Dp) {
                         }
                     }
                     Row(Modifier.padding(start = 18.dp, end = 18.dp, top = 14.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Tool("What if", Icons.AutoMirrored.Outlined.ShowChart, Color(0xFFDBEAFE), Color(0xFF1D4ED8), Modifier.weight(1f)) { nav.push(Route.WhatIf()) }
                         Tool("Compare", Icons.Outlined.CompareArrows, Color(0xFFEDE9FE), Color(0xFF6D28D9), Modifier.weight(1f)) { nav.push(Route.Compare()) }
                         Tool("Insights", Icons.Outlined.Lightbulb, Color(0xFFFEF3C7), Color(0xFFB45309), Modifier.weight(1f)) { nav.push(Route.Insights) }
                     }

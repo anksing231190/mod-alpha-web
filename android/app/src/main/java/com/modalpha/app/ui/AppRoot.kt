@@ -221,6 +221,7 @@ fun MainTabs(user: User, repo: Repository, session: SessionViewModel, bio: Biome
                             logout = session::logout,
                             openCompare = { nav.push(Route.Compare()) },
                             openAsk = { tab.value = Tab.Ask },
+                            openSubscription = { nav.push(Route.Subscription) },
                         ),
                         inner,
                     )
