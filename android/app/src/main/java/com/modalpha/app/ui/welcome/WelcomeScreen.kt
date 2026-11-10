@@ -78,45 +78,44 @@ fun WelcomeScreen(
     val c = Ma.c
     var i by remember { mutableIntStateOf(0) }
     if (autoPlay && returningName == null) LaunchedEffect(Unit) { while (true) { delay(3500); i = (i + 1) % slides.size } }
-    Box(Modifier.fillMaxSize().meshBackdrop(c)) {
-        Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
+    Column(Modifier.fillMaxSize().background(c.bg)) {
+        // dark panel: brand row + the animation
+        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)).meshBackdrop(c).statusBarsPadding().padding(bottom = 18.dp)) {
             Row(Modifier.fillMaxWidth().padding(start = 22.dp, end = 22.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("Mod Alpha", color = c.chromeText, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.weight(1f))
                 Text("Try the demo", Modifier.clip(CircleShape).background(Color.White.copy(alpha = .08f)).border(1.dp, Color.White.copy(alpha = .14f), CircleShape).clickable(role = Role.Button, onClick = onDemo).padding(horizontal = 14.dp, vertical = 8.dp),
                     color = c.chromeSub, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             }
-            VSpace(18.dp)
-            if (returningName == null) { WaveWelcome(Modifier.fillMaxWidth(), autoPlay); Spacer(Modifier.weight(1f)) }
+            VSpace(14.dp)
+            if (returningName == null) WaveWelcome(Modifier.fillMaxWidth(), autoPlay)
+            else Box(Modifier.fillMaxWidth().height(356.dp), contentAlignment = Alignment.TopCenter) { DialLock(lastDay, lastMonth, play = autoPlay) }
+        }
+        // light page: message + actions
+        Column(Modifier.weight(1f).fillMaxWidth().navigationBarsPadding().padding(horizontal = 24.dp)) {
+            Spacer(Modifier.weight(1f))
+            if (returningName != null) WelcomeBack(returningName, "Log in to see this month's best SIP date.", onDark = false)
             else {
-                Box(Modifier.fillMaxWidth().height(360.dp), contentAlignment = Alignment.TopCenter) { DialLock(lastDay, lastMonth, play = autoPlay) }
-                Spacer(Modifier.weight(1f))
-                WelcomeBack(returningName, "Log in to see this month's best SIP date.")
-                Spacer(Modifier.weight(1f))
-            }
-            Column(Modifier.padding(horizontal = 24.dp)) {
-                if (returningName == null) {
-                    AnimatedContent(i, transitionSpec = { (slideInVertically { it / 4 } + fadeIn()) togetherWith fadeOut() }, label = "slide") { k ->
-                        Column {
-                            Text(buildAnnotatedString { append(slides[k].first); withStyle(SpanStyle(brush = Brush.horizontalGradient(listOf(Color(0xFF93C5FD), Color(0xFFC4B5FD))))) { append(slides[k].second) } },
-                                color = c.chromeText, fontSize = 29.sp, fontWeight = FontWeight.Black, lineHeight = 34.sp, letterSpacing = (-.5).sp)
-                            VSpace(8.dp)
-                            Text(slides[k].third, color = c.chromeSub, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.height(42.dp))
-                        }
+                AnimatedContent(i, transitionSpec = { (slideInVertically { it / 4 } + fadeIn()) togetherWith fadeOut() }, label = "slide") { k ->
+                    Column {
+                        Text(buildAnnotatedString { append(slides[k].first); withStyle(SpanStyle(brush = Brush.horizontalGradient(listOf(c.hi, c.hi2)))) { append(slides[k].second) } },
+                            color = c.text, fontSize = 27.sp, fontWeight = FontWeight.Black, lineHeight = 32.sp, letterSpacing = (-.5).sp)
+                        VSpace(6.dp)
+                        Text(slides[k].third, color = c.sub, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.height(42.dp))
                     }
-                    VSpace(10.dp)
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { slides.indices.forEach { k -> Box(Modifier.height(5.dp).width(if (k == i) 22.dp else 6.dp).clip(CircleShape).background(if (k == i) Gold else Color.White.copy(alpha = .25f))) } }
-                    VSpace(22.dp)
                 }
-                GradientButton("Log in", onLogin, brush = c.hiBrush)
-                VSpace(10.dp)
-                Box(Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(14.dp)).background(Color.White.copy(alpha = .08f)).border(1.dp, Color.White.copy(alpha = .16f), RoundedCornerShape(14.dp)).clickable(role = Role.Button, onClick = onSignup), contentAlignment = Alignment.Center) {
-                    Text(if (returningName != null) "Not ${returningName}? Create account" else "Create account", color = c.chromeText, style = MaterialTheme.typography.labelLarge)
-                }
-                VSpace(12.dp)
-                Text("Historical analysis, not investment advice.", color = c.chromeMuted, fontSize = 11.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
-                VSpace(12.dp)
+                VSpace(8.dp)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { slides.indices.forEach { k -> Box(Modifier.height(5.dp).width(if (k == i) 22.dp else 6.dp).clip(CircleShape).background(if (k == i) c.accent else c.line)) } }
             }
+            Spacer(Modifier.weight(1f))
+            GradientButton("Log in", onLogin, brush = c.accentBrush)
+            VSpace(10.dp)
+            Box(Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(14.dp)).background(c.surface).border(1.dp, c.line, RoundedCornerShape(14.dp)).clickable(role = Role.Button, onClick = onSignup), contentAlignment = Alignment.Center) {
+                Text(if (returningName != null) "Not ${returningName}? Create account" else "Create account", color = c.text, style = MaterialTheme.typography.labelLarge)
+            }
+            VSpace(10.dp)
+            Text("Historical analysis, not investment advice.", color = c.muted, fontSize = 11.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+            VSpace(10.dp)
         }
     }
 }

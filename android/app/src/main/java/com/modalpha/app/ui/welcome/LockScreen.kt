@@ -54,19 +54,19 @@ fun LockScreen(
     val c = Ma.c
     if (autoPrompt) LaunchedEffect(Unit) { delay(2700); onFingerprint() }          // after the dial clicks into place
     val glow by rememberInfiniteTransition(label = "fp").animateFloat(1f, 1.06f, infiniteRepeatable(tween(1100), RepeatMode.Reverse), label = "g")
-    Box(Modifier.fillMaxSize().meshBackdrop(c)) {
-        Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 22.dp)) {
-            Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Mod Alpha", color = c.chromeText, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            }
-            VSpace(18.dp)
-            Box(Modifier.fillMaxWidth().height(360.dp), contentAlignment = Alignment.TopCenter) { DialLock(lastDay, lastMonth, play = autoPrompt) }
+    Column(Modifier.fillMaxSize().background(c.bg)) {
+        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)).meshBackdrop(c).statusBarsPadding().padding(bottom = 18.dp)) {
+            Text("Mod Alpha", Modifier.padding(start = 22.dp, top = 12.dp), color = c.chromeText, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            VSpace(14.dp)
+            Box(Modifier.fillMaxWidth().height(356.dp), contentAlignment = Alignment.TopCenter) { DialLock(lastDay, lastMonth, play = autoPrompt) }
+        }
+        Column(Modifier.weight(1f).fillMaxWidth().navigationBarsPadding().padding(horizontal = 22.dp)) {
             Spacer(Modifier.weight(1f))
-            WelcomeBack(name, "Touch the sensor to see this month's date.")
+            WelcomeBack(name, "Touch the sensor to see this month's date.", onDark = false)
             Spacer(Modifier.weight(1f))
             Row(
-                Modifier.fillMaxWidth().height(56.dp).border((1 + 2 * (glow - 1f) / .06f).dp, Gold.copy(alpha = .25f + .35f * (glow - 1f) / .06f), RoundedCornerShape(16.dp))
-                    .clip(RoundedCornerShape(16.dp)).background(c.hiBrush).clickable(role = Role.Button, onClick = onFingerprint),
+                Modifier.fillMaxWidth().height(56.dp).border((1 + 2 * (glow - 1f) / .06f).dp, c.accent.copy(alpha = .15f + .3f * (glow - 1f) / .06f), RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(16.dp)).background(c.accentBrush).clickable(role = Role.Button, onClick = onFingerprint),
                 horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(Icons.Outlined.Fingerprint, null, tint = androidx.compose.ui.graphics.Color.White, modifier = Modifier.size(26.dp)); Spacer(Modifier.width(10.dp))
@@ -74,8 +74,8 @@ fun LockScreen(
             }
             VSpace(6.dp)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween) {
-                TextButton(onClick = onUseOtp) { Text("Use OTP instead", color = Gold, fontWeight = FontWeight.SemiBold) }
-                TextButton(onClick = onSwitch) { Text("Not $name?", color = c.chromeMuted) }
+                TextButton(onClick = onUseOtp) { Text("Use OTP instead", color = c.accent, fontWeight = FontWeight.SemiBold) }
+                TextButton(onClick = onSwitch) { Text("Not $name?", color = c.muted) }
             }
             VSpace(8.dp)
         }

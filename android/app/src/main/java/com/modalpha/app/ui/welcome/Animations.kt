@@ -223,15 +223,15 @@ private fun sfx(n: Int) = when { n % 100 in 11..13 -> "th"; n % 10 == 1 -> "st";
 
 /** Centred "Welcome back" block used by the returning Welcome screen and the Lock screen. */
 @Composable
-fun WelcomeBack(name: String, sub: String) {
+fun WelcomeBack(name: String, sub: String, onDark: Boolean = true) {
     val c = Ma.c
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.size(52.dp).clip(CircleShape).background(c.hiBrush).border(2.dp, Gold.copy(alpha = .7f), CircleShape), contentAlignment = Alignment.Center) {
             Text(name.trim().take(1).uppercase(), color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
         }
         Spacer(Modifier.height(10.dp))
-        Text("WELCOME BACK", color = Gold, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
-        Text(name, color = c.chromeText, fontSize = 28.sp, fontWeight = FontWeight.Black)
-        Text(sub, color = c.chromeSub, fontSize = 13.5.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        Text("WELCOME BACK", color = if (onDark) Gold else GoldDeep, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+        Text(name, color = if (onDark) c.chromeText else c.text, fontSize = 28.sp, fontWeight = FontWeight.Black)
+        Text(sub, color = if (onDark) c.chromeSub else c.sub, fontSize = 13.5.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
     }
 }
