@@ -63,6 +63,8 @@ class ScreenshotTest {
 
 
     @Test fun welcome_navy() = shot("01-welcome", AppTheme.Navy, 2600) { WelcomeScreen({}, {}, {}, autoPlay = false) }
+    @Test fun welcome_back_calendar() = shot("01e-welcome-back-calendar", AppTheme.Navy, 3200) { WelcomeScreen({}, {}, {}, autoPlay = false, returningName = "Ankit", lastDay = 12, lastMonth = "November", startSlide = 1, lastYm = java.time.YearMonth.now().toString()) }
+    @Test fun welcome_back_countdown() = shot("01f-welcome-back-countdown", AppTheme.Navy, 3200) { WelcomeScreen({}, {}, {}, autoPlay = false, returningName = "Ankit", lastDay = 12, lastMonth = "November", startSlide = 2, lastYm = java.time.YearMonth.now().toString()) }
     @Test fun welcome_navdata() = shot("01c-welcome-navdata", AppTheme.Navy, 2600) { WelcomeScreen({}, {}, {}, autoPlay = false, startSlide = 1) }
     @Test fun welcome_reminder() = shot("01d-welcome-reminder", AppTheme.Navy, 2600) { WelcomeScreen({}, {}, {}, autoPlay = false, startSlide = 2) }
     @Test fun welcome_navdata_espresso() = shot("01c-welcome-navdata", AppTheme.Espresso, 2600) { WelcomeScreen({}, {}, {}, autoPlay = false, startSlide = 1) }

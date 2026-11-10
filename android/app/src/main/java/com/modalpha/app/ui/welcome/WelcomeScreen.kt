@@ -74,12 +74,14 @@ private val slides = listOf(
 @Composable
 fun WelcomeScreen(
     onLogin: () -> Unit, onSignup: () -> Unit, onDemo: () -> Unit,
-    autoPlay: Boolean = true, returningName: String? = null, lastDay: Int? = null, lastMonth: String? = null, startSlide: Int = 0,
+    autoPlay: Boolean = true, returningName: String? = null, lastDay: Int? = null, lastMonth: String? = null, startSlide: Int = 0, lastYm: String? = null,
 ) {
     val c = Ma.c
     var i by remember { mutableIntStateOf(startSlide) }
     // slide 1 stays longer so its chart can finish drawing; each slide's picture changes with its message
-    if (autoPlay && returningName == null) LaunchedEffect(Unit) { while (true) { delay(if (i == 0) 6500L else 6000L); i = (i + 1) % slides.size } }
+    // first visit: 3 messages with their own pictures; returning: dial → tear-off calendar → countdown
+    val ym = remember(lastYm) { lastYm?.let { runCatching { java.time.YearMonth.parse(it) }.getOrNull() } }
+    if (autoPlay) LaunchedEffect(Unit) { while (true) { delay(if (returningName != null) 5500L else if (i == 0) 6500L else 6000L); i = (i + 1) % 3 } }
     Column(Modifier.fillMaxSize().background(c.bg)) {
         // dark panel: brand row + the animation
         Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)).meshBackdrop(c).statusBarsPadding().padding(bottom = 18.dp)) {
@@ -92,12 +94,20 @@ fun WelcomeScreen(
                     when (k) { 0 -> WaveWelcome(Modifier.fillMaxWidth(), autoPlay); 1 -> NavFlowSlide(autoPlay = autoPlay); else -> ReminderSlide(autoPlay = autoPlay) }
                 }
             }
-            else Box(Modifier.fillMaxWidth().height(356.dp), contentAlignment = Alignment.TopCenter) { DialLock(lastDay, lastMonth, play = autoPlay) }
+            else AnimatedContent(i, transitionSpec = { fadeIn(tween(450)) togetherWith fadeOut(tween(300)) }, label = "back") { k ->
+                Box(Modifier.fillMaxWidth().height(380.dp), contentAlignment = Alignment.TopCenter) {
+                    when (k) { 0 -> DialLock(lastDay, lastMonth, play = autoPlay); 1 -> TearOffSlide(lastDay, ym, autoPlay); else -> CountdownSlide(lastDay, ym, autoPlay) }
+                }
+            }
         }
         // light page: message + actions
         Column(Modifier.weight(1f).fillMaxWidth().navigationBarsPadding().padding(horizontal = 24.dp)) {
             Spacer(Modifier.weight(1f))
-            if (returningName != null) WelcomeBack(returningName, "Log in to see this month's best SIP date.", onDark = false)
+            if (returningName != null) {
+                WelcomeBack(returningName, listOf("Log in to see this month's best SIP date.", "Your date is ready. Log in to plan your SIP.", "Log in to set your reminder.")[i], onDark = false)
+                VSpace(10.dp)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally)) { (0..2).forEach { k -> Box(Modifier.height(5.dp).width(if (k == i) 22.dp else 6.dp).clip(CircleShape).background(if (k == i) c.accent else c.line)) } }
+            }
             else {
                 AnimatedContent(i, transitionSpec = { (slideInVertically { it / 4 } + fadeIn()) togetherWith fadeOut() }, label = "slide") { k ->
                     Column {

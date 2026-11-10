@@ -148,7 +148,7 @@ private fun SignedOut(session: SessionViewModel) {
             onLogin = { vm.setSignup(false); page = "login" },
             onSignup = { vm.setSignup(true); page = "login" },
             onDemo = { vm.tryDemo(); page = "login" },
-            returningName = session.returningName, lastDay = session.lastBestDay, lastMonth = monthLabel(session.lastBestMonth),
+            returningName = session.returningName, lastDay = session.lastBestDay, lastMonth = monthLabel(session.lastBestMonth), lastYm = session.lastBestMonth,
         )
         else -> LoginScreen(vm, onBack = { page = "welcome" })
     }

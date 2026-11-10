@@ -42,6 +42,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -290,5 +291,111 @@ private fun MiniCalendar(best: Int, today: Int, glow: Float) {
                 }
             }
         }
+    }
+}
+
+/* ============================== Returning user · slides 2 and 3 ============================== */
+
+private fun ordinalOf(n: Int) = "$n" + when { n % 100 in 11..13 -> "th"; n % 10 == 1 -> "st"; n % 10 == 2 -> "nd"; n % 10 == 3 -> "rd"; else -> "th" }
+
+/**
+ * Tear-off desk calendar: last month's page flips away and shows this month's page with the best date
+ * (from the last login), or a lock when no date is saved for this month yet.
+ */
+@Composable
+fun TearOffSlide(day: Int?, ym: java.time.YearMonth?, autoPlay: Boolean = true) {
+    val c = Ma.c
+    val now = java.time.YearMonth.now()
+    val known = day != null && ym == now
+    val t by rememberInfiniteTransition(label = "tear").animateFloat(0f, 1f, infiniteRepeatable(tween(4800, easing = LinearEasing)), label = "t")
+    val p = if (autoPlay) ((t - .25f) / .3f).coerceIn(0f, 1f) else 1f        // page flip progress
+    fun mon(m: java.time.YearMonth) = m.month.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH).uppercase()
+    SlideCard {
+        Column(Modifier.fillMaxWidth().height(352.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            Box(Modifier.width(170.dp).height(190.dp)) {
+                // this month (underneath)
+                CalPage(mon(now), if (known) "$day" else "?", c.accent, if (known) GoldDeep else c.muted, Modifier.padding(top = 8.dp))
+                if (!known) Text("🔒", Modifier.align(Alignment.Center).padding(top = 30.dp), fontSize = 26.sp)
+                // last month flips up and away
+                if (p < 1f) CalPage(mon(now.minusMonths(1)), "✓", Color(0xFFDC2626), c.muted,
+                    Modifier.padding(top = 8.dp).graphicsLayer { transformOrigin = androidx.compose.ui.graphics.TransformOrigin(.5f, 0f); rotationX = -110f * p; alpha = 1f - p; cameraDistance = 12f * density })
+                // binder rings
+                Row(Modifier.fillMaxWidth().padding(horizontal = 40.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                    repeat(2) { Box(Modifier.size(10.dp, 18.dp).clip(RoundedCornerShape(5.dp)).background(Color(0xFF64748B))) }
+                }
+            }
+            Spacer(Modifier.height(14.dp))
+            Text(if (known) "${now.month.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.ENGLISH)}'s page is ready" else "This month's page is ready",
+                color = c.text, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Text(if (known) "Best SIP date: the ${ordinalOf(day!!)}" else "Log in to see the date", color = c.muted, fontSize = 12.sp)
+        }
+    }
+}
+
+@Composable
+private fun CalPage(mon: String, d: String, band: Color, ink: Color, modifier: Modifier) {
+    val c = Ma.c
+    Column(modifier.fillMaxWidth().height(176.dp).clip(RoundedCornerShape(16.dp)).background(c.surface).border(1.dp, c.line, RoundedCornerShape(16.dp)), horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(Modifier.fillMaxWidth().height(44.dp).background(band), contentAlignment = Alignment.Center) { Text(mon, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 3.sp) }
+        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { Text(d, color = ink, fontSize = 72.sp, fontWeight = FontWeight.Black) }
+    }
+}
+
+/**
+ * Flip-clock countdown to this month's date with a month bar (today filled, the date as a gold dot).
+ * After the date has passed: "Done for this month"; with no saved date: a prompt to log in.
+ */
+@Composable
+fun CountdownSlide(day: Int?, ym: java.time.YearMonth?, autoPlay: Boolean = true) {
+    val c = Ma.c
+    val today = java.time.LocalDate.now(); val now = java.time.YearMonth.from(today)
+    val known = day != null && ym == now
+    val left = if (known) day!! - today.dayOfMonth else null
+    val tr = rememberInfiniteTransition(label = "cd")
+    val flip by tr.animateFloat(0f, 1f, infiniteRepeatable(tween(2400, easing = LinearEasing)), label = "f")
+    val fill by tr.animateFloat(0f, 1f, infiniteRepeatable(tween(4800, easing = LinearEasing)), label = "b")
+    val f = if (autoPlay) flip else 0f
+    val bar = if (autoPlay) (fill / .55f).coerceAtMost(1f) else 1f
+    SlideCard {
+        Column(Modifier.fillMaxWidth().height(352.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            Text(when { left == null -> "This month's date"; left > 0 -> "Next SIP date in"; left == 0 -> "Your SIP date is"; else -> "This month's SIP date" }, color = c.muted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.height(10.dp))
+            when {
+                left != null && left > 0 -> {
+                    val s = "%02d".format(left.coerceAtMost(99))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FlipDigit(s[0], 0f); FlipDigit(s[1], f)
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Text("${if (left == 1) "day" else "days"} · ${now.atDay(day!!).dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.ENGLISH)}", color = c.sub, fontSize = 13.sp)
+                }
+                left == 0 -> Text("Today", color = GoldDeep, fontSize = 48.sp, fontWeight = FontWeight.Black)
+                left != null -> { Text("Done ✓", color = c.up, fontSize = 42.sp, fontWeight = FontWeight.Black); Text("Next month's date comes by the 25th", color = c.sub, fontSize = 12.5.sp) }
+                else -> { Text("🔒", fontSize = 40.sp); Text("Log in to see your date", color = c.sub, fontSize = 12.5.sp) }
+            }
+            Spacer(Modifier.height(22.dp))
+            // month bar: 1st → today filled, gold dot on the date
+            val len = now.lengthOfMonth()
+            BoxWithConstraints(Modifier.fillMaxWidth().height(20.dp)) {
+                val w = maxWidth
+                Box(Modifier.align(Alignment.CenterStart).fillMaxWidth().height(8.dp).clip(CircleShape).background(c.line))
+                Box(Modifier.align(Alignment.CenterStart).width(w * (today.dayOfMonth.toFloat() / len) * bar).height(8.dp).clip(CircleShape).background(c.accent))
+                if (known) Box(Modifier.align(Alignment.CenterStart).offset(x = w * ((day!! - .5f) / len) - 9.dp).size(18.dp).clip(CircleShape).background(Color.White).padding(3.dp).clip(CircleShape).background(Gold))
+            }
+            Row(Modifier.fillMaxWidth().padding(top = 4.dp)) {
+                val m = now.month.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH)
+                Text("1 $m", color = c.muted, fontSize = 10.sp); Spacer(Modifier.weight(1f)); Text("today", color = c.accent, fontSize = 10.sp, fontWeight = FontWeight.SemiBold); Spacer(Modifier.weight(1f)); Text("$len $m", color = c.muted, fontSize = 10.sp)
+            }
+        }
+    }
+}
+
+@Composable
+private fun FlipDigit(ch: Char, flip: Float) {
+    // the right digit "ticks" once per loop: a quick squash at the end of each cycle
+    val sq = if (flip > .85f) 1f - kotlin.math.sin((flip - .85f) / .15f * Math.PI).toFloat() * .9f else 1f
+    Box(Modifier.size(70.dp, 88.dp).clip(RoundedCornerShape(14.dp)).background(Color(0xFF0F1A33)), contentAlignment = Alignment.Center) {
+        Text("$ch", Modifier.graphicsLayer { scaleY = sq }, color = Color.White, fontSize = 54.sp, fontWeight = FontWeight.Black)
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Color.White.copy(alpha = .15f)))
     }
 }
