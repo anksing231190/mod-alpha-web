@@ -51,6 +51,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
@@ -89,7 +91,11 @@ fun LoginScreen(vm: LoginViewModel, onBack: (() -> Unit)? = null) {
         Box(
             Modifier.fillMaxWidth().height(330.dp).clip(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp)).background(Ma.c.chromeBrush)
                 .background(Brush.radialGradient(listOf(Ma.c.glow.copy(alpha = .30f), Color.Transparent), radius = 700f))
-        )
+        ) { com.modalpha.app.ui.welcome.LoginBackdrop(Modifier.fillMaxSize()) }
+        val glow = com.modalpha.app.ui.welcome.rememberLogoGlow()
+        // the form card slides up once when the screen opens
+        val enter = androidx.compose.runtime.remember { androidx.compose.animation.core.Animatable(0f) }
+        androidx.compose.runtime.LaunchedEffect(Unit) { enter.animateTo(1f, androidx.compose.animation.core.tween(650, easing = androidx.compose.animation.core.FastOutSlowInEasing)) }
         Column(
             Modifier.fillMaxSize().systemBarsPadding().imePadding().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -99,7 +105,11 @@ fun LoginScreen(vm: LoginViewModel, onBack: (() -> Unit)? = null) {
                     Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Back", tint = Ma.c.chromeText)
                 }
             }
-            BrandMark(68.dp, dark = true)
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.drawBehind {
+                val r = size.minDimension / 2
+                drawCircle(Brush.radialGradient(listOf(com.modalpha.app.ui.components.Gold.copy(alpha = .18f + .17f * glow), Color.Transparent), radius = r * (1.5f + .25f * glow)), r * (1.5f + .25f * glow))
+                drawCircle(com.modalpha.app.ui.components.Gold.copy(alpha = .25f + .3f * glow), r * (1.12f + .06f * glow), style = androidx.compose.ui.graphics.drawscope.Stroke(1.2.dp.toPx()))
+            }) { BrandMark(68.dp, dark = true) }
             VSpace(12.dp)
             Text("Mod Alpha", color = Ma.c.chromeText, style = MaterialTheme.typography.headlineSmall)
             VSpace(4.dp)
@@ -107,7 +117,7 @@ fun LoginScreen(vm: LoginViewModel, onBack: (() -> Unit)? = null) {
             VSpace(26.dp)
 
             Column(
-                Modifier.fillMaxWidth().shadow(18.dp, RoundedCornerShape(24.dp), ambientColor = Ma.c.chrome, spotColor = Ma.c.chrome)
+                Modifier.graphicsLayer { translationY = (1 - enter.value) * 60.dp.toPx(); alpha = .3f + .7f * enter.value }.fillMaxWidth().shadow(18.dp, RoundedCornerShape(24.dp), ambientColor = Ma.c.chrome, spotColor = Ma.c.chrome)
                     .clip(RoundedCornerShape(24.dp)).background(Ma.c.surface)
                     .border(1.dp, Ma.c.line, RoundedCornerShape(24.dp)).padding(20.dp)
             ) {

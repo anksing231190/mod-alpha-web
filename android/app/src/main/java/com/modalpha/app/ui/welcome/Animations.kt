@@ -112,8 +112,10 @@ fun WaveWelcome(modifier: Modifier = Modifier, autoPlay: Boolean = true) {
                 val lo = NAV.min() - .8; val hi = NAV.max() + .8
                 fun px(i: Int) = W * i / (NAV.size - 1)
                 fun py(v: Double) = (H * (1 - (v - lo) / (hi - lo))).toFloat()
-                // grid + month labels
-                for (k in 1..3) drawLine(Color.White.copy(alpha = .06f), Offset(0f, H * k / 4), Offset(W, H * k / 4), 1f)
+                // checkered plot area (same look as the app's charts) + month labels
+                val rows = 5; val ch = H / rows; val cols = (W / ch).toInt().coerceAtLeast(6); val cw = W / cols
+                for (r in 0 until rows) for (k in 0 until cols) if ((r + k) % 2 == 0) drawRect(Color.White.copy(alpha = .075f), Offset(k * cw, r * ch), androidx.compose.ui.geometry.Size(cw, ch))
+                for (r in 0..rows) drawLine(Color.White.copy(alpha = .08f), Offset(0f, r * ch), Offset(W, r * ch), 1f)
                 for (m in 0 until MONTHS) {
                     val x = px(m * DAYS)
                     if (m > 0) drawLine(Color.White.copy(alpha = .05f), Offset(x, 0f), Offset(x, H), 1f)
@@ -234,4 +236,48 @@ fun WelcomeBack(name: String, sub: String, onDark: Boolean = true) {
         Text(name, color = if (onDark) c.chromeText else c.text, fontSize = 28.sp, fontWeight = FontWeight.Black)
         Text(sub, color = if (onDark) c.chromeSub else c.sub, fontSize = 13.5.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
     }
+}
+
+/**
+ * Live backdrop for the login header: a checkered grid, a NAV line that keeps scrolling like a market feed with gold
+ * buy dots pulsing on the dips, and a breathing glow behind the logo (drawn by the caller with `logoGlow`).
+ */
+@Composable
+fun LoginBackdrop(modifier: Modifier = Modifier, animate: Boolean = true) {
+    val tr = rememberInfiniteTransition(label = "login")
+    val t by tr.animateFloat(0f, 1f, infiniteRepeatable(tween(14000, easing = LinearEasing)), label = "scroll")
+    val pulse by tr.animateFloat(0f, 1f, infiniteRepeatable(tween(1300), RepeatMode.Reverse), label = "pulse")
+    val shift = if (animate) t else .3f
+    val line = Color(0xFFA9C4F5)
+    Canvas(modifier) {
+        val W = size.width; val H = size.height
+        val cell = 26.dp.toPx(); var y = 0f; var r = 0
+        while (y < H) { var x = 0f; var k = 0; while (x < W) { if ((r + k) % 2 == 0) drawRect(Color.White.copy(alpha = .035f * (1 - y / H)), Offset(x, y), androidx.compose.ui.geometry.Size(cell, cell)); x += cell; k++ }; y += cell; r++ }
+        // a window of 2 months of NAV sliding left; wraps around the 6-month series
+        val n = NAV.size; val win = DAYS * 2; val start = shift * n
+        val lo = NAV.min(); val hi = NAV.max(); val top = H * .2f; val band = H * .3f
+        fun px(j: Int) = W * (j - (start % 1f)) / (win - 1)
+        fun py(v: Double) = (top + band * (1 - (v - lo) / (hi - lo))).toFloat()
+        val base = start.toInt()
+        val p = Path()
+        for (j in 0..win) { val v = NAV[(base + j) % n]; if (j == 0) p.moveTo(px(j), py(v)) else p.lineTo(px(j), py(v)) }
+        val area = Path().apply { addPath(p); lineTo(px(win), H); lineTo(px(0), H); close() }
+        drawPath(area, Brush.verticalGradient(listOf(line.copy(alpha = .10f), Color.Transparent), startY = top, endY = H))
+        drawPath(p, line.copy(alpha = .3f), style = Stroke(1.4.dp.toPx(), cap = StrokeCap.Round))
+        for (j in 0..win) {
+            val idx = (base + j) % n
+            if (idx % DAYS == BEST) {
+                val o = Offset(px(j), py(NAV[idx]))
+                drawCircle(Gold.copy(alpha = .08f + .14f * pulse), (6 + 4 * pulse).dp.toPx(), o)
+                drawCircle(Gold.copy(alpha = .8f), 3.dp.toPx(), o)
+            }
+        }
+    }
+}
+
+/** Breathing glow ring for the logo. */
+@Composable
+fun rememberLogoGlow(animate: Boolean = true): Float {
+    val g by rememberInfiniteTransition(label = "logo").animateFloat(0f, 1f, infiniteRepeatable(tween(1800), RepeatMode.Reverse), label = "g")
+    return if (animate) g else .5f
 }

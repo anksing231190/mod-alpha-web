@@ -47,8 +47,10 @@ class AdminScreensTest {
         val vm = LoginViewModel({ repo }, { _, _ -> })
         vm.setMethod(com.modalpha.app.ui.login.LoginMethod.Email); vm.onEmail("admin@modalpha.in"); vm.onPassword("admin1234"); vm.loginEmail()
         Thread.sleep(300)
+        rule.mainClock.autoAdvance = false                       // the login header animates forever
         rule.setContent { ModAlphaTheme { LoginScreen(vm, onBack = {}) } }
-        cap("01-login-codes")
+        rule.mainClock.advanceTimeBy(2400)
+        rule.onRoot().captureRoboImage("build/outputs/roborazzi/a-01-login-codes-navy.png")
     }
     @Test fun overview() { admin(); cap("02-overview") }
     @Test fun overview_espresso() { admin(AppTheme.Espresso); cap("02-overview", AppTheme.Espresso) }
