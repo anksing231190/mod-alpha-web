@@ -34,6 +34,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -100,21 +101,11 @@ fun NavFlowSlide(modifier: Modifier = Modifier, autoPlay: Boolean = true) {
                 Text("$year", Modifier.clip(RoundedCornerShape(8.dp)).background(c.accent.copy(alpha = .1f)).padding(horizontal = 8.dp, vertical = 3.dp), color = c.accent, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
             }
             Spacer(Modifier.height(10.dp))
-            // checkered chart with faint NAV lines behind the flowing fund cards
-            Box(Modifier.fillMaxWidth().height(212.dp).clip(RoundedCornerShape(14.dp)).clipToBounds()) {
-                Canvas(Modifier.fillMaxSize()) {
-                    val rows = 6; val ch = size.height / rows; val cols = (size.width / ch).toInt().coerceAtLeast(6); val cw = size.width / cols
-                    for (r in 0 until rows) for (k in 0 until cols) if ((r + k) % 2 == 0) drawRect(INK.copy(alpha = .045f), Offset(k * cw, r * ch), Size(cw, ch))
-                    for (r in 0..rows) drawLine(INK.copy(alpha = .06f), Offset(0f, r * ch), Offset(size.width, r * ch), 1f)
-                    val cols3 = listOf(c.accent, Color(0xFF0D9488), GoldDeep)
-                    funds.take(3).forEachIndexed { i, f ->
-                        if (f.spark.size > 1) drawPath(linePath(f.spark, size.width, size.height, pad = 18f + i * 22f), cols3[i].copy(alpha = .22f), style = Stroke(1.6.dp.toPx(), cap = StrokeCap.Round))
-                    }
-                }
-                Column(Modifier.fillMaxSize().padding(vertical = 14.dp), verticalArrangement = Arrangement.SpaceEvenly) {
-                    FundRow(funds, shift, reverse = false)
-                    FundRow(funds.reversed(), shift, reverse = true)
-                }
+            // row 1 of fund cards · a clean 10-year chart in its own band · row 2 (no line ever runs behind a card)
+            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(c.surface2).padding(vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                FundRow(funds, shift, reverse = false)
+                TenYearChart(funds.first(), autoPlay)
+                FundRow(funds.reversed(), shift, reverse = true)
             }
             Spacer(Modifier.height(10.dp))
             Row(Modifier.fillMaxWidth()) {
@@ -126,6 +117,32 @@ fun NavFlowSlide(modifier: Modifier = Modifier, autoPlay: Boolean = true) {
                 }
             }
         }
+    }
+}
+
+/** One fund's NAV over 10 years on a checkered band, drawn left to right; label on the left, return on the right. */
+@Composable
+private fun TenYearChart(f: Fund, autoPlay: Boolean) {
+    val c = Ma.c
+    val p by rememberInfiniteTransition(label = "ten").animateFloat(0f, 1f, infiniteRepeatable(tween(5200, easing = LinearEasing)), label = "p")
+    val prog = if (autoPlay) (p / .75f).coerceAtMost(1f) else 1f
+    // a smooth 10-year path from the fund's own sparkline (repeated with growth so it spans the decade)
+    val pts = remember(f.id) {
+        // chain the sparkline end to end (each copy starts where the last ended) so the 10-year path is continuous
+        val base = f.spark.ifEmpty { listOf(1.0, 1.1) }; val out = ArrayList<Double>(); var scale = 1.0
+        while (out.size < 40) { base.forEach { out += scale * it / base.first() }; scale = out.last() }
+        out.take(40)
+    }
+    Box(Modifier.padding(horizontal = 10.dp).fillMaxWidth().height(74.dp).clip(RoundedCornerShape(10.dp)).background(c.surface)) {
+        Canvas(Modifier.fillMaxSize()) {
+            val rows = 3; val ch = size.height / rows; val cols = (size.width / ch).toInt().coerceAtLeast(6); val cw = size.width / cols
+            for (r in 0 until rows) for (k in 0 until cols) if ((r + k) % 2 == 0) drawRect(INK.copy(alpha = .045f), Offset(k * cw, r * ch), Size(cw, ch))
+            for (r in 1 until rows) drawLine(INK.copy(alpha = .06f), Offset(0f, r * ch), Offset(size.width, r * ch), 1f)
+            val n = (pts.size * prog).toInt().coerceIn(2, pts.size)
+            val path = linePath(pts.take(n), size.width * (n - 1) / (pts.size - 1), size.height, pad = 10f, lo0 = pts.min(), hi0 = pts.max())
+            drawPath(path, c.accent, style = Stroke(1.8.dp.toPx(), cap = StrokeCap.Round))
+        }
+        Text("${f.short} · 2016–2026", Modifier.align(Alignment.TopStart).padding(6.dp).clip(RoundedCornerShape(6.dp)).background(c.surface).padding(horizontal = 4.dp, vertical = 1.dp), color = c.sub, fontSize = 9.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
