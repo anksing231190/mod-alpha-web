@@ -34,12 +34,18 @@ jobs:
             -t $REGISTRY/mod-alpha-web:${{ github.sha }} -t $REGISTRY/mod-alpha-web:$APP_ENV .
           docker push --all-tags $REGISTRY/mod-alpha-web
       - name: Roll out to the stage server (SSH)
-        # Set these in GitHub → Settings → Environments → stage: variable STAGE_SSH_HOST (e.g. 13.233.x.x),
-        # variable STAGE_SSH_USER (e.g. ubuntu), secret STAGE_SSH_KEY (private key of a deploy-only user).
-        if: ${{ env.APP_ENV == 'stage' && vars.STAGE_SSH_HOST != '' }}
+        # GitHub → Settings → Environments → stage: secret STAGE_SSH_KEY (private key of the deploy key), and
+        # optionally variables STAGE_SSH_HOST / STAGE_SSH_USER (defaults: the stage server, ubuntu).
+        if: ${{ env.APP_ENV == 'stage' }}
+        env:
+          SSH_KEY: ${{ secrets.STAGE_SSH_KEY }}
+          SSH_HOST: ${{ vars.STAGE_SSH_HOST || '52.65.52.22' }}
+          SSH_USER: ${{ vars.STAGE_SSH_USER || 'ubuntu' }}
         run: |
-          install -m 600 /dev/null key && echo "${{ secrets.STAGE_SSH_KEY }}" > key
-          ssh -i key -o StrictHostKeyChecking=accept-new ${{ vars.STAGE_SSH_USER }}@${{ vars.STAGE_SSH_HOST }} "cd ~/modalpha-stage && ./deploy.sh ${{ github.sha }}"
+          echo "settings seen: host var ${{ vars.STAGE_SSH_HOST != '' && 'set' || 'EMPTY (using default)' }}, user var ${{ vars.STAGE_SSH_USER != '' && 'set' || 'EMPTY (using default)' }}, key secret $([ -n "$SSH_KEY" ] && echo set || echo EMPTY)"
+          if [ -z "$SSH_KEY" ]; then echo "::warning::STAGE_SSH_KEY is not visible to this workflow (add it under Settings → Environments → stage → Environment secrets of this repository). Skipping roll-out."; exit 0; fi
+          install -m 600 /dev/null key && printf '%s\n' "$SSH_KEY" > key
+          ssh -i key -o StrictHostKeyChecking=accept-new -o ConnectTimeout=20 "$SSH_USER@$SSH_HOST" "cd ~/modalpha-stage && ./deploy.sh ${{ github.sha }}"
           rm -f key
       - name: Roll out
         # Host-agnostic: call the platform's deploy hook (Render/Railway/Coolify/your CD) with the new image tag.
