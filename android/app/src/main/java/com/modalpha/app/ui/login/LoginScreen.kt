@@ -51,6 +51,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.clip
@@ -89,7 +90,7 @@ fun LoginScreen(vm: LoginViewModel, onBack: (() -> Unit)? = null) {
     Box(Modifier.fillMaxSize().background(Ma.c.bg)) {
         // dark brand panel at the top, the form card overlaps it
         Box(
-            Modifier.fillMaxWidth().height(330.dp).clip(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp)).background(Ma.c.chromeBrush)
+            Modifier.fillMaxWidth().height(400.dp).clip(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp)).background(Ma.c.chromeBrush)
                 .background(Brush.radialGradient(listOf(Ma.c.glow.copy(alpha = .30f), Color.Transparent), radius = 700f))
         ) { com.modalpha.app.ui.welcome.LoginBackdrop(Modifier.fillMaxSize()) }
         val glow = com.modalpha.app.ui.welcome.rememberLogoGlow()
@@ -105,16 +106,20 @@ fun LoginScreen(vm: LoginViewModel, onBack: (() -> Unit)? = null) {
                     Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Back", tint = Ma.c.chromeText)
                 }
             }
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.drawBehind {
-                val r = size.minDimension / 2
-                drawCircle(Brush.radialGradient(listOf(com.modalpha.app.ui.components.Gold.copy(alpha = .18f + .17f * glow), Color.Transparent), radius = r * (1.5f + .25f * glow)), r * (1.5f + .25f * glow))
-                drawCircle(com.modalpha.app.ui.components.Gold.copy(alpha = .25f + .3f * glow), r * (1.12f + .06f * glow), style = androidx.compose.ui.graphics.drawscope.Stroke(1.2.dp.toPx()))
-            }) { BrandMark(68.dp, dark = true) }
-            VSpace(12.dp)
+            // round logo filling its gold ring, with a breathing glow behind
+            Box(
+                Modifier.size(92.dp).drawBehind {
+                    val r = size.minDimension / 2
+                    drawCircle(Brush.radialGradient(listOf(com.modalpha.app.ui.components.Gold.copy(alpha = .16f + .16f * glow), Color.Transparent), radius = r * (1.55f + .25f * glow)), r * (1.55f + .25f * glow))
+                }.clip(CircleShape).background(Brush.radialGradient(listOf(Ma.c.chrome, Ma.c.chrome2)))
+                    .border(1.5.dp, com.modalpha.app.ui.components.Gold.copy(alpha = .45f + .35f * glow), CircleShape),
+                contentAlignment = Alignment.Center,
+            ) { androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(com.modalpha.app.R.drawable.brand_mark), "Mod Alpha", Modifier.size(56.dp)) }
+            VSpace(14.dp)
             Text("Mod Alpha", color = Ma.c.chromeText, style = MaterialTheme.typography.headlineSmall)
             VSpace(4.dp)
             Text("Invest at the right time with AI", color = Ma.c.chromeSub, style = MaterialTheme.typography.bodyMedium)
-            VSpace(26.dp)
+            VSpace(78.dp)
 
             Column(
                 Modifier.graphicsLayer { translationY = (1 - enter.value) * 60.dp.toPx(); alpha = .3f + .7f * enter.value }.fillMaxWidth().shadow(18.dp, RoundedCornerShape(24.dp), ambientColor = Ma.c.chrome, spotColor = Ma.c.chrome)
