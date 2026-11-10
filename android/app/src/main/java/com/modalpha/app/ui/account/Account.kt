@@ -120,6 +120,9 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.Devices
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -134,99 +137,194 @@ private fun per(c: String) = when (c) { "Yearly" -> "year"; "Quarterly" -> "quar
 fun YouTab(session: SessionViewModel, bio: Biometrics, bottomPad: Dp, onBack: (() -> Unit)? = null) {
     val nav = LocalNav.current
     val u = nav.user
+    val c = Ma.c
+    val ctx = LocalContext.current
     val plan = rememberLoad { nav.repo.subscription() to nav.repo.plan() }
     val kyc = rememberLoad { nav.repo.kycStatus() }
     val tickets = rememberLoad { nav.repo.tickets() }
-    val watch = rememberLoad { nav.repo.watchlist().size }
-    val hist = rememberLoad { nav.repo.sipHistory() }
     val theme by session.theme.collectAsStateWithLifecycle()
     var bioOn by remember { mutableStateOf(session.biometricOn) }
     var themeSheet by remember { mutableStateOf(false) }
     var askAll by remember { mutableStateOf(false) }
-    if (askAll) AlertDialog({ askAll = false }, containerColor = Ma.c.surface,
+    if (askAll) AlertDialog({ askAll = false }, containerColor = c.surface,
         title = { Text("Log out of all devices?") },
-        text = { Text("This ends your Mod Alpha sessions on every phone, tablet and computer, including this one. You'll need to log in again.", color = Ma.c.sub) },
-        confirmButton = { TextButton({ askAll = false; session.logoutAll { nav.toast(it) } }) { Text("Log out everywhere", color = Ma.c.down, fontWeight = FontWeight.SemiBold) } },
-        dismissButton = { TextButton({ askAll = false }) { Text("Cancel", color = Ma.c.muted) } })
+        text = { Text("This ends your Mod Alpha sessions on every phone, tablet and computer, including this one. You'll need to log in again.", color = c.sub) },
+        confirmButton = { TextButton({ askAll = false; session.logoutAll { nav.toast(it) } }) { Text("Log out everywhere", color = c.down, fontWeight = FontWeight.SemiBold) } },
+        dismissButton = { TextButton({ askAll = false }) { Text("Cancel", color = c.muted) } })
     val (sub, planName) = (plan.res as? Res.Ok)?.value ?: (null to "…")
     val k = (kyc.res as? Res.Ok)?.value
     val open = (tickets.res as? Res.Ok)?.value?.count { it.status != "Closed" && it.status != "Answered" } ?: 0
-    Column(Modifier.fillMaxSize().background(Ma.c.bg)) {
-        MeshHero(bottomPad = 18.dp) {
-            Column(Modifier.padding(horizontal = 20.dp)) {
-                Row(Modifier.height(54.dp), verticalAlignment = Alignment.CenterVertically) {
-                    if (onBack != null) { IconButton(onClick = onBack, modifier = Modifier.offset(x = (-12).dp)) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Back", tint = Ma.c.chromeText) } }
-                    Text("Profile", color = Ma.c.chromeText, fontSize = 23.sp, fontWeight = FontWeight.Black, modifier = Modifier.weight(1f))
-                    if (nav.repo.isDemo) GhostChip("Demo data")
+    val ap = remember { com.modalpha.app.data.AppPrefs(ctx) }
+    Column(Modifier.fillMaxSize().background(c.bg).statusBarsPadding()) {
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(bottom = bottomPad + 24.dp)) {
+            if (onBack != null) IconButton(onClick = onBack, modifier = Modifier.padding(start = 4.dp)) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Back", tint = c.text) }
+            // who: avatar, name, "My Profile"
+            Row(Modifier.fillMaxWidth().clickable { nav.push(Route.MyProfile) }.padding(horizontal = 20.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(58.dp).clip(CircleShape).background(c.hiBrush).border(2.dp, Gold, CircleShape), contentAlignment = Alignment.Center) { Text(u.initial, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold) }
+                HSpace(14.dp)
+                Column(Modifier.weight(1f)) {
+                    Text(u.name.uppercase(), color = c.text, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = .5.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text("My Profile", color = c.accent, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline)
                 }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(54.dp).clip(CircleShape).background(Ma.c.hiBrush).border(2.dp, Gold.copy(alpha = .7f), CircleShape), contentAlignment = Alignment.Center) { Text(u.initial, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold) }
-                    HSpace(12.dp)
-                    Column(Modifier.weight(1f)) {
-                        Text(u.name, color = Ma.c.chromeText, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        Text(listOfNotNull(u.mobile?.let { prettyMobile(it) }, u.email).joinToString(" · "), color = Ma.c.chromeSub, fontSize = 12.5.sp, maxLines = 1)
-                    }
+                Chevron()
+            }
+            // plan band
+            Row(
+                Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Brush.horizontalGradient(listOf(c.chrome, c.accent)))
+                    .clickable { nav.push(if (planName == "Free") Route.Plans else Route.Subscription) }.padding(horizontal = 16.dp, vertical = 15.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text((sub?.plan ?: planName).uppercase().toCharArray().joinToString(" "), color = Gold, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+                HSpace(12.dp)
+                Text(if (planName == "Free") "Upgrade for the best SIP date" else "Membership${sub?.cycle?.let { " · $it" } ?: ""}", color = Color.White, fontSize = 14.sp, modifier = Modifier.weight(1f))
+                Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null, tint = Color.White)
+            }
+            // customer id
+            u.ref?.let { ref ->
+                Row(Modifier.padding(horizontal = 16.dp).fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(c.surface).border(1.dp, c.line, RoundedCornerShape(14.dp)).padding(horizontal = 14.dp, vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("Customer ID", color = c.muted, fontSize = 13.sp); HSpace(8.dp)
+                    Text(ref.uppercase(), color = c.text, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                    Icon(Icons.Outlined.ContentCopy, "Copy Customer ID", tint = c.accent, modifier = Modifier.size(18.dp).clickable {
+                        (ctx.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(android.content.ClipData.newPlainText("Customer ID", ref.uppercase()))
+                        nav.toast("Customer ID copied")
+                    })
                 }
-                VSpace(14.dp)
-                // Membership card
-                GlassCard(Modifier.fillMaxWidth().clickable { nav.push(if (planName == "Free") Route.Plans else Route.Subscription) }, gold = true) { Column(Modifier.padding(4.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Outlined.WorkspacePremium, null, tint = goldInk(), modifier = Modifier.size(20.dp)); HSpace(8.dp)
-                        Text("MOD ALPHA ${(sub?.plan ?: planName).uppercase()}", color = goldInk(), fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, letterSpacing = 1.2.sp, modifier = Modifier.weight(1f))
-                        Text(if (planName == "Free") "Upgrade ›" else "Manage ›", color = Ma.c.chromeText, fontWeight = FontWeight.SemiBold, fontSize = 12.5.sp)
-                    }
-                    VSpace(12.dp)
-                    Row {
-                        Box(Modifier.weight(1f)) { StatBlock(if (sub?.cancelling == true) "Ends" else "Renews", sub?.renewalDate?.let { prettyDate(it) } ?: "—", sub?.cycle, valueSize = 14) }
-                        Box(Modifier.weight(1f)) { StatBlock("KYC", k ?: "…", null, valueColor = if (k == "Verified") mintInk() else goldInk(), valueSize = 14) }
-                        Box(Modifier.weight(1f)) { StatBlock("Member since", u.signupDate?.let { runCatching { LocalDate.parse(it.take(10)).format(DateTimeFormatter.ofPattern("MMM yyyy", Locale.ENGLISH)) }.getOrNull() } ?: "—", null, valueSize = 14) }
-                    }
-                } }
             }
-        }
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(top = 14.dp, bottom = bottomPad + 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            // Stat tiles
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                val months = (hist.res as? Res.Ok)?.value?.first?.count { it.day != null } ?: 0
-                StatTile("Watchlist", "${(watch.res as? Res.Ok)?.value ?: "—"}", "funds", Icons.Outlined.Star, Color(0xFFD97706), Modifier.weight(1f)) { nav.goTab(com.modalpha.app.ui.Tab.Explore) }
-                StatTile("SIP dates", "$months", "months", Icons.Outlined.CalendarMonth, Color(0xFF2563EB), Modifier.weight(1f)) { nav.goTab(com.modalpha.app.ui.Tab.Calendar) }
-                StatTile("Requests", "$open", "open", Icons.AutoMirrored.Outlined.HelpOutline, Color(0xFF7C3AED), Modifier.weight(1f)) { nav.push(Route.Help) }
-            }
-            // Settings grid
-            Caption("Settings", Modifier.padding(start = 4.dp, top = 4.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                SettingTile(Icons.Outlined.Notifications, "Reminders", "When we remind you", Color(0xFFD97706), Modifier.weight(1f)) { nav.remindMe(null) }
-                SettingTile(Icons.Outlined.Palette, "Theme", theme.label, Color(0xFFDB2777), Modifier.weight(1f)) { themeSheet = true }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                if (!nav.repo.isDemo && bio.available) SettingTile(Icons.Outlined.Fingerprint, "Fingerprint", if (bioOn) "On" else "Off", Color(0xFF059669), Modifier.weight(1f), trailing = {
-                    MaSwitch(bioOn) { want -> if (want) bio.prompt("Turn on fingerprint unlock") { session.setBiometric(true); bioOn = true } else { session.setBiometric(false); bioOn = false } }
-                }) { }
-                else SettingTile(Icons.Outlined.VerifiedUser, "KYC", k ?: "…", Color(0xFF059669), Modifier.weight(1f)) { if (k != "Verified") nav.push(Route.Kyc()) }
-                SettingTile(Icons.AutoMirrored.Outlined.ReceiptLong, "Billing", "Plan & invoices", Color(0xFF2563EB), Modifier.weight(1f)) { nav.push(Route.Subscription) }
-            }
-            CardList(Modifier.padding(horizontal = 0.dp), rows = listOf(
-                { ListRow(Icons.AutoMirrored.Outlined.HelpOutline, "Help & my requests", onClick = { nav.push(Route.Help) }) { if (open > 0) Tag("$open open", Tone.Blue); Chevron() } },
-            ))
-            OutlineButton("Log out", session::logout, Modifier.fillMaxWidth(), color = Ma.c.down, icon = Icons.AutoMirrored.Outlined.Logout)
-            if (!nav.repo.isDemo) Text("Log out of all devices", Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { askAll = true }.padding(10.dp),
-                color = Ma.c.muted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
+            MenuSection("ACCOUNT")
+            MenuRow(Icons.AutoMirrored.Outlined.ReceiptLong, "Plan & invoices", when { sub == null -> "Free plan"; sub.cancelling -> "Ends ${prettyDate(sub.renewalDate)} · GST invoices"; else -> "Renews ${prettyDate(sub.renewalDate)} · GST invoices" }) { nav.push(Route.Subscription) }
+            MenuRow(Icons.Outlined.VerifiedUser, "KYC", if (k == "Verified") "PAN verified" else "Needed before you subscribe",
+                tag = k?.let { (if (it == "Verified") "Verified" else it) to (if (it == "Verified") c.up else c.warn) }) { if (k != "Verified") nav.push(Route.Kyc()) }
+            MenuRow(Icons.Outlined.Notifications, "Reminders & alerts", "NAV heads-up ${if (ap.navAlertPct == 0) "off" else "${ap.navAlertPct}%"}") { nav.remindMe(null) }
+            MenuRow(Icons.Outlined.Palette, "Theme", theme.label) { themeSheet = true }
+            MenuSection("SECURE LOCK AND SUPPORT")
+            if (!nav.repo.isDemo && bio.available) MenuRow(Icons.Outlined.Fingerprint, "Fingerprint lock", "Unlock the app with your fingerprint", trailing = {
+                MaSwitch(bioOn) { want -> if (want) bio.prompt("Turn on fingerprint unlock") { session.setBiometric(true); bioOn = true } else { session.setBiometric(false); bioOn = false } }
+            }) {}
+            if (!nav.repo.isDemo) MenuRow(Icons.Outlined.Devices, "Devices & sessions", "Log out of all devices") { askAll = true }
+            MenuRow(Icons.AutoMirrored.Outlined.HelpOutline, "Help & support requests", "FAQs and your requests", tag = if (open > 0) "$open open" to c.down else null) { nav.push(Route.Help) }
+            Box(Modifier.padding(16.dp)) { OutlineButton("Log out", session::logout, Modifier.fillMaxWidth(), color = c.down, icon = Icons.AutoMirrored.Outlined.Logout) }
         }
     }
-    if (themeSheet) ModalBottomSheet({ themeSheet = false }, containerColor = Ma.c.surface) {
+    if (themeSheet) ModalBottomSheet({ themeSheet = false }, containerColor = c.surface) {
         Column(Modifier.padding(start = 20.dp, end = 20.dp, bottom = 32.dp)) {
-            Text("Theme", color = Ma.c.text, style = MaterialTheme.typography.titleLarge); VSpace(14.dp)
+            Text("Theme", color = c.text, style = MaterialTheme.typography.titleLarge); VSpace(14.dp)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 AppTheme.entries.forEach { t ->
                     val tc = colorsFor(t); val on = t == theme
-                    Column(Modifier.weight(1f).clip(RoundedCornerShape(16.dp)).border(if (on) 2.dp else 1.dp, if (on) Ma.c.accent else Ma.c.line, RoundedCornerShape(16.dp)).clickable { session.setTheme(t) }.padding(12.dp)) {
+                    Column(Modifier.weight(1f).clip(RoundedCornerShape(16.dp)).border(if (on) 2.dp else 1.dp, if (on) c.accent else c.line, RoundedCornerShape(16.dp)).clickable { session.setTheme(t) }.padding(12.dp)) {
                         Row(Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(10.dp))) { Box(Modifier.weight(1f).fillMaxSize().background(tc.chrome)); Box(Modifier.weight(1.4f).fillMaxSize().background(tc.bg)) }
-                        VSpace(8.dp); Text(t.label, color = Ma.c.text, fontWeight = FontWeight.SemiBold); Text(t.desc, color = Ma.c.muted, fontSize = 12.sp)
+                        VSpace(8.dp); Text(t.label, color = c.text, fontWeight = FontWeight.SemiBold); Text(t.desc, color = c.muted, fontSize = 12.sp)
                     }
                 }
             }
         }
     }
+}
+
+@Composable private fun MenuSection(t: String) =
+    Text(t, Modifier.padding(start = 20.dp, top = 22.dp, bottom = 4.dp), color = Ma.c.text, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = .8.sp)
+
+@Composable
+private fun MenuRow(icon: ImageVector, title: String, sub: String?, tag: Pair<String, Color>? = null, trailing: (@Composable () -> Unit)? = null, onClick: () -> Unit) {
+    val c = Ma.c
+    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 20.dp, vertical = 13.dp), verticalAlignment = Alignment.CenterVertically) {
+        Icon(icon, null, tint = c.accent, modifier = Modifier.size(22.dp))
+        HSpace(16.dp)
+        Column(Modifier.weight(1f)) {
+            Text(title, color = c.text, fontSize = 15.sp)
+            if (sub != null) Text(sub, color = c.muted, fontSize = 12.5.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        when {
+            trailing != null -> trailing()
+            tag != null -> Text(tag.first, Modifier.clip(CircleShape).background(tag.second).padding(horizontal = 9.dp, vertical = 3.dp), color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            else -> Chevron()
+        }
+    }
+    HorizontalDivider(Modifier.padding(start = 58.dp, end = 20.dp), color = c.line)
+}
+
+private fun maskEmail(e: String) = e.substringBefore('@').let { n -> (n.take(1) + "****" + n.takeLast(1)).uppercase() } + "@" + e.substringAfter('@').uppercase()
+private fun maskMobile(m: String) = "*".repeat((m.length - 5).coerceAtLeast(0)) + m.takeLast(5)
+
+/** My Profile: dark header (avatar, name, plan, Customer ID) and a sheet with Personal details / KYC. */
+@Composable
+fun MyProfileScreen() {
+    val nav = LocalNav.current
+    val u = nav.user
+    val c = Ma.c
+    val ctx = LocalContext.current
+    val plan = rememberLoad { nav.repo.subscription() to nav.repo.plan() }
+    val kyc = rememberLoad { nav.repo.kycStatus() }
+    var tab by rememberSaveable { mutableStateOf("Personal details") }
+    val (sub, planName) = (plan.res as? Res.Ok)?.value ?: (null to "…")
+    val web = com.modalpha.app.BuildConfig.API_BASE_URL.replace("://api.", "://")
+    fun openWeb(path: String) = runCatching { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("$web/#/$path"))) }
+    Box(Modifier.fillMaxSize().background(c.bg)) {
+        Column(Modifier.fillMaxWidth().height(380.dp).background(Brush.verticalGradient(listOf(c.chrome, c.chrome2))).statusBarsPadding()) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = nav::pop) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Back", tint = Color.White) }
+                Text("My Profile", color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+            }
+            Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(Modifier.size(84.dp).clip(CircleShape).background(c.hiBrush).border(2.5.dp, Gold, CircleShape), contentAlignment = Alignment.Center) { Text(u.initial, color = Color.White, fontSize = 34.sp, fontWeight = FontWeight.ExtraBold) }
+                VSpace(10.dp)
+                Text(u.name.uppercase(), color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = .5.sp)
+                VSpace(12.dp)
+                Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).border(1.dp, Color(0xFF67E8F9), RoundedCornerShape(12.dp)).clickable { nav.push(if (planName == "Free") Route.Plans else Route.Subscription) }.padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text((sub?.plan ?: planName).uppercase().toCharArray().joinToString(" "), color = Gold, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
+                    HSpace(10.dp)
+                    Text(if (planName == "Free") "Free plan" else "Membership", color = Color.White, fontSize = 14.sp, modifier = Modifier.weight(1f))
+                    Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null, tint = Color.White)
+                }
+                u.ref?.let {
+                    Column(Modifier.fillMaxWidth().padding(top = 12.dp)) {
+                        Text("Customer ID", color = c.chromeSub, fontSize = 13.sp)
+                        Text(it.uppercase(), color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = .5.sp)
+                    }
+                }
+            }
+        }
+        Column(Modifier.padding(top = 340.dp).padding(horizontal = 10.dp).fillMaxSize().clip(RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp)).background(c.surface)) {
+            Row(Modifier.fillMaxWidth()) {
+                listOf("Personal details", "KYC").forEach { t ->
+                    val on = t == tab
+                    Column(Modifier.weight(1f).clickable { tab = t }, horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(t, Modifier.padding(vertical = 15.dp), color = if (on) c.text else c.muted, fontWeight = if (on) FontWeight.Bold else FontWeight.Medium, fontSize = 15.sp)
+                        Box(Modifier.fillMaxWidth().height(2.5.dp).background(if (on) c.accent else Color.Transparent))
+                    }
+                }
+            }
+            HorizontalDivider(color = c.line)
+            Column(Modifier.verticalScroll(rememberScrollState()).navigationBarsPadding().padding(bottom = 16.dp)) {
+                if (tab == "Personal details") {
+                    ProfileField("Email", u.email?.let(::maskEmail) ?: "Not added", if (u.email != null && !u.emailVerified) "Not verified" else null) { openWeb("user/settings") }
+                    ProfileField("Registered mobile", u.mobile?.let(::maskMobile) ?: "Not added", null) { openWeb("user/settings") }
+                    ProfileField("Member since", u.signupDate?.let { runCatching { LocalDate.parse(it).format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH)) }.getOrNull() } ?: "—", null, null)
+                    ProfileField("Plan", if (sub == null) "Free" else "${sub.plan} · ${sub.cycle} · ${if (sub.cancelling) "ends" else "renews"} ${prettyDate(sub.renewalDate)}", null, null)
+                } else {
+                    val k = (kyc.res as? Res.Ok)?.value
+                    ProfileField("KYC status", k ?: "…", null, null)
+                    ProfileField("Verified with", if (k == "Verified") "PAN · checked with the KRA" else "PAN (and DigiLocker if needed)", null, null)
+                    if (k != null && k != "Verified") Box(Modifier.padding(20.dp)) { GradientButton("Complete KYC", { nav.push(Route.Kyc()) }) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProfileField(label: String, value: String, note: String?, onUpdate: (() -> Unit)?) {
+    val c = Ma.c
+    Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp), verticalAlignment = Alignment.Bottom) {
+        Column(Modifier.weight(1f)) {
+            Text(label, color = c.muted, fontSize = 12.5.sp)
+            VSpace(4.dp)
+            Text(value, color = c.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            if (note != null) Text(note, color = c.warn, fontSize = 11.5.sp)
+        }
+        if (onUpdate != null) Text("Update", Modifier.clickable(onClick = onUpdate).padding(4.dp), color = c.accent, fontWeight = FontWeight.Bold, fontSize = 13.5.sp)
+    }
+    HorizontalDivider(Modifier.padding(horizontal = 20.dp), color = c.line)
 }
 
 @Composable

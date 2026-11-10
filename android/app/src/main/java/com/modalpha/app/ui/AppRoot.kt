@@ -95,6 +95,7 @@ import com.modalpha.app.ui.account.PlansScreen
 import com.modalpha.app.ui.account.SubscriptionScreen
 import com.modalpha.app.ui.account.SuccessScreen
 import com.modalpha.app.ui.account.YouTab
+import com.modalpha.app.ui.account.MyProfileScreen
 import com.modalpha.app.ui.explore.CompareScreen
 import com.modalpha.app.ui.explore.ExploreTab
 import com.modalpha.app.ui.explore.FundScreen
@@ -218,6 +219,8 @@ fun MainTabs(user: User, repo: Repository, session: SessionViewModel, bio: Biome
                             openProfile = { nav.push(Route.Profile) },
                             openWhatIf = { nav.push(Route.WhatIf()) },
                             logout = session::logout,
+                            openCompare = { nav.push(Route.Compare()) },
+                            openAsk = { tab.value = Tab.Ask },
                         ),
                         inner,
                     )
@@ -243,6 +246,7 @@ fun MainTabs(user: User, repo: Repository, session: SessionViewModel, bio: Biome
                             Route.Subscription -> SubscriptionScreen()
                             Route.Help -> HelpScreen()
                             Route.Profile -> YouTab(session, bio, 0.dp, onBack = nav::pop)
+                            Route.MyProfile -> MyProfileScreen()
                         }
                     }
                 }

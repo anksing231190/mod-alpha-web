@@ -98,6 +98,7 @@ class AllScreensTest {
     @Test fun ask() = tab("14-ask", Tab.Ask) { AskTab(remember { mutableStateListOf(ChatMsg(true, "Is the 12th good for small-cap funds too?"), ChatMsg(false, "Yes. Across the small-cap funds we track, a SIP on the 12th beat the 1st in **7 of the last 10 years**, by **+3.1%** on average.")) }, it) }
     @Test fun notifications() = shot("15-notifications") { NotificationsScreen() }
     @Test fun you() = shot("16-profile") { YouTab(session, Biometrics(available = false), 0.dp, onBack = {}) }
+    @Test fun myProfile() = shot("16b-my-profile") { com.modalpha.app.ui.account.MyProfileScreen() }
     @Test fun you_espresso() = shot("16-profile", AppTheme.Espresso) { YouTab(session, Biometrics(available = false), 0.dp, onBack = {}) }
     @Test fun plans() = shot("17-plans") { PlansScreen() }
     @Test fun checkout() = shot("18-checkout") { CheckoutScreen("Pro", "Yearly") }

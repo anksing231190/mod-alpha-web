@@ -73,7 +73,8 @@ class LiveRepository(context: Context, private val baseUrl: String) : Repository
 
     private fun JsonObject.toUser(): User {
         val u = (this["user"] as? JsonObject) ?: throw ApiException("Unexpected reply from the server")
-        return User(u.str("id") ?: "", u.str("name") ?: "Investor", u.str("email"), u.str("mobile"), u.str("role") ?: "user", u.str("signupDate")?.take(10))
+        return User(u.str("id") ?: "", u.str("name") ?: "Investor", u.str("email"), u.str("mobile"), u.str("role") ?: "user", u.str("signupDate")?.take(10),
+            ref = u.str("ref"), emailVerified = u.str("emailVerified") == "true", mobileVerified = u.str("mobileVerified") == "true")
     }
 
     override suspend fun restore(): User? = if (!jar.hasSession()) null else runCatching { call("GET", "/auth/me").toUser() }.getOrNull()

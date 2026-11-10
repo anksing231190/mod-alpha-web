@@ -56,7 +56,7 @@ fun LockScreen(
     val glow by rememberInfiniteTransition(label = "fp").animateFloat(1f, 1.06f, infiniteRepeatable(tween(1100), RepeatMode.Reverse), label = "g")
     Column(Modifier.fillMaxSize().background(c.bg)) {
         Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)).meshBackdrop(c).statusBarsPadding().padding(bottom = 18.dp)) {
-            Text("Mod Alpha", Modifier.padding(start = 22.dp, top = 12.dp), color = c.chromeText, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            BrandHeader(Modifier.padding(start = 22.dp, top = 12.dp))
             VSpace(14.dp)
             Box(Modifier.fillMaxWidth().height(356.dp), contentAlignment = Alignment.TopCenter) { DialLock(lastDay, lastMonth, play = autoPrompt) }
         }

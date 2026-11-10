@@ -16,8 +16,8 @@ class DemoRepository(private val latencyMs: Long = 450) : Repository {
 
     private data class Account(val user: User, val plan: String)
     private val accounts = mutableMapOf(
-        "+919876543210" to Account(User("u1", "Ankit Singh", "ankit@example.com", "+919876543210", signupDate = "2026-03-14"), "Pro"),
-        "+919876500000" to Account(User("u2", "Riya Sharma", null, "+919876500000"), "Free"),
+        "+919876543210" to Account(User("u1", "Ankit Singh", "ankit@example.com", "+919876543210", signupDate = "2026-03-14", ref = "MA-10231", emailVerified = true, mobileVerified = true), "Pro"),
+        "+919876500000" to Account(User("u2", "Riya Sharma", null, "+919876500000", ref = "MA-10544", mobileVerified = true), "Free"),
     )
     private var current: Account? = null
 

@@ -8,6 +8,9 @@ data class User(
     val mobile: String?,
     val role: String = "user",            // user | admin | superadmin
     val signupDate: String? = null,
+    val ref: String? = null,                  // Customer ID
+    val emailVerified: Boolean = false,
+    val mobileVerified: Boolean = false,
 ) {
     val isAdmin: Boolean get() = role == "admin" || role == "superadmin"
     val firstName: String get() = name.trim().split(" ").firstOrNull()?.ifBlank { null } ?: "there"

@@ -284,3 +284,19 @@ fun rememberLogoGlow(animate: Boolean = true): Float {
     val g by rememberInfiniteTransition(label = "logo").animateFloat(0f, 1f, infiniteRepeatable(tween(1800), RepeatMode.Reverse), label = "g")
     return if (animate) g else .5f
 }
+
+/** Brand row for the dark panels: the round |α| badge, "Mod Alpha" and the tagline. */
+@Composable
+fun BrandHeader(modifier: Modifier = Modifier) {
+    val c = Ma.c
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(34.dp).clip(CircleShape).background(Color(0xFFFBF6EC)).border(1.5.dp, Gold, CircleShape), contentAlignment = Alignment.Center) {
+            Image(painterResource(R.drawable.brand_mark), null, Modifier.size(21.dp))
+        }
+        Spacer(Modifier.width(9.dp))
+        Column {
+            Text("Mod Alpha", color = c.chromeText, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, lineHeight = 19.sp)
+            Text("INVEST AT THE RIGHT TIME", color = c.chromeSub, fontSize = 8.5.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.4.sp)
+        }
+    }
+}

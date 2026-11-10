@@ -23,6 +23,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.CompareArrows
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
@@ -96,6 +99,8 @@ class HomeActions(
     val openProfile: () -> Unit = {},
     val openWhatIf: () -> Unit = {},
     val logout: () -> Unit = {},
+    val openCompare: () -> Unit = {},
+    val openAsk: () -> Unit = {},
 )
 
 @Composable
@@ -124,8 +129,9 @@ fun HomeContent(d: HomeData, refreshing: Boolean, onRefresh: () -> Unit, actions
     PullToRefreshBox(isRefreshing = refreshing, onRefresh = onRefresh, modifier = Modifier.fillMaxSize()) {
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = contentPadding.calculateBottomPadding() + 16.dp)) {
             item { Hero(d, today, actions) }
+            item { QuickLinks(actions, Modifier.padding(start = 18.dp, end = 18.dp, top = 14.dp)) }
             d.compare?.let { item { EdgeCard(it, Modifier.padding(start = 18.dp, end = 18.dp, top = 14.dp)) } }
-            item { WhatIfCard(actions.openWhatIf, Modifier.padding(start = 18.dp, end = 18.dp, top = 14.dp)) }
+
             item { Watchlist(d.watchlist, actions) }
         }
     }
@@ -155,74 +161,105 @@ private fun Hero(d: HomeData, today: LocalDate, actions: HomeActions) {
             }
           }
             if (d.plan != "Free") { GhostChip(d.plan.uppercase(), gold = true); Spacer(Modifier.width(8.dp)) }
-            Box(Modifier.size(40.dp).clip(RoundedCornerShape(13.dp)).background(c.surface).border(1.dp, c.line, RoundedCornerShape(13.dp)).clickable(onClick = actions.openNotifications), contentAlignment = Alignment.Center) {
-                Icon(Icons.Outlined.NotificationsNone, "Notifications, ${d.unread} unread", tint = c.text, modifier = Modifier.size(20.dp))
+            Box(Modifier.size(40.dp).clip(RoundedCornerShape(13.dp)).background(Color.White).border(1.dp, c.line, RoundedCornerShape(13.dp)).clickable(onClick = actions.openNotifications), contentAlignment = Alignment.Center) {
+                Icon(Icons.Outlined.NotificationsNone, "Notifications, ${d.unread} unread", tint = Color(0xFF0F1A33), modifier = Modifier.size(20.dp))
                 if (d.unread > 0) Box(Modifier.align(Alignment.TopEnd).offset((-7).dp, 7.dp).size(8.dp).clip(CircleShape).background(Color(0xFFF43F5E)))
             }
             Spacer(Modifier.width(8.dp))
-            Box(Modifier.size(40.dp).clip(RoundedCornerShape(13.dp)).background(c.surface).border(1.dp, c.line, RoundedCornerShape(13.dp)).clickable(onClickLabel = "Log out") { askLogout = true }, contentAlignment = Alignment.Center) {
-                Icon(Icons.AutoMirrored.Outlined.Logout, "Log out", tint = c.down, modifier = Modifier.size(19.dp))
+            Box(Modifier.size(40.dp).clip(RoundedCornerShape(13.dp)).background(Color.White).border(1.dp, c.line, RoundedCornerShape(13.dp)).clickable(onClickLabel = "Log out") { askLogout = true }, contentAlignment = Alignment.Center) {
+                Icon(Icons.AutoMirrored.Outlined.Logout, "Log out", tint = Color(0xFFB91C1C), modifier = Modifier.size(19.dp))
             }
         }
-        // date + confidence
-        Text("BEST SIP DATE · ${monthName(sip?.month ?: "").uppercase()}", Modifier.padding(start = 18.dp, top = 16.dp), color = c.chromeMuted, fontSize = 10.5.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.3.sp)
+        // date + days-to-go ring
+        Text("BEST SIP DATE · ${monthName(sip?.month ?: "").uppercase()}", Modifier.padding(start = 18.dp, top = 14.dp), color = c.chromeMuted, fontSize = 10.5.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.3.sp)
         if (sip == null) {
             Text("This month's date is being prepared. We'll notify you when it's ready.", Modifier.padding(18.dp), color = c.chromeSub, fontSize = 15.sp)
             return@MeshHero
         }
         val locked = d.locked || sip.day == null
+        val date = if (locked) null else runCatching { LocalDate.parse("${sip.month}-%02d".format(sip.day)) }.getOrNull()
+        val days = date?.let { ChronoUnit.DAYS.between(today, it) }
         Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Box(contentAlignment = Alignment.CenterStart) {
                     Row(verticalAlignment = Alignment.Top, modifier = if (locked) (if (Build.VERSION.SDK_INT >= 31) Modifier.blur(12.dp) else Modifier.alpha(.12f)) else Modifier) {
-                        Text("${sip.day ?: 18}", color = c.chromeText, fontSize = 84.sp, fontWeight = FontWeight.Black, letterSpacing = (-4).sp, lineHeight = 84.sp)
-                        Text(sfx(sip.day ?: 18), color = c.chromeText, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(start = 3.dp, top = 12.dp))
+                        Text("${sip.day ?: 18}", color = c.chromeText, fontSize = 76.sp, fontWeight = FontWeight.Black, letterSpacing = (-4).sp, lineHeight = 76.sp)
+                        Text(sfx(sip.day ?: 18), color = c.chromeText, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(start = 3.dp, top = 10.dp))
                     }
                     if (locked) Box(Modifier.padding(start = 26.dp).size(52.dp).clip(CircleShape).background(c.surface).border(1.dp, c.line, CircleShape), contentAlignment = Alignment.Center) {
-                        Icon(Icons.Outlined.Lock, "Locked", tint = c.text, modifier = Modifier.size(22.dp))
+                        Icon(Icons.Outlined.Lock, "Locked", tint = Color(0xFF0F1A33), modifier = Modifier.size(22.dp))
                     }
                 }
-                if (!locked) {
-                    val date = runCatching { LocalDate.parse("${sip.month}-%02d".format(sip.day)) }.getOrNull()
-                    val days = date?.let { ChronoUnit.DAYS.between(today, it) }
-                    val wd = date?.dayOfWeek?.getDisplayName(TextStyle.FULL, Locale.ENGLISH) ?: ""
-                    Text(when { days == null -> wd; days > 1 -> "$wd · in $days days"; days == 1L -> "$wd · tomorrow"; days == 0L -> "$wd · today"; else -> "$wd · done for this month" }, color = c.chromeSub, fontSize = 14.sp)
-                } else Text("This month's date is ready", color = c.chromeSub, fontSize = 14.sp)
+                val wd = date?.dayOfWeek?.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
+                Text(if (locked) "This month's date is ready" else listOfNotNull(wd, "${sip.confidencePct}% confidence".takeIf { sip.confidencePct > 0 }).joinToString(" · "), color = c.chromeSub, fontSize = 13.5.sp)
             }
-            if (!locked && sip.confidencePct > 0) Ring(sip.confidencePct / 100f, 96.dp, 9.dp, listOf(Mint, Color(0xFF22D3EE))) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("${sip.confidencePct}%", color = c.chromeText, fontSize = 20.sp, fontWeight = FontWeight.Black)
-                    Text("CONFIDENCE", color = c.chromeMuted, fontSize = 8.5.sp, fontWeight = FontWeight.Bold, letterSpacing = .5.sp)
+            if (!locked && days != null) {
+                val len = YearMonth.parse(sip.month).lengthOfMonth()
+                Ring(if (days > 0) 1f - days.toFloat() / len else 1f, 88.dp, 8.dp, listOf(Mint, Color(0xFF22D3EE))) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(when { days > 0 -> "$days"; days == 0L -> "Today"; else -> "Done" }, color = c.chromeText, fontSize = if (days > 0) 24.sp else 16.sp, fontWeight = FontWeight.Black, lineHeight = 24.sp)
+                        if (days > 0) Text(if (days == 1L) "DAY TO GO" else "DAYS TO GO", color = c.chromeMuted, fontSize = 7.5.sp, fontWeight = FontWeight.Bold, letterSpacing = .5.sp)
+                    }
                 }
             }
         }
-        Row(Modifier.padding(start = 18.dp, end = 18.dp, top = 12.dp).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            UpChip("${pct(sip.upliftPct)} vs 1st of month", up = (sip.upliftPct ?: 0.0) >= 0)
-            if (!locked) sip.leadPts?.let { GhostChip("Leads next date by %.1f pts".format(it)) }
-            if (!locked) GhostChip("${sip.confidenceLabel.ifBlank { "High" }} confidence")
-        }
-        // every day of the month
-        d.dayEdge?.let { edge ->
-            GlassCard(Modifier.padding(start = 18.dp, end = 18.dp, top = 12.dp).fillMaxWidth()) {
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Every day this month · historical edge", color = c.chromeMuted, fontSize = 11.sp, modifier = Modifier.weight(1f))
-                        if (!locked) { Text("■ ", color = SoftGold, fontSize = 10.sp); Text("best  ", color = c.chromeMuted, fontSize = 11.sp); Text("■ ", color = SoftGood, fontSize = 10.sp); Text("good", color = c.chromeMuted, fontSize = 11.sp) }
-                    }
-                    VSpace(6.dp)
-                    BarStrip(edge, Modifier.fillMaxWidth().height(46.dp), hi = if (locked) null else sip.day?.minus(1), good = if (locked) emptySet() else sip.alternatives.map { it.day - 1 }.toSet())
-                    Row(Modifier.fillMaxWidth().padding(top = 3.dp)) { listOf("1", "7", "14", "21", "28").forEachIndexed { i, s -> if (i > 0) Spacer(Modifier.weight(1f)); Text(s, color = c.chromeMuted, fontSize = 9.5.sp) } }
-                }
+        // three facts about this month's date
+        Row(Modifier.padding(start = 18.dp, end = 18.dp, top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            HeroTile(pct(sip.upliftPct), "vs the 1st", Modifier.weight(1f))
+            if (!locked) {
+                if (sip.leadPts != null) HeroTile("%.1f pts".format(sip.leadPts), "ahead of next", Modifier.weight(1f))
+                else HeroTile("${sip.confidencePct}%", "confidence", Modifier.weight(1f))
+                val backup = sip.alternatives.maxByOrNull { it.upliftPct ?: 0.0 }?.day
+                HeroTile(backup?.let { "$it${sfx(it)}" } ?: "—", "backup day", Modifier.weight(1f))
             }
         }
         // actions
-        Row(Modifier.padding(start = 18.dp, end = 18.dp, top = 12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        val ctx = androidx.compose.ui.platform.LocalContext.current
+        Row(Modifier.padding(start = 18.dp, end = 18.dp, top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (locked) GradientButton("Unlock with Pro", actions.openPlans, brush = c.hiBrush)
             else {
-                GradientButton("Remind me", { actions.setReminder(sip.day!!) }, Modifier.weight(1.4f), brush = c.hiBrush, leading = { Icon(Icons.Outlined.NotificationsActive, null, tint = Color.White, modifier = Modifier.size(18.dp)) })
-                Box(Modifier.weight(1f).height(52.dp).clip(RoundedCornerShape(14.dp)).background(c.surface).border(1.dp, c.line, RoundedCornerShape(14.dp)).clickable(onClick = actions.whyDate), contentAlignment = Alignment.Center) {
-                    Text("Why ${sip.day}${sfx(sip.day!!)}?", color = c.text, style = MaterialTheme.typography.labelLarge)
-                }
+                GradientButton("Remind me", { actions.setReminder(sip.day!!) }, Modifier.weight(1.25f), brush = c.hiBrush, leading = { Icon(Icons.Outlined.NotificationsActive, null, tint = Color.White, modifier = Modifier.size(17.dp)) })
+                HeroButton("Add to calendar", Modifier.weight(1.25f)) { date?.let { addToCalendar(ctx, it) } }
+                HeroButton("Why ${sip.day}${sfx(sip.day!!)}?", Modifier.weight(1f), onClick = actions.whyDate)
+            }
+        }
+    }
+}
+
+@Composable private fun HeroTile(value: String, label: String, modifier: Modifier) =
+    Column(modifier.clip(RoundedCornerShape(12.dp)).background(Color.White.copy(alpha = .1f)).border(1.dp, Color.White.copy(alpha = .12f), RoundedCornerShape(12.dp)).padding(vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, color = Ma.c.chromeText, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
+        Text(label, color = Ma.c.chromeMuted, fontSize = 10.5.sp, maxLines = 1)
+    }
+
+@Composable private fun HeroButton(text: String, modifier: Modifier, onClick: () -> Unit) =
+    Box(modifier.height(52.dp).clip(RoundedCornerShape(14.dp)).background(Ma.c.surface).border(1.dp, Ma.c.line, RoundedCornerShape(14.dp)).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
+        Text(text, color = Ma.c.text, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 6.dp))
+    }
+
+/** Opens the phone's calendar with an all-day "Mod Alpha · SIP date" event (no calendar permission needed). */
+private fun addToCalendar(ctx: android.content.Context, date: LocalDate) {
+    val start = date.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+    val i = android.content.Intent(android.content.Intent.ACTION_INSERT).setData(android.provider.CalendarContract.Events.CONTENT_URI)
+        .putExtra(android.provider.CalendarContract.Events.TITLE, "Mod Alpha · SIP date")
+        .putExtra(android.provider.CalendarContract.Events.DESCRIPTION, "This month's best SIP date from Mod Alpha. Invest in your own app or broker.")
+        .putExtra(android.provider.CalendarContract.EXTRA_EVENT_ALL_DAY, true)
+        .putExtra(android.provider.CalendarContract.EXTRA_EVENT_BEGIN_TIME, start)
+        .putExtra(android.provider.CalendarContract.EXTRA_EVENT_END_TIME, start + 86_400_000L)
+    runCatching { ctx.startActivity(i) }
+}
+
+/** Shortcuts under the hero. */
+@Composable
+private fun QuickLinks(actions: HomeActions, modifier: Modifier = Modifier) {
+    val c = Ma.c
+    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        listOf(Triple(Icons.AutoMirrored.Outlined.ShowChart, "What if", actions.openWhatIf), Triple(Icons.Outlined.CompareArrows, "Compare", actions.openCompare),
+            Triple(Icons.Outlined.CalendarMonth, "Calendar", actions.openSip), Triple(Icons.Outlined.ChatBubbleOutline, "Ask α", actions.openAsk)).forEach { (ic, label, go) ->
+            Column(Modifier.weight(1f).clip(RoundedCornerShape(14.dp)).background(c.surface).border(1.dp, c.line, RoundedCornerShape(14.dp)).clickable(onClick = go).padding(vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(Modifier.size(32.dp).clip(RoundedCornerShape(10.dp)).background(c.accent.copy(alpha = .1f)), contentAlignment = Alignment.Center) { Icon(ic, null, tint = c.accent, modifier = Modifier.size(18.dp)) }
+                Spacer(Modifier.height(5.dp))
+                Text(label, color = c.text, fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -261,10 +298,11 @@ private fun EdgeCard(c: SipCompare, modifier: Modifier = Modifier) {
                 Text((if (c.extra >= 0) "+" else "−") + inr(kotlin.math.abs(c.extra)), color = if (c.extra >= 0) Ma.c.up else Ma.c.down, fontSize = 22.sp, fontWeight = FontWeight.Black)
             }
             VSpace(8.dp)
-            GridChart(
-                listOf(ChartSeries(c.points.map { it.modAlpha.toDouble() }, Ma.c.accent, fill = true), ChartSeries(c.points.map { it.fixed.toDouble() }, Ma.c.muted, dashed = true)),
-                emptyList(), Modifier.fillMaxWidth().height(96.dp), yFormat = { inrShort(it) }, glow = true, showY = false,
-            )
+            // the gap itself (Mod Alpha value − fixed-date value) over time, so even a small edge reads as a curve
+            val gap = c.points.map { (it.modAlpha - it.fixed).toDouble() }
+            Text("Extra value over a SIP on the ${c.fixedDay}${sfx(c.fixedDay)}" + if (c.fixedValue > 0) " · %+.2f%%".format(c.extra * 100.0 / c.fixedValue) else "", color = Ma.c.muted, fontSize = 11.sp)
+            VSpace(4.dp)
+            if (gap.size > 1) GridChart(listOf(ChartSeries(gap, Ma.c.up, fill = true)), emptyList(), Modifier.fillMaxWidth().height(96.dp), yFormat = { inrShort(it) }, showY = false)
             VSpace(10.dp)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Mini("Invested", inrShort(c.invested.toDouble()), Ma.c.text, Modifier.weight(1f))

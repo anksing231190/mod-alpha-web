@@ -87,7 +87,7 @@ fun WelcomeScreen(
         // dark panel: brand row + the animation
         Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)).meshBackdrop(c).statusBarsPadding().padding(bottom = 18.dp)) {
             Row(Modifier.fillMaxWidth().padding(start = 22.dp, end = 22.dp, top = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Mod Alpha", color = c.chromeText, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                BrandHeader()
             }
             VSpace(14.dp)
             if (returningName == null) AnimatedContent(i, transitionSpec = { fadeIn(tween(450)) togetherWith fadeOut(tween(300)) }, label = "panel") { k ->
